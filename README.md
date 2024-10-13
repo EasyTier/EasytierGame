@@ -1,5 +1,5 @@
 # EasyiterGame
-基于easytier的简易游戏联机客户端
+基于easytier的简易游戏联机启动器
 
 1. 开发环境如何运行
    拉取仓库，使用命令行  pnpm install  安装包

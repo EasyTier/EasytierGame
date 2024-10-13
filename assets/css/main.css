@@ -1,0 +1,43 @@
+@tailwind base;
+
+/*
+	用于进行主题更换，如果要更换elemenet-plus-ui的主题记得加上!important，不然更换会失败
+*/
+
+@layer base {
+	html {
+		font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Hiragino Sans GB", STHeiti, "Microsoft YaHei";
+	}
+}
+
+html,
+body {
+	height: 100%;
+	overflow: hidden;
+}
+
+* {
+	outline: none;
+}
+
+#__easytier {
+	height: 100%;
+	overflow: hidden;
+	background-color: #fff;
+	box-sizing: border-box;
+	padding: 3px 5px;
+}
+
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #0003;
+	border-radius: 10px;
+	transition: all 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-track {
+	border-radius: 10px;
+}

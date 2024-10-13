@@ -1,0 +1,41 @@
+{
+	"name": "easytier-game",
+	"private": true,
+	"author": "luoleixin@digisky.com",
+	"description": "A simple network initiator based on Easytier",
+	"version": "1.0.3",
+	"scripts": {
+		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
+		"build": "nuxt generate --dotenv env/.env.prod"
+	},
+	"devDependencies": {
+		"@element-plus/icons-vue": "^2.3.1",
+		"@element-plus/nuxt": "^1.0.9",
+		"@nuxtjs/tailwindcss": "^6.12.0",
+		"@pinia-plugin-persistedstate/nuxt": "^1.2.0",
+		"@pinia/nuxt": "^0.5.1",
+		"@tauri-apps/api": "^2.0.2",
+		"@tauri-apps/cli": "^2.0.2",
+		"@tauri-apps/plugin-cli": "^2.0.0",
+		"@tauri-apps/plugin-http": "^2.0.0",
+		"@tinymce/tinymce-vue": "^5.1.1",
+		"@types/lodash-es": "^4.17.12",
+		"@types/qs": "^6.9.15",
+		"@vitejs/plugin-vue-jsx": "^3.1.0",
+		"dayjs": "^1.11.10",
+		"defu": "^6.1.4",
+		"element-plus": "^2.7.1",
+		"javascript-obfuscator": "^4.1.0",
+		"less": "^4.2.0",
+		"lodash-es": "^4.17.21",
+		"nuxt": "^3.11.2",
+		"pinia": "^2.1.7",
+		"postcss": "^8.4.38",
+		"qs": "^6.12.0",
+		"typescript": "^5.4.5",
+		"vue": "^3.4.24",
+		"vue-clipboard3": "^2.0.0",
+		"xlsx": "^0.18.5",
+		"@tauri-apps/plugin-shell": "~2"
+	}
+}

@@ -1,0 +1,43 @@
+{
+	// https://nuxt.com/docs/guide/concepts/typescript
+	"extends": "./.nuxt/tsconfig.json",
+	"exclude": ["node_modules", "dist", ".output"],
+	"include": [
+		"components/**/*.ts",
+		"components/**/*.js",
+		"components/**/*.vue",
+		"pages/**/*.ts",
+		"pages/**/*.js",
+		"pages/**/*.vue",
+		"layouts/**/*.ts",
+		"layouts/**/*.js",
+		"layouts/**/*.vue",
+		"plugins/**/*.ts",
+		"plugins/**/*.js",
+		"store/**/*.ts",
+		"store/**/*.js",
+		"utils/**/*.ts",
+		"utils/**/*.js",
+		"typings/**/*.d.ts",
+		// "composables/**/*.ts",
+		// "composables/**/*.js",
+		// "api/**/*.ts",
+		// "api/**/*.js"
+	],
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		// 	"types": ["element-plus/global"]
+		"resolveJsonModule": true,
+		// 从 Vue 3.4 开始，Vue 不再隐式注册全局 JSX 命名空间。要指示 TypeScript 使用 Vue 的 JSX 类型定义，请确保在你的 tsconfig.json 中包含以下内容
+		"jsx": "preserve",
+		"jsxImportSource": "vue",
+		"types": ["@pinia/nuxt", "vite/client", "element-plus/global"],
+		"allowJs": true, // 允许编译器编译JS，JSX文件
+		"checkJs": true, // 允许在JS文件中报错，通常与allowJS一起使用
+		"esModuleInterop": true, // 允许export=导出，由import from 导入
+
+		"lib": ["DOM", "ESNext"],
+		"allowSyntheticDefaultImports": true
+	}
+}

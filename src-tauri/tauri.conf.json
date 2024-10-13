@@ -1,0 +1,37 @@
+{
+	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+	"productName": "easytier-game",
+	"version": "1.0.3",
+	"identifier": "com.tauri.easytier-game",
+
+	"build": {
+		"frontendDist": "../dist",
+		"devUrl": "http://localhost:5000",
+		"beforeBuildCommand": "pnpm build",
+		"beforeDevCommand": "pnpm dev"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "easytier-game",
+				"width": 331,
+				"height": 285,
+				"resizable": false,
+				"fullscreen": false,
+				"decorations": true,
+				"maximizable": false,
+				"center": true,
+				"transparent": false
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": false,
+		"targets": "all",
+		"createUpdaterArtifacts": false,
+		"icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+	}
+}

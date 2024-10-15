@@ -15,7 +15,7 @@ async function toggleVisibility() {
   }
 }
 
-export async function useTray(init: boolean = false) {
+export async function useTray(init: boolean = false, beforExit) {
   let tray
   try {
     tray = await TrayIcon.getById(DEFAULT_TRAY_NAME)
@@ -26,9 +26,9 @@ export async function useTray(init: boolean = false) {
         id: DEFAULT_TRAY_NAME,
         menu: await Menu.new({
           id: 'main',
-          items: await generateMenuItem(),
+          items: await generateMenuItem(beforExit),
         }),
-        action: async () => {
+        action: async (e) => {
           toggleVisibility()
         },
       })
@@ -44,25 +44,31 @@ export async function useTray(init: boolean = false) {
     tray.setMenuOnLeftClick(false)
     tray.setMenu(await Menu.new({
       id: 'main',
-      items: await generateMenuItem(),
+      items: await generateMenuItem(beforExit),
     }))
   }
 
   return tray
 }
 
-export async function generateMenuItem() {
+export async function generateMenuItem(beforExit: Function) {
   return [
-    await MenuItemExit('Exit'),
+    await MenuItemExit('退出', beforExit),
     await PredefinedMenuItem.new({ item: 'Separator' }),
-    await MenuItemShow('Show / Hide'),
+    await MenuItemShow('显示 / 隐藏'),
   ]
 }
 
-export async function MenuItemExit(text: string) {
-  return await PredefinedMenuItem.new({
+export async function MenuItemExit(text: string, beforExit: Function) {
+  return await MenuItem.new({
+    id: "quit",
     text,
-    item: 'Quit',
+    action: async () => {
+      if (beforExit) {
+        await beforExit();
+      }
+      await getCurrentWindow().close();
+    }
   })
 }
 
@@ -76,30 +82,30 @@ export async function MenuItemShow(text: string) {
   })
 }
 
-export async function setTrayMenu(items: (MenuItem | PredefinedMenuItem)[] | undefined = undefined) {
-  const tray = await useTray()
-  if (!tray)
-    return
-  const menu = await Menu.new({
-    id: 'main',
-    items: items || await generateMenuItem(),
-  })
-  tray.setMenu(menu)
-}
+// export async function setTrayMenu(items: (MenuItem | PredefinedMenuItem)[] | undefined = undefined) {
+//   const tray = await useTray()
+//   if (!tray)
+//     return
+//   const menu = await Menu.new({
+//     id: 'main',
+//     items: items || await generateMenuItem(),
+//   })
+//   tray.setMenu(menu)
+// }
 
-export async function setTrayRunState(isRunning: boolean = false) {
-  const tray = await useTray()
-  if (!tray)
-    return
-  tray.setIcon(isRunning ? 'icons/icon-inactive.ico' : 'icons/icon.ico')
-}
+// export async function setTrayRunState(isRunning: boolean = false) {
+//   const tray = await useTray()
+//   if (!tray)
+//     return
+//   tray.setIcon(isRunning ? 'icons/icon-inactive.ico' : 'icons/icon.ico')
+// }
 
-export async function setTrayTooltip(tooltip: string) {
-  if (tooltip) {
-    const tray = await useTray()
-    if (!tray)
-      return
-    tray.setTooltip(`EasyTier\n${pkg.version}\n${tooltip}`)
-    tray.setTitle(`EasyTier\n${pkg.version}\n${tooltip}`)
-  }
-}
+// export async function setTrayTooltip(tooltip: string) {
+//   if (tooltip) {
+//     const tray = await useTray()
+//     if (!tray)
+//       return
+//     tray.setTooltip(`EasyTier\n${pkg.version}\n${tooltip}`)
+//     tray.setTitle(`EasyTier\n${pkg.version}\n${tooltip}`)
+//   }
+// }

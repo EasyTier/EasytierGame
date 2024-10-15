@@ -1,5 +1,6 @@
 use reqwest::{Client, Error};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
@@ -11,8 +12,7 @@ use std::sync::{
 use std::{path, thread};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
-use tauri::{Manager, WindowEvent};
-
+use tauri::Manager;
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
 pub struct Release {
@@ -47,26 +47,6 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
     response.json::<Vec<Release>>().await
 }
 
-static mut IS_CLOSE: bool = false;
-
-#[tauri::command(rename_all = "snake_case")]
-fn my_commit_output(commit_msg: String, window: tauri::Window) -> Result<bool, String> {
-    println!("{}", commit_msg);
-    unsafe {
-        IS_CLOSE = true;
-    }
-    window.close().unwrap();
-    return Ok(true);
-}
-
-#[tauri::command(rename_all = "snake_case")]
-fn force_close(window: tauri::Window) {
-    unsafe {
-        IS_CLOSE = true;
-    }
-    window.close().unwrap();
-}
-
 #[tauri::command(rename_all = "snake_case")]
 fn get_core_version() -> String {
     match Command::new("easytier-core.exe")
@@ -83,8 +63,73 @@ fn get_core_version() -> String {
 }
 
 #[tauri::command(rename_all = "snake_case")]
+fn get_cli_version() -> String {
+    match Command::new("easytier-cli.exe")
+        .arg("--version")
+        .creation_flags(0x08000000)
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            return output_str.trim().to_string();
+        }
+        Err(_e) => return "".to_string(),
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct RoutePeerInfo {
+    peer_id: u64,
+    cost: u64,
+    hostname: Option<String>,
+    udp_stun_info: String,
+    easytier_version: String,
+    network_length: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct RouteTable {
+    peer_infos: HashMap<u32, RoutePeerInfo>,
+    ipv4_peer_id_map: HashMap<String, u64>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PeerRouteServiceImpl {
+    route_table_with_cost: RouteTable,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PeerRoute {
+    my_peer_id: u64,
+    service_impl: PeerRouteServiceImpl,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct MyResponse {
+    response: PeerRoute
+}
+
+
+
+#[tauri::command(rename_all = "snake_case")]
+fn get_members_by_cli() -> String {
+    match Command::new("easytier-cli.exe")
+        .arg("peer")
+        .arg("list")
+        .creation_flags(0x08000000)
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            return output_str.trim().to_string();
+        }
+        Err(_e) => return _e.to_string(),
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
 async fn download_easytier_zip(download_url: String, file_name: String) {
-    let target = format!("https://ghp.ci/?q={}",download_url);
+    let target = format!("https://ghp.ci/{}", download_url);
     let response = reqwest::get(target)
         .await
         .expect("error to download easytier url");
@@ -269,16 +314,17 @@ pub fn run() {
     let context = tauri::generate_context!();
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .on_window_event(move |window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                unsafe {
-                    if !IS_CLOSE {
-                        api.prevent_close();
-                        window.emit("window-close-event", "").unwrap();
-                    }
-                }
-            }
-        })
+        // .on_window_event(move |window, event| {
+        //     if let WindowEvent::CloseRequested { api, .. } = event {
+        //         println!("close window");
+        //         unsafe {
+        //             if !IS_CLOSE && window.label() == "main" {
+        //                 api.prevent_close();
+        //                 window.emit("window-close-event", "").unwrap();
+        //             }
+        //         }
+        //     }
+        // })
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
                 .get_webview_window("main")
@@ -316,13 +362,13 @@ pub fn run() {
         })
         .manage(stop_signal_clone)
         .invoke_handler(tauri::generate_handler![
-            my_commit_output,
-            force_close,
             run_command,
             stop_command,
             get_core_version,
             fetch_easytier_list,
-            download_easytier_zip
+            download_easytier_zip,
+            get_cli_version,
+            get_members_by_cli
         ])
         .run(context)
         .expect("error while running tauri application");

@@ -9,9 +9,23 @@
 			>
 				<ElTableColumn
 					v-for="prop in showTableHeader"
-					:prop="prop"
-					:label="prop"
-				></ElTableColumn>
+					:label="prop[1]"
+					:key="prop[0]"
+				>
+					<template #default="{ row }">
+						<span v-if="prop[0] == 'loss_rate'">
+							{{ row[prop[0]] && row[prop[0]] != "-" ? Number(row[prop[0]] * 100).toFixed(2) + "%" : row[prop[0]] }}
+						</span>
+						<span v-else-if="prop[0] != 'cost'">{{ row[prop[0]] }}</span>
+						<ElTag
+							v-else
+							effect="dark"
+							:type="row[prop[0]] == 'p2p' ? 'success' : 'info'"
+						>
+							{{ row[prop[0]] }}
+						</ElTag>
+					</template>
+				</ElTableColumn>
 			</ElTable>
 		</div>
 	</div>
@@ -23,7 +37,14 @@
 		member: []
 	});
 
-	const showTableHeader = ["ipv4", "hostname", "cost", "lat_ms", "loss_rate", "nat_type", "version"];
+	const showTableHeader = [
+		["ipv4", "虚拟网IP"],
+		["hostname", "主机名"],
+		["cost", "方式"],
+		["lat_ms", "延迟/ms"],
+		["loss_rate", "丢包率"],
+		["version", "版本"]
+	];
 	const headers = [
 		"ipv4",
 		"hostname",
@@ -161,9 +182,9 @@
 
 	onMounted(async () => {
 		listenOutput();
-		// timer = setInterval(() => {
-		// 	listenOutput();
-		// }, 3000);
+		timer = setInterval(() => {
+			listenOutput();
+		}, 1000 * 10);
 	});
 
 	onBeforeUnmount(() => {

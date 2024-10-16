@@ -1,27 +1,44 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "enables the default permissions",
-  "windows": [
-    "main",
-    "log"
-  ],
-  "permissions": [
-    "core:default",
-    "core:window:allow-minimize",
-    "core:window:allow-hide",
-    "core:window:allow-close",
-    "shell:allow-open",
-    "core:window:allow-show",
-    "core:window:allow-create",
-    "core:window:allow-set-position",
-    "core:window:allow-destroy",
-    "core:webview:allow-create-webview-window",
-    "core:webview:allow-set-webview-size",
-    "core:webview:allow-set-webview-position",
-    "core:webview:allow-create-webview",
-    "core:webview:allow-webview-show",
-    "core:webview:allow-webview-hide",
-    "core:webview:allow-webview-close"
-  ]
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "enables the default permissions",
+	"windows": ["main", "log"],
+	"permissions": [
+		"core:default",
+		"core:window:allow-minimize",
+		"core:window:allow-hide",
+		"core:window:allow-close",
+		"shell:allow-open",
+		"core:window:allow-show",
+		"core:window:allow-create",
+		"core:window:allow-set-position",
+		"core:window:allow-destroy",
+		"core:webview:allow-create-webview-window",
+		"core:webview:allow-set-webview-size",
+		"core:webview:allow-set-webview-position",
+		"core:webview:allow-create-webview",
+		"core:webview:allow-webview-show",
+		"core:webview:allow-webview-hide",
+		"core:webview:allow-webview-close",
+		{
+			"identifier": "shell:allow-spawn",
+			"allow": [
+				{
+					"args": ["run"],
+					"cmd": "WinIPBroadcast",
+					"name": "WinIPBroadcast"
+				}
+			]
+		},
+		{
+			"identifier": "shell:allow-execute",
+			"allow": [
+				{
+					"args": ["run"],
+					"cmd": "WinIPBroadcast",
+					"name": "WinIPBroadcast"
+				}
+			]
+		}
+	]
 }

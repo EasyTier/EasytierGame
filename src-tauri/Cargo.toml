@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.0.4"
+version = "1.0.5"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -33,6 +33,7 @@ tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-shell = "2"
 reqwest = { version = "0.12", features = ["json"] }
 zip = "2.2.0"
+sysinfo = '0.32.0'
 # prost = "0.13"
 # prost-types = "0.13"
 

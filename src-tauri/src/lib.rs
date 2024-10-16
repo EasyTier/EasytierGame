@@ -10,6 +10,7 @@ use std::sync::{
     mpsc, Arc,
 };
 use std::{path, thread};
+use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
@@ -106,10 +107,8 @@ struct PeerRoute {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct MyResponse {
-    response: PeerRoute
+    response: PeerRoute,
 }
-
-
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_members_by_cli() -> String {
@@ -203,7 +202,8 @@ fn run_command(
     stop_signal.store(false, Ordering::Relaxed);
     let app_handle1 = app_handle.clone();
     let app_handle2 = app_handle.clone();
-    let stop_signal = Arc::clone(&stop_signal);
+    let stop_signal1 = Arc::clone(&stop_signal);
+    let stop_signal2 = Arc::clone(&stop_signal);
     let args2 = args.clone();
     thread::spawn(move || {
         let mut child = Command::new("easytier-core.exe")
@@ -234,13 +234,13 @@ fn run_command(
                 }
             }
         }
-
+        stop_signal1.store(true, Ordering::Relaxed);
         println!("end");
     });
 
     thread::spawn(move || {
         while let Ok(line) = rx.recv() {
-            if stop_signal.load(Ordering::Relaxed) {
+            if stop_signal2.load(Ordering::Relaxed) {
                 break;
             }
             app_handle2
@@ -251,8 +251,7 @@ fn run_command(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn stop_command(child_id: u32, stop_signal: tauri::State<Arc<AtomicBool>>) {
-    println!("stop command");
+fn stop_command(child_id: u32) {
     if child_id != 0 {
         let output = Command::new("taskkill")
             .arg("/F")
@@ -268,8 +267,9 @@ fn stop_command(child_id: u32, stop_signal: tauri::State<Arc<AtomicBool>>) {
         } else {
             eprintln!("Failed to terminate process {}.", child_id);
         }
+    }else {
+        println!("child id is 0");
     }
-    stop_signal.store(true, Ordering::Relaxed);
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -307,6 +307,29 @@ fn toggle_window_visibility<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn search_pid_by_pname(target_process_name: String) -> u32 {
+    // 创建一个新的 System 实例
+    let mut system = System::new_all();
+
+    // 刷新所有进程信息
+    system.refresh_all();
+
+    // 遍历所有进程
+    for (pid, process) in system.processes() {
+        if process
+            .name()
+            .to_string_lossy()
+            .to_lowercase()
+            .contains(&target_process_name.to_lowercase())
+        {
+            println!("Found process '{}' with PID: {}", target_process_name, pid);
+            return pid.as_u32();
+        }
+    }
+    return 0;
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let stop_signal = Arc::new(AtomicBool::new(false)); // 创建一个原子布尔值，用于控制命令的停止
@@ -314,17 +337,6 @@ pub fn run() {
     let context = tauri::generate_context!();
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        // .on_window_event(move |window, event| {
-        //     if let WindowEvent::CloseRequested { api, .. } = event {
-        //         println!("close window");
-        //         unsafe {
-        //             if !IS_CLOSE && window.label() == "main" {
-        //                 api.prevent_close();
-        //                 window.emit("window-close-event", "").unwrap();
-        //             }
-        //         }
-        //     }
-        // })
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
                 .get_webview_window("main")
@@ -368,7 +380,8 @@ pub fn run() {
             fetch_easytier_list,
             download_easytier_zip,
             get_cli_version,
-            get_members_by_cli
+            get_members_by_cli,
+            search_pid_by_pname
         ])
         .run(context)
         .expect("error while running tauri application");

@@ -232,15 +232,27 @@
 				>
 					easytier发布页
 				</ElLink>
-				<div>
+				<div class="flex items-center gap-[0_5px]">
 					<ElLink
 						class="!text-[11px]"
-						type="danger"
+						type="info"
 						:underline="false"
 						@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
 					>
-						找不到房间？安装WinIPBroadcast
+						WinIPBroadcast
+						<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
+							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
+						</ElTooltip>
 					</ElLink>
+					<ElSwitch
+						inline-prompt
+						:model-value="data.winipBcStart"
+						@change="handleWinipBcStart"
+						size="small"
+						label="WinIPBroadcast"
+						active-text="开启"
+						inactive-text="关闭"
+					></ElSwitch>
 				</div>
 			</div>
 		</div>
@@ -249,7 +261,7 @@
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
-	import { open } from "@tauri-apps/plugin-shell";
+	import { open, Command } from "@tauri-apps/plugin-shell";
 	import { QuestionFilled, Delete, List, UserFilled } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray } from "~/composables/tray";
@@ -263,6 +275,7 @@
 	useTray(true, async () => {
 		is_close = true;
 		await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
+		await invoke("stop_command", { child_id: data.winipBcPid || 0 });
 	});
 
 	const mainStore = useMainStore();
@@ -270,6 +283,8 @@
 	const protocols = ["tcp", "udp", "ws", "wss", "wg"];
 	const data = reactive({
 		logVisible: false,
+		winipBcPid: 0, //WinIPBroadcast进程id
+		winipBcStart: false,
 		memberVisible: false,
 		log: "",
 		update: false,
@@ -284,7 +299,7 @@
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
 			appWindow.onCloseRequested(async event => {
-				console.log(appWindow.label);
+				// console.log(appWindow.label);
 				if (!is_close) {
 					event.preventDefault();
 					appWindow.hide();
@@ -397,8 +412,47 @@
 		data.releaseList = list as never[];
 	};
 
+	const getWinIpBroadcastPid = async () => {
+		const pid = await invoke("search_pid_by_pname", { target_process_name: "WinIPBroadcast" });
+		data.winipBcPid = (pid as number) || 0;
+		if (data.winipBcPid && data.winipBcPid > 0) {
+			data.winipBcStart = true;
+		} else {
+			data.winipBcStart = false;
+		}
+	};
+
+	const handleWinipBcStart = async () => {
+		if (!data.winipBcStart) {
+			try {
+				await invoke("stop_command", { child_id: data.winipBcPid || 0 });
+				const child = await Command.create("WinIPBroadcast", ["run"]).spawn();
+				data.winipBcPid = child.pid || 0;
+				if (data.winipBcPid) {
+					data.winipBcStart = true;
+				} else {
+					Elmessage.error(`启动失败`);
+				}
+			} catch (err) {
+				Elmessage.error(`启动失败`);
+				console.log(err);
+			}
+		} else {
+			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
+			await getWinIpBroadcastPid();
+		}
+	};
+
+	const initStartWinIpBroadcast = async () => {
+		await getWinIpBroadcastPid();
+		if (!data.winipBcStart) {
+			await handleWinipBcStart();
+		}
+	};
+
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
+		await initStartWinIpBroadcast();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		closePrevent();
@@ -518,7 +572,6 @@
 			console.log(err);
 		}
 	};
-
 
 	const handleShowLogDialog = async () => {
 		try {

@@ -449,6 +449,8 @@
 			await handleWinipBcStart();
 		}
 	};
+		
+	let logsTimer = null;
 
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
@@ -461,6 +463,7 @@
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
+		logsTimer && clearInterval(logsTimer);
 	});
 
 	const getArgs = () => {

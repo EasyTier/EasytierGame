@@ -9,8 +9,8 @@
 			>
 				<ElTableColumn
 					v-for="prop in showTableHeader"
-					:prop="prop"
-					:label="prop"
+					:prop="prop[0]"
+					:label="prop[1]"
 				></ElTableColumn>
 			</ElTable>
 		</div>
@@ -23,7 +23,7 @@
 		member: []
 	});
 
-	const showTableHeader = ["ipv4", "hostname", "cost", "lat_ms", "loss_rate", "nat_type", "version"];
+	const showTableHeader = [["ipv4", "虚拟网IP"], ["hostname", "主机名"], ["lat_ms", "延迟"], ["loss_rate", "丢包率"], ["version", '版本']];
 	const headers = [
 		"ipv4",
 		"hostname",
@@ -161,9 +161,9 @@
 
 	onMounted(async () => {
 		listenOutput();
-		// timer = setInterval(() => {
-		// 	listenOutput();
-		// }, 3000);
+		timer = setInterval(() => {
+			listenOutput();
+		}, 1000 * 10);
 	});
 
 	onBeforeUnmount(() => {

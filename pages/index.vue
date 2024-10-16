@@ -505,9 +505,8 @@
 					data.memberVisible = true;
 					memberDialog.onCloseRequested(() => {
 						data.logVisible = false;
-					})
+					});
 					const appWindow = getCurrentWindow();
-					appWindow.emitTo("log", "logs", data.log);
 				} else {
 					data.memberVisible = false;
 					memberDialog.destroy();
@@ -520,8 +519,10 @@
 		}
 	};
 
+
 	const handleShowLogDialog = async () => {
 		try {
+			logsTimer && clearInterval(logsTimer);
 			const appWindow = getCurrentWindow();
 			const appSize = await appWindow.innerSize();
 			const appPosition = await appWindow.outerPosition();
@@ -540,13 +541,15 @@
 					y: appPosition.y,
 					url: "#/log"
 				});
-
 				if (!data.logVisible) {
 					data.logVisible = true;
 					infoDialog.onCloseRequested(() => {
 						data.logVisible = false;
-					})
-					appWindow.emitTo("log", "logs", data.log);
+					});
+
+					logsTimer = setInterval(() => {
+						appWindow.emitTo("log", "logs", data.log);
+					}, 3000);
 				} else {
 					data.logVisible = false;
 					infoDialog.destroy();

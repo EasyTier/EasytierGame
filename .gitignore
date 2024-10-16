@@ -10,3 +10,7 @@ dist
 .idea
 .vscode
 release
+src-tauri/easytier-cli.exe
+src-tauri/easytier-core.exe
+src-tauri/Packet.dll
+src-tauri/wintun.dll

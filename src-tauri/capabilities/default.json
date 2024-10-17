@@ -20,6 +20,12 @@
 		"core:webview:allow-webview-show",
 		"core:webview:allow-webview-hide",
 		"core:webview:allow-webview-close",
+		"autostart:allow-enable",
+		"autostart:allow-disable",
+		"autostart:allow-is-enabled",
+		"core:tray:allow-get-by-id",
+		"core:tray:allow-set-icon",
+		"core:tray:allow-new",
 		{
 			"identifier": "shell:allow-spawn",
 			"allow": [

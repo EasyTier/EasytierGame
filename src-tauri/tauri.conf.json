@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "easytier-game",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"identifier": "com.tauri.easytier-game",
 
 	"build": {
@@ -28,12 +28,18 @@
 			"csp": null
 		}
 	},
-	
+
 	"bundle": {
 		"active": false,
 		"targets": "all",
 		"externalBin": ["WinIPBroadcast"],
+		"resources": ["icons/icon-inactive.ico", "icons/icon.ico"],
+		"windows": {
+			"webviewInstallMode": {
+				"type": "embedBootstrapper"
+			}
+		},
 		"createUpdaterArtifacts": false,
-		"icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+		"icon": ["icons/icon.png", "icons/icon.rgba", "icons/icon.icns", "icons/icon.ico", "icons/icon-inactive.ico"]
 	}
 }

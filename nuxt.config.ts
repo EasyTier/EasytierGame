@@ -70,7 +70,7 @@ export default defineNuxtConfig({
 			sourcemap: !!process.env.TAURI_DEBUG
 		},
 		esbuild: {
-			pure: ["console.log"],
+			// pure: ["console.log"],
 			drop: ["debugger"]
 		}
 	},

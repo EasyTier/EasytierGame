@@ -14,6 +14,8 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
+use tauri_plugin_autostart::MacosLauncher;
+
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
 pub struct Release {
@@ -267,7 +269,7 @@ fn stop_command(child_id: u32) {
         } else {
             eprintln!("Failed to terminate process {}.", child_id);
         }
-    }else {
+    } else {
         println!("child id is 0");
     }
 }
@@ -330,12 +332,18 @@ fn search_pid_by_pname(target_process_name: String) -> u32 {
     return 0;
 }
 
+pub const AUTOSTART_ARG: &str = "--autostart";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let stop_signal = Arc::new(AtomicBool::new(false)); // 创建一个原子布尔值，用于控制命令的停止
     let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec![AUTOSTART_ARG]),
+        ))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app

@@ -9,9 +9,10 @@ export default defineStore("main", {
 				networkPassword: "",
 				hostname: "",
 				ipv4: "",
+				autoStart: false, // 是否自动启动
 				disableIpv6: false, // 是否禁用IPv6
 				disbleListenner: false, // 是否禁用监听
-				disbleP2p: true, // 是否使用P2P
+				disbleP2p: false, // 是否使用P2P
 				dhcp: true, // 是否使用DHCP
 			},
 			basePeers: ["public.easytier.top:11010"],
@@ -25,6 +26,7 @@ export default defineStore("main", {
 			"config.protocol",
 			"config.networkPassword",
 			"config.disbleP2p",
+			"config.autoStart",
 			"config.disableIpv6",
 			"config.disbleListenner",
 			"config.hostname",

@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@tauri-apps/plugin-autostart':
+        specifier: ~2
+        version: 2.0.0
     devDependencies:
       '@element-plus/icons-vue':
         specifier: ^2.3.1
@@ -1007,6 +1011,9 @@ packages:
     resolution: {integrity: sha512-R4ontHZvXORArERAHIidp5zRfZEshZczTiK+poslBv7AGKpQZoMw+E49zns7mOmP64i2Cq9Ci0pJvi4Rm8Okzw==}
     engines: {node: '>= 10'}
     hasBin: true
+
+  '@tauri-apps/plugin-autostart@2.0.0':
+    resolution: {integrity: sha512-NEwOQWVasZ8RczXkMLNJokRDujneuMH/UFA5t84DLkbNZUmiD3G7HZWhgSd1YQ0BFU9h9w+h2B/py3y6bzWg4Q==}
 
   '@tauri-apps/plugin-cli@2.0.0':
     resolution: {integrity: sha512-glQmlL1IiCGEa1FHYa/PTPSeYhfu56omLRgHXWlJECDt6DbJyRuJWVgtkQfUxtqnVdYnnU+DGIGeiInoEqtjLw==}
@@ -5567,6 +5574,10 @@ snapshots:
       '@tauri-apps/cli-win32-arm64-msvc': 2.0.2
       '@tauri-apps/cli-win32-ia32-msvc': 2.0.2
       '@tauri-apps/cli-win32-x64-msvc': 2.0.2
+
+  '@tauri-apps/plugin-autostart@2.0.0':
+    dependencies:
+      '@tauri-apps/api': 2.0.2
 
   '@tauri-apps/plugin-cli@2.0.0':
     dependencies:

@@ -219,40 +219,49 @@
 					禁用ipv6
 				</ElCheckbox>
 				<ElCheckbox
+					@change="handleAutoStart"
+					:model-value="config.autoStart"
+					size="small"
+				>
+					开机自启
+				</ElCheckbox>
+				<ElCheckbox
 					v-model="config.disbleListenner"
 					size="small"
 				>
 					禁用端口监听
 				</ElCheckbox>
-				<ElLink
-					class="!text-[11px] pb-[2px] ml-[15px]"
-					type="info"
-					:underline="false"
-					@click="open('https://github.com/EasyTier/EasyTier/releases')"
-				>
-					easytier发布页
-				</ElLink>
 				<div class="flex items-center gap-[0_5px]">
+					<div>
+						<ElLink
+							class="!text-[11px]"
+							type="info"
+							:underline="false"
+							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
+						>
+							WinIPBroadcast
+							<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
+								<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
+							</ElTooltip>
+						</ElLink>
+						<ElSwitch
+							inline-prompt
+							:model-value="data.winipBcStart"
+							@change="handleWinipBcStart"
+							size="small"
+							label="WinIPBroadcast"
+							active-text="开启"
+							inactive-text="关闭"
+						></ElSwitch>
+					</div>
 					<ElLink
-						class="!text-[11px]"
+						class="!text-[11px] pb-[2px] ml-[15px]"
 						type="info"
 						:underline="false"
-						@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
+						@click="open('https://github.com/EasyTier/EasytierGame')"
 					>
-						WinIPBroadcast
-						<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
-							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
-						</ElTooltip>
+						主页
 					</ElLink>
-					<ElSwitch
-						inline-prompt
-						:model-value="data.winipBcStart"
-						@change="handleWinipBcStart"
-						size="small"
-						label="WinIPBroadcast"
-						active-text="开启"
-						inactive-text="关闭"
-					></ElSwitch>
 				</div>
 			</div>
 		</div>
@@ -260,19 +269,20 @@
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { listen } from "@tauri-apps/api/event";
+	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
 	import { QuestionFilled, Delete, List, UserFilled } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
-	import { useTray } from "~/composables/tray";
+	import { useTray, setTrayRunState } from "~/composables/tray";
 	import useMainStore from "@/stores/index";
 	import { ElMessage } from "element-plus";
-	import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
+	import { getCurrentWindow, LogicalPosition, PhysicalPosition } from "@tauri-apps/api/window";
 	import { WebviewWindow, getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
+	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 
 	let is_close = false;
 
-	useTray(true, async () => {
+	const tray = await useTray(true, async () => {
 		is_close = true;
 		await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
 		await invoke("stop_command", { child_id: data.winipBcPid || 0 });
@@ -299,7 +309,7 @@
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
 			appWindow.onCloseRequested(async event => {
-				// console.log(appWindow.label);
+				console.log(appWindow.label);
 				if (!is_close) {
 					event.preventDefault();
 					appWindow.hide();
@@ -330,13 +340,14 @@
 		thread_id: null,
 		async listenOutput() {
 			const appWindow = getCurrentWindow();
-			const unListen = await listen("command-output", event => {
+			const unListen = await listen("command-output", async event => {
 				data.isStart = true;
 				if (event.payload) {
 					data.startLoading = false;
 					let ipv4 = /new: Some\((\d+\.\d+\.\d+\.\d+)\/.*\)/g.exec(event.payload as string)?.[1];
 					if (ipv4) {
 						data.isSuccessGetIp = true;
+						await setTrayRunState(tray, true);
 						config.ipv4 = ipv4;
 					}
 				}
@@ -431,10 +442,10 @@
 				if (data.winipBcPid) {
 					data.winipBcStart = true;
 				} else {
-					Elmessage.error(`启动失败`);
+					ElMessage.error(`启动失败`);
 				}
 			} catch (err) {
-				Elmessage.error(`启动失败`);
+				ElMessage.error(`启动失败`);
 				console.log(err);
 			}
 		} else {
@@ -449,11 +460,48 @@
 			await handleWinipBcStart();
 		}
 	};
-		
-	let logsTimer = null;
+
+	const handleAutoStart = async () => {
+		let is_enable = await tauriAutoStart.isEnabled();
+		if (!config.autoStart && !is_enable) {
+			try {
+				await tauriAutoStart.enable();
+			} catch (err) {
+				ElMessage.error(`开机自启失败`);
+			}
+		} else {
+			try {
+				await tauriAutoStart.disable();
+			} catch (err) {
+				// ElMessage.error(`取消自启失败`);
+			}
+		}
+		is_enable = await tauriAutoStart.isEnabled();
+		if (!is_enable) {
+			config.autoStart = false;
+		} else {
+			config.autoStart = true;
+		}
+	};
+
+	const initAutoStart = async () => {
+		try {
+			const is_enable = await tauriAutoStart.isEnabled();
+			if (!is_enable) {
+				config.autoStart = false;
+			} else {
+				config.autoStart = true;
+			}
+		} catch (err) {
+			config.autoStart = false;
+		}
+	};
+
+	let logsTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
+		await initAutoStart();
 		await initStartWinIpBroadcast();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
@@ -502,7 +550,9 @@
 	const reset = async () => {
 		data.isStart = false;
 		data.isSuccessGetIp = false;
-		config.ipv4 = "";
+		if (config.dhcp) {
+			config.ipv4 = "";
+		}
 		const memberDialog = await getAllWebviewWindows();
 		const memberDialogs = memberDialog.filter(item => item.label === "member");
 		if (memberDialogs && memberDialogs.length > 0) {
@@ -514,7 +564,7 @@
 				}
 			}
 		}
-
+		await setTrayRunState(tray, false);
 		await unListenAll();
 	};
 
@@ -532,19 +582,24 @@
 		}
 	};
 
+	let unListenMemberClose: UnlistenFn | null = null;
+	let unlistenMemberCreated: UnlistenFn | null = null;
 	const handleShowMemberDialog = async () => {
-		try {
-			if (!data.isStart) {
-				return ElMessage.warning("请先开始联机");
-			}
-			if (!mainStore.config.ipv4) {
-				return ElMessage.warning("请等待获取IP");
-			}
-			const appWindow = getCurrentWindow();
-			const appSize = await appWindow.innerSize();
+		if (!data.isStart) {
+			return ElMessage.warning("请先开始联机");
+		}
+		if (!mainStore.config.ipv4) {
+			return ElMessage.warning("请等待获取IP");
+		}
+		const appWindow = getCurrentWindow();
+		if (appWindow) {
+			const appSize = await appWindow.outerSize();
+			const factor = await appWindow.scaleFactor();
 			const appPosition = await appWindow.outerPosition();
-			if (appWindow) {
-				const memberDialog = new WebviewWindow("member", {
+			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
+			let memberDialog = await WebviewWindow.getByLabel("member");
+			if (!memberDialog) {
+				memberDialog = new WebviewWindow("member", {
 					title: "成员列表",
 					width: 470,
 					height: 380,
@@ -554,36 +609,44 @@
 					decorations: true,
 					maximizable: false,
 					minimizable: false,
-					x: appPosition.x + appSize.width + 10,
-					y: appPosition.y,
+					x: logicalPosition.x,
+					y: logicalPosition.y,
 					url: "#/member"
 				});
-				if (!data.memberVisible) {
-					data.memberVisible = true;
-					memberDialog.onCloseRequested(() => {
-						data.logVisible = false;
-					});
-					const appWindow = getCurrentWindow();
-				} else {
+				unlistenMemberCreated = await memberDialog.once("tauri://webview-created", async () => {
+					if (memberDialog) {
+						data.logVisible = true;
+						await memberDialog.show();
+					}
+				});
+				unListenMemberClose = await memberDialog.onCloseRequested(() => {
+					data.logVisible = false;
+					unListenMemberClose && unListenMemberClose();
+				});
+			} else {
+				const visible = await memberDialog.isVisible();
+				if (visible) {
 					data.memberVisible = false;
-					memberDialog.destroy();
+					await memberDialog.close();
+					unlistenMemberCreated && unlistenMemberCreated();
 				}
-
-				// await memberDialog.setPosition(new LogicalPosition(appPosition.x + appSize.width + 10, appPosition.y));
 			}
-		} catch (err) {
-			console.log(err);
 		}
 	};
 
+	let unListenlogClose: UnlistenFn | null = null;
+	let unlistenLogCreated: UnlistenFn | null = null;
 	const handleShowLogDialog = async () => {
-		try {
-			logsTimer && clearInterval(logsTimer);
-			const appWindow = getCurrentWindow();
-			const appSize = await appWindow.innerSize();
+		logsTimer && clearInterval(logsTimer);
+		const appWindow = getCurrentWindow();
+		if (appWindow) {
+			const appSize = await appWindow.outerSize();
+			const factor = await appWindow.scaleFactor();
 			const appPosition = await appWindow.outerPosition();
-			if (appWindow) {
-				const infoDialog = new WebviewWindow("log", {
+			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
+			let infoDialog = await WebviewWindow.getByLabel("log");
+			if (!infoDialog) {
+				infoDialog = new WebviewWindow("log", {
 					title: "日志",
 					width: 600,
 					height: 380,
@@ -593,26 +656,31 @@
 					decorations: true,
 					maximizable: false,
 					minimizable: false,
-					x: appPosition.x + appSize.width + 10,
-					y: appPosition.y,
+					x: logicalPosition.x,
+					y: logicalPosition.y,
 					url: "#/log"
 				});
-				if (!data.logVisible) {
-					data.logVisible = true;
-					infoDialog.onCloseRequested(() => {
-						data.logVisible = false;
-					});
-
-					logsTimer = setInterval(() => {
-						appWindow.emitTo("log", "logs", data.log);
-					}, 3000);
-				} else {
+				unlistenLogCreated = await infoDialog.once("tauri://webview-created", async () => {
+					if (infoDialog) {
+						data.logVisible = true;
+						logsTimer = setInterval(() => {
+							appWindow.emitTo("log", "logs", data.log);
+						}, 3000);
+						await infoDialog.show();
+					}
+				});
+				unListenlogClose = await infoDialog.onCloseRequested(() => {
 					data.logVisible = false;
-					infoDialog.destroy();
+					unListenlogClose && unListenlogClose();
+				});
+			} else {
+				const visible = await infoDialog.isVisible();
+				if (visible) {
+					data.logVisible = false;
+					await infoDialog.close();
+					unlistenLogCreated && unlistenLogCreated();
 				}
 			}
-		} catch (err) {
-			console.log(err);
 		}
 	};
 </script>

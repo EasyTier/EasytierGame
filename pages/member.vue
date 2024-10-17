@@ -40,7 +40,7 @@
 	const showTableHeader = [
 		["ipv4", "虚拟网IP"],
 		["hostname", "主机名"],
-		["cost", "方式"],
+		["cost", "路由"],
 		["lat_ms", "延迟/ms"],
 		["loss_rate", "丢包率"],
 		["version", "版本"]

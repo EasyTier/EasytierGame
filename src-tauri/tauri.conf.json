@@ -19,8 +19,8 @@
 				"resizable": false,
 				"fullscreen": false,
 				"decorations": true,
-				"maximizable": false,
 				"center": true,
+				"maximizable": false,
 				"transparent": false
 			}
 		],
@@ -33,13 +33,13 @@
 		"active": false,
 		"targets": "all",
 		"externalBin": ["WinIPBroadcast"],
-		"resources": ["icons/icon-inactive.ico", "icons/icon.ico"],
+		"resources": ["icons/icon-inactive.ico", "icons/icon.ico","easytier-cli.exe", "easytier-core.exe", "Packet.dll", "wintun.dll"],
 		"windows": {
 			"webviewInstallMode": {
 				"type": "embedBootstrapper"
 			}
 		},
 		"createUpdaterArtifacts": false,
-		"icon": ["icons/icon.png", "icons/icon.rgba", "icons/icon.icns", "icons/icon.ico", "icons/icon-inactive.ico"]
+		"icon": ["icons/icon.png", "icons/icon.rgba", "icons/icon.icns", "icons/icon.ico"]
 	}
 }

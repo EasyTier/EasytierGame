@@ -54,6 +54,7 @@
 							placeholder="协议"
 							multiple
 							collapse-tags
+							@click.stop
 							v-model="config.protocol"
 							@change="handleServerUrlChange"
 						>

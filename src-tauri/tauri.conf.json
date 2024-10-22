@@ -15,7 +15,7 @@
 			{
 				"title": "easytier-game",
 				"width": 331,
-				"height": 285,
+				"height": 305,
 				"resizable": false,
 				"fullscreen": false,
 				"decorations": true,
@@ -28,12 +28,12 @@
 			"csp": null
 		}
 	},
-
+	"plugins": {},
 	"bundle": {
 		"active": false,
 		"targets": "all",
 		"externalBin": ["WinIPBroadcast"],
-		"resources": ["icons/icon-inactive.ico", "icons/icon.ico","easytier-cli.exe", "easytier-core.exe", "Packet.dll", "wintun.dll"],
+		"resources": ["icons/icon-inactive.ico", "icons/icon.ico", "easytier-cli.exe", "easytier-core.exe", "Packet.dll", "wintun.dll"],
 		"windows": {
 			"webviewInstallMode": {
 				"type": "embedBootstrapper"

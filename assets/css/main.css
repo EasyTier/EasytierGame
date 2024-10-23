@@ -27,17 +27,3 @@ body {
 	box-sizing: border-box;
 	padding: 3px 5px;
 }
-
-::-webkit-scrollbar {
-	width: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-	background-color: #0003;
-	border-radius: 10px;
-	transition: all 0.2s ease-in-out;
-}
-
-::-webkit-scrollbar-track {
-	border-radius: 10px;
-}

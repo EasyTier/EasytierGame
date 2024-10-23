@@ -69,7 +69,7 @@
 		for (let idx = 0; idx < length; idx++) {
 			let headersIdx = idx % headers.length;
 			if (headersIdx === 0) {
-				console.log(idx, [...data]);
+				// console.log(idx, [...data]);
 				obj = {};
 				result.push(obj);
 			}
@@ -175,7 +175,7 @@
 		}
 		const result = formatData(memberData);
 		data.member = result;
-		console.log({ member: data.member });
+		// console.log({ member: data.member });
 	};
 
 	let timer: NodeJS.Timeout | null = null;

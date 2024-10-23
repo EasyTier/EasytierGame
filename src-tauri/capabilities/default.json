@@ -2,7 +2,7 @@
 	"$schema": "../gen/schemas/desktop-schema.json",
 	"identifier": "default",
 	"description": "enables the default permissions",
-	"windows": ["main", "log"],
+	"windows": ["main", "log", "member", "cidr", "advance"],
 	"permissions": [
 		"core:default",
 		"core:window:allow-minimize",
@@ -20,6 +20,7 @@
 		"core:webview:allow-webview-show",
 		"core:webview:allow-webview-hide",
 		"core:webview:allow-webview-close",
+		"autostart:default",
 		"autostart:allow-enable",
 		"autostart:allow-disable",
 		"autostart:allow-is-enabled",

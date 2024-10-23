@@ -3,7 +3,7 @@
 	"private": true,
 	"author": "leizi97",
 	"description": "A simple network initiator based on Easytier",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"scripts": {
 		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
 		"build": "nuxt generate --dotenv env/.env.prod"
@@ -25,8 +25,7 @@
 		"@vitejs/plugin-vue-jsx": "^3.1.0",
 		"dayjs": "^1.11.10",
 		"defu": "^6.1.4",
-		"element-plus": "^2.7.1",
-		"javascript-obfuscator": "^4.1.0",
+		"element-plus": "^2.8.6",
 		"less": "^4.2.0",
 		"lodash-es": "^4.17.21",
 		"nuxt": "^3.11.2",

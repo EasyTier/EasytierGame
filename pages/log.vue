@@ -1,7 +1,7 @@
 <template>
 	<ElInput
 		type="textarea"
-		rows="17"
+		:rows="17"
 		v-model="data.log"
 		resize="none"
 		readonly

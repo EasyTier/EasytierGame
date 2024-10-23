@@ -16,7 +16,7 @@
 						effect="dark"
 						:type="data.isSuccessGetIp ? 'success' : 'info'"
 					>
-						{{ data.isSuccessGetIp ? "联机成功" : "联机中" }}
+						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
 					</ElTag>
 					<ElButton
 						v-if="!data.coreVersion"
@@ -179,10 +179,11 @@
 						{{ !data.isStart ? "启动联机" : "停止联机" }}
 					</ElButton>
 				</div>
-				<div class="mt-[6px]">
+				<div class="mt-[6px] pl-[2px]">
+					<!-- <ElButtonGroup> -->
 					<ElTooltip
-						placement="right"
-						:content="data.logVisible ? '关闭日志' : '打开日志'"
+						placement="left"
+						content="日志"
 					>
 						<ElButton
 							:type="!data.logVisible ? 'info' : 'warning'"
@@ -194,7 +195,7 @@
 					</ElTooltip>
 					<ElTooltip
 						placement="left"
-						content="成员信息"
+						content="成员"
 					>
 						<ElButton
 							@click="handleShowMemberDialog"
@@ -204,6 +205,7 @@
 							size="small"
 						></ElButton>
 					</ElTooltip>
+					<!-- </ElButtonGroup> -->
 				</div>
 			</div>
 			<div>
@@ -211,14 +213,14 @@
 					v-model="config.disbleP2p"
 					size="small"
 				>
-					禁用p2p
+					强制中转
 				</ElCheckbox>
-				<ElCheckbox
+				<!-- <ElCheckbox
 					v-model="config.disableIpv6"
 					size="small"
 				>
 					禁用ipv6
-				</ElCheckbox>
+				</ElCheckbox> -->
 				<ElCheckbox
 					@change="handleAutoStart"
 					:model-value="config.autoStart"
@@ -226,12 +228,16 @@
 				>
 					开机自启
 				</ElCheckbox>
-				<ElCheckbox
+				<!-- <ElCheckbox
 					v-model="config.disbleListenner"
 					size="small"
 				>
 					禁用端口监听
-				</ElCheckbox>
+				</ElCheckbox> -->
+				<div>
+					<ElButton @click="handleShowCidrDialog" :icon="Share">子网代理</ElButton>
+					<ElButton :icon="Setting">高级配置</ElButton>
+				</div>
 				<div class="flex items-center gap-[0_5px]">
 					<div>
 						<ElLink
@@ -270,15 +276,16 @@
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray, setTrayRunState } from "~/composables/tray";
 	import useMainStore from "@/stores/index";
 	import { ElMessage } from "element-plus";
-	import { getCurrentWindow, LogicalPosition, PhysicalPosition } from "@tauri-apps/api/window";
-	import { WebviewWindow, getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
+	import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
+	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
+	import etWindows from "@/composables/windows";
 	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 
 	let is_close = false;
@@ -294,6 +301,7 @@
 	const protocols = ["tcp", "udp", "ws", "wss", "wg"];
 	const data = reactive({
 		logVisible: false,
+		cidrVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
 		memberVisible: false,
@@ -583,8 +591,6 @@
 		}
 	};
 
-	let unListenMemberClose: UnlistenFn | null = null;
-	let unlistenMemberCreated: UnlistenFn | null = null;
 	const handleShowMemberDialog = async () => {
 		if (!data.isStart) {
 			return ElMessage.warning("请先开始联机");
@@ -592,96 +598,63 @@
 		if (!mainStore.config.ipv4) {
 			return ElMessage.warning("请等待获取IP");
 		}
-		const appWindow = getCurrentWindow();
-		if (appWindow) {
-			const appSize = await appWindow.outerSize();
-			const factor = await appWindow.scaleFactor();
-			const appPosition = await appWindow.outerPosition();
-			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
-			let memberDialog = await WebviewWindow.getByLabel("member");
-			if (!memberDialog) {
-				memberDialog = new WebviewWindow("member", {
-					title: "成员列表",
-					width: 470,
-					height: 380,
-					parent: appWindow,
-					closable: true,
-					resizable: true,
-					decorations: true,
-					maximizable: false,
-					minimizable: false,
-					x: logicalPosition.x,
-					y: logicalPosition.y,
-					url: "#/member"
-				});
-				unlistenMemberCreated = await memberDialog.once("tauri://webview-created", async () => {
-					if (memberDialog) {
-						data.logVisible = true;
-						await memberDialog.show();
-					}
-				});
-				unListenMemberClose = await memberDialog.onCloseRequested(() => {
-					data.logVisible = false;
-					unListenMemberClose && unListenMemberClose();
-				});
-			} else {
-				const visible = await memberDialog.isVisible();
-				if (visible) {
-					data.memberVisible = false;
-					await memberDialog.close();
-					unlistenMemberCreated && unlistenMemberCreated();
-				}
+
+		await etWindows(
+			"member",
+			{
+				title: "成员列表",
+				width: 470,
+				height: 380,
+				url: "#/member"
+			},
+			() => {
+				data.memberVisible = true;
+			},
+			() => {
+				data.memberVisible = false;
 			}
-		}
+		);
 	};
 
-	let unListenlogClose: UnlistenFn | null = null;
-	let unlistenLogCreated: UnlistenFn | null = null;
 	const handleShowLogDialog = async () => {
-		logsTimer && clearInterval(logsTimer);
-		const appWindow = getCurrentWindow();
-		if (appWindow) {
-			const appSize = await appWindow.outerSize();
-			const factor = await appWindow.scaleFactor();
-			const appPosition = await appWindow.outerPosition();
-			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
-			let infoDialog = await WebviewWindow.getByLabel("log");
-			if (!infoDialog) {
-				infoDialog = new WebviewWindow("log", {
-					title: "日志",
-					width: 600,
-					height: 380,
-					parent: appWindow,
-					closable: true,
-					resizable: false,
-					decorations: true,
-					maximizable: false,
-					minimizable: false,
-					x: logicalPosition.x,
-					y: logicalPosition.y,
-					url: "#/log"
-				});
-				unlistenLogCreated = await infoDialog.once("tauri://webview-created", async () => {
-					if (infoDialog) {
-						data.logVisible = true;
-						logsTimer = setInterval(() => {
-							appWindow.emitTo("log", "logs", data.log);
-						}, 3000);
-						await infoDialog.show();
-					}
-				});
-				unListenlogClose = await infoDialog.onCloseRequested(() => {
-					data.logVisible = false;
-					unListenlogClose && unListenlogClose();
-				});
-			} else {
-				const visible = await infoDialog.isVisible();
-				if (visible) {
-					data.logVisible = false;
-					await infoDialog.close();
-					unlistenLogCreated && unlistenLogCreated();
-				}
+		await etWindows(
+			"log",
+			{
+				title: "日志",
+				width: 600,
+				height: 380,
+				resizable: false,
+				url: "#/log"
+			},
+			(_, appWindow) => {
+				data.logVisible = true;
+				logsTimer && clearInterval(logsTimer);
+				logsTimer = setInterval(() => {
+					appWindow.emitTo("log", "logs", data.log);
+				}, 3000);
+			},
+			() => {
+				data.logVisible = false;
 			}
-		}
+		);
+	};
+
+	const handleShowCidrDialog = async () => {
+		await etWindows(
+			"cidr",
+			{
+				title: "子网代理",
+				width: 600,
+				height: 380,
+				resizable: false,
+				url: "#/cidr"
+			},
+			(_, appWindow) => {
+				data.cidrVisible = true;
+			},
+			() => {
+				data.cidrVisible = false;
+			}
+		);
 	};
 </script>

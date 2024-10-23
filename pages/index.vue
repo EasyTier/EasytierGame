@@ -2,32 +2,27 @@
 	<ElForm
 		size="small"
 		label-position="top"
-		:model="config"
-	>
+		:model="config">
 		<ElFormItem
 			label="服务器"
-			prop="serverUrl"
-		>
+			prop="serverUrl">
 			<template #label>
 				<div class="flex items-center gap-[0_5px]">
 					<div>服务器</div>
 					<span>-</span>
 					<ElTag
 						effect="dark"
-						:type="data.isSuccessGetIp ? 'success' : 'info'"
-					>
+						:type="data.isSuccessGetIp ? 'success' : 'info'">
 						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
 					</ElTag>
 					<ElButton
 						v-if="!data.coreVersion"
-						@click="getCoreVersion(true)"
-					>
+						@click="getCoreVersion(true)">
 						获取工具版本
 					</ElButton>
 					<ElTag
 						v-else
-						type="info"
-					>
+						type="info">
 						core-{{ data.coreVersion }}
 					</ElTag>
 					<ElButton
@@ -35,8 +30,7 @@
 						:loading="data.update"
 						type="warning"
 						@click="handleUpdateCore"
-						size="small"
-					>
+						size="small">
 						{{ data.coreVersion ? "更新" : "下载" }}
 					</ElButton>
 				</div>
@@ -46,8 +40,7 @@
 				filterable
 				default-first-option
 				v-model="config.serverUrl"
-				@change="handleServerUrlChange"
-			>
+				@change="handleServerUrlChange">
 				<template #prefix>
 					<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
 						<ElSelect
@@ -56,14 +49,12 @@
 							collapse-tags
 							@click.stop
 							v-model="config.protocol"
-							@change="handleServerUrlChange"
-						>
+							@change="handleServerUrlChange">
 							<ElOption
 								v-for="item in protocols"
 								:key="item"
 								:label="item"
-								:value="item"
-							></ElOption>
+								:value="item"></ElOption>
 						</ElSelect>
 					</div>
 				</template>
@@ -71,16 +62,14 @@
 					v-for="item in mainStore.basePeers"
 					:key="item"
 					:label="item"
-					:value="item"
-				>
+					:value="item">
 					<div class="flex items-center justify-between">
 						<span style="float: left">{{ item }}</span>
 						<ElButton
 							@click.stop="handleDeleteServerUrl(item)"
 							round
 							:icon="Delete"
-							type="danger"
-						></ElButton>
+							type="danger"></ElButton>
 					</div>
 				</ElOption>
 			</ElSelect>
@@ -99,8 +88,7 @@
 					<ElInput
 						maxlength="100"
 						placeholder="请输入网络名"
-						v-model="config.networkName"
-					></ElInput>
+						v-model="config.networkName"></ElInput>
 				</ElFormItem>
 			</div>
 			<div class="flex-1">
@@ -118,8 +106,7 @@
 						maxlength="100"
 						placeholder="请输入网络密码"
 						v-model="config.networkPassword"
-						type="password"
-					></ElInput>
+						type="password"></ElInput>
 				</ElFormItem>
 			</div>
 		</div>
@@ -136,13 +123,11 @@
 				<ElInput
 					maxlength="100"
 					placeholder="例如: Player1"
-					v-model="config.hostname"
-				></ElInput>
+					v-model="config.hostname"></ElInput>
 			</ElFormItem>
 			<ElFormItem
 				class="w-[70%]"
-				label="局域网IP"
-			>
+				label="局域网IP">
 				<template #label>
 					<div class="flex items-center h-[20px]">
 						虚拟网IP
@@ -155,16 +140,14 @@
 							inline-prompt
 							inactive-text="固定IP"
 							active-text="动态获取IP"
-							size="small"
-						></ElSwitch>
+							size="small"></ElSwitch>
 					</div>
 				</template>
 				<ElInput
 					maxlength="100"
 					:disabled="config.dhcp"
 					:placeholder="data.isStart ? '等待动态分配IP...' : '例如: 10.126.126.1'"
-					v-model="config.ipv4"
-				></ElInput>
+					v-model="config.ipv4"></ElInput>
 			</ElFormItem>
 		</div>
 		<div class="flex items-start gap-[0_30px]">
@@ -174,8 +157,7 @@
 						:type="!data.isStart ? 'primary' : 'danger'"
 						:disabled="data.startLoading || !data.coreVersion || data.update"
 						@click="handleConnection"
-						size="default"
-					>
+						size="default">
 						{{ !data.isStart ? "启动联机" : "停止联机" }}
 					</ElButton>
 				</div>
@@ -183,27 +165,23 @@
 					<!-- <ElButtonGroup> -->
 					<ElTooltip
 						placement="left"
-						content="日志"
-					>
+						content="日志">
 						<ElButton
 							:type="!data.logVisible ? 'info' : 'warning'"
 							@click="handleShowLogDialog"
 							:icon="List"
 							size="small"
-							plain
-						></ElButton>
+							plain></ElButton>
 					</ElTooltip>
 					<ElTooltip
 						placement="left"
-						content="成员"
-					>
+						content="成员">
 						<ElButton
 							@click="handleShowMemberDialog"
 							:icon="UserFilled"
 							plain
 							type="success"
-							size="small"
-						></ElButton>
+							size="small"></ElButton>
 					</ElTooltip>
 					<!-- </ElButtonGroup> -->
 				</div>
@@ -211,8 +189,7 @@
 			<div>
 				<ElCheckbox
 					v-model="config.disbleP2p"
-					size="small"
-				>
+					size="small">
 					强制中转
 				</ElCheckbox>
 				<!-- <ElCheckbox
@@ -224,8 +201,7 @@
 				<ElCheckbox
 					@change="handleAutoStart"
 					:model-value="config.autoStart"
-					size="small"
-				>
+					size="small">
 					开机自启
 				</ElCheckbox>
 				<!-- <ElCheckbox
@@ -235,8 +211,16 @@
 					禁用端口监听
 				</ElCheckbox> -->
 				<div>
-					<ElButton @click="handleShowCidrDialog" :icon="Share">子网代理</ElButton>
-					<ElButton :icon="Setting">高级配置</ElButton>
+					<ElButton
+						@click="handleShowCidrDialog"
+						:icon="Share"
+						>子网代理</ElButton
+					>
+					<ElButton
+						@click="handleShowAdvanceDialog"
+						:icon="Setting"
+						>高级选项</ElButton
+					>
 				</div>
 				<div class="flex items-center gap-[0_5px]">
 					<div>
@@ -244,8 +228,7 @@
 							class="!text-[11px]"
 							type="info"
 							:underline="false"
-							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
-						>
+							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')">
 							WinIPBroadcast
 							<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
 								<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
@@ -258,15 +241,13 @@
 							size="small"
 							label="WinIPBroadcast"
 							active-text="开启"
-							inactive-text="关闭"
-						></ElSwitch>
+							inactive-text="关闭"></ElSwitch>
 					</div>
 					<ElLink
 						class="!text-[11px] pb-[2px] ml-[15px]"
 						type="info"
 						:underline="false"
-						@click="open('https://github.com/EasyTier/EasytierGame')"
-					>
+						@click="open('https://github.com/EasyTier/EasytierGame')">
 						主页
 					</ElLink>
 				</div>
@@ -298,10 +279,12 @@
 
 	const mainStore = useMainStore();
 	const config = mainStore.config;
+	// console.log(config);
 	const protocols = ["tcp", "udp", "ws", "wss", "wg"];
 	const data = reactive({
 		logVisible: false,
 		cidrVisible: false,
+		advanceVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
 		memberVisible: false,
@@ -311,13 +294,13 @@
 		coreVersion: "",
 		isSuccessGetIp: false,
 		startLoading: false,
-		isStart: false
+		isStart: false,
 	});
 
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
-			appWindow.onCloseRequested(async event => {
+			appWindow.onCloseRequested(async (event) => {
 				console.log(appWindow.label);
 				if (!is_close) {
 					event.preventDefault();
@@ -346,10 +329,11 @@
 	const listenObj: { [key: string]: any } = {
 		unListenOutPut: null,
 		unListenThreadId: null,
+		unListenConfigStart: null,
 		thread_id: null,
 		async listenOutput() {
 			const appWindow = getCurrentWindow();
-			const unListen = await listen("command-output", async event => {
+			const unListen = await listen("command-output", async (event) => {
 				data.isStart = true;
 				if (event.payload) {
 					data.startLoading = false;
@@ -366,13 +350,22 @@
 			this.unListenOutPut = unListen;
 		},
 		async listenThreadId() {
-			const unListen = await listen("thread-id", event => {
+			const unListen = await listen("thread-id", (event) => {
 				if (event.payload) {
 					this.thread_id = event.payload;
 				}
 			});
 			this.unListenThreadId = unListen;
-		}
+		},
+		async listenConfigStart() {
+			const unListen = await listen("config", (event) => {
+				// console.log("config", event.payload);
+				const ipv4 = config.ipv4;
+				mainStore.$patch(event.payload);
+				config.ipv4 = ipv4;
+			});
+			this.unListenConfigStart = unListen;
+		},
 	};
 
 	const unListenAll = async () => {
@@ -514,16 +507,19 @@
 		await initStartWinIpBroadcast();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
+		await listenObj.listenConfigStart();
 		closePrevent();
 	});
 
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
+		listenObj.unListenConfigStart && listenObj.unListenConfigStart();
 		logsTimer && clearInterval(logsTimer);
 	});
 
 	const getArgs = () => {
+		// console.log(config.proxyNetworks);
 		const args = [];
 		if (config.dhcp) {
 			args.push("-d");
@@ -542,7 +538,7 @@
 		}
 		if (config.serverUrl) {
 			const formatUrl = config.serverUrl.replace(/\\/g, "/");
-			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
+			args.push("--peers", ...config.protocol.map((protocol) => `${protocol}://${formatUrl}`));
 		}
 		if (config.disbleP2p) {
 			args.push("--disable-p2p");
@@ -552,6 +548,40 @@
 		}
 		if (config.disbleListenner) {
 			args.push("--no-listener");
+		}
+		if (mainStore.cidrEnable && config.proxyNetworks) {
+			// console.log(config.proxyNetworks);
+			const reg = /\d+\.\d+\.\d+\.\d+\/\d+/g;
+			const formatProxyNetworks = config.proxyNetworks
+				.split("\n")
+				.map((item) => item.trim())
+				.filter((item) => item && reg.test(item));
+			args.push("--proxy-networks", ...formatProxyNetworks);
+			config.proxyNetworks = formatProxyNetworks.join("\n");
+		}
+		if (config.disableEncryption) {
+			args.push("--disable-encryption");
+		}
+		if (config.multiThread) {
+			args.push("--multi-thread");
+		}
+		if (config.enablExitNode) {
+			args.push("--enable-exit-node");
+		}
+		if (config.noTun) {
+			args.push("--no-tun");
+		}
+		if (config.latencyfirst) {
+			args.push("--latency-first");
+		}
+		if (config.useSmoltcp) {
+			args.push("--use-smoltcp");
+		}
+		if (config.disableUdpHolePunching) {
+			args.push("--disable-udp-hole-punching");
+		}
+		if (config.relayAllPeerrpc) {
+			args.push("--relay-all-peer-rpc");
 		}
 		return args;
 	};
@@ -563,7 +593,7 @@
 			config.ipv4 = "";
 		}
 		const memberDialog = await getAllWebviewWindows();
-		const memberDialogs = memberDialog.filter(item => item.label === "member");
+		const memberDialogs = memberDialog.filter((item) => item.label === "member");
 		if (memberDialogs && memberDialogs.length > 0) {
 			data.memberVisible = false;
 			for (const memberDialog of memberDialogs) {
@@ -581,12 +611,13 @@
 		if (data.isStart) {
 			await reset();
 		} else {
+			data.log = ""; //清空日志
 			data.startLoading = true;
 			await unListenAll();
 			await listenObj.listenOutput();
 			const args = getArgs();
 			await invoke("run_command", {
-				args
+				args,
 			});
 		}
 	};
@@ -605,7 +636,7 @@
 				title: "成员列表",
 				width: 470,
 				height: 380,
-				url: "#/member"
+				url: "#/member",
 			},
 			() => {
 				data.memberVisible = true;
@@ -624,7 +655,7 @@
 				width: 600,
 				height: 380,
 				resizable: false,
-				url: "#/log"
+				url: "#/log",
 			},
 			(_, appWindow) => {
 				data.logVisible = true;
@@ -647,13 +678,32 @@
 				width: 600,
 				height: 380,
 				resizable: false,
-				url: "#/cidr"
+				url: "#/cidr",
 			},
 			(_, appWindow) => {
 				data.cidrVisible = true;
 			},
 			() => {
 				data.cidrVisible = false;
+			}
+		);
+	};
+
+	const handleShowAdvanceDialog = async () => {
+		await etWindows(
+			"advance",
+			{
+				title: "高级选项",
+				width: 600,
+				height: 380,
+				resizable: false,
+				url: "#/advance",
+			},
+			(_, appWindow) => {
+				data.advanceVisible = true;
+			},
+			() => {
+				data.advanceVisible = false;
 			}
 		);
 	};

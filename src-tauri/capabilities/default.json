@@ -32,7 +32,7 @@
 			"allow": [
 				{
 					"args": ["run"],
-					"cmd": "WinIPBroadcast",
+					"cmd": "easytier/tool/WinIPBroadcast",
 					"name": "WinIPBroadcast"
 				}
 			]
@@ -42,7 +42,7 @@
 			"allow": [
 				{
 					"args": ["run"],
-					"cmd": "WinIPBroadcast",
+					"cmd": "easytier/tool/WinIPBroadcast",
 					"name": "WinIPBroadcast"
 				}
 			]

@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "easytier-game",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"identifier": "com.tauri.easytier-game",
 
 	"build": {
@@ -32,8 +32,15 @@
 	"bundle": {
 		"active": false,
 		"targets": "all",
-		"externalBin": ["WinIPBroadcast"],
-		"resources": ["icons/icon-inactive.ico", "icons/icon.ico", "easytier-cli.exe", "easytier-core.exe", "Packet.dll", "wintun.dll"],
+		"resources": [
+			"easytier/tool/WinIPBroadcast.exe",
+			"easytier/icons/icon-inactive.ico",
+			"easytier/icons/icon.ico",
+			"easytier/easytier-cli.exe",
+			"easytier/easytier-core.exe",
+			"easytier/Packet.dll",
+			"easytier/wintun.dll"
+		],
 		"windows": {
 			"webviewInstallMode": {
 				"type": "embedBootstrapper"

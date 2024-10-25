@@ -52,7 +52,7 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_core_version() -> String {
-    match Command::new("easytier-core.exe")
+    match Command::new("easytier/easytier-core.exe")
         .arg("--version")
         .creation_flags(0x08000000)
         .output()
@@ -67,7 +67,7 @@ fn get_core_version() -> String {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_cli_version() -> String {
-    match Command::new("easytier-cli.exe")
+    match Command::new("easytier/easytier-cli.exe")
         .arg("--version")
         .creation_flags(0x08000000)
         .output()
@@ -114,7 +114,7 @@ struct MyResponse {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_members_by_cli() -> String {
-    match Command::new("easytier-cli.exe")
+    match Command::new("easytier/easytier-cli.exe")
         .arg("peer")
         .arg("list")
         .creation_flags(0x08000000)
@@ -130,11 +130,17 @@ fn get_members_by_cli() -> String {
 
 #[tauri::command(rename_all = "snake_case")]
 async fn download_easytier_zip(download_url: String, file_name: String) {
-    let target = format!("https://ghp.ci/{}", download_url);
+    let target = format!("{}", download_url);
     let response = reqwest::get(target)
         .await
         .expect("error to download easytier url");
-    let file_path = format!("./{}", file_name);
+    let file_path = format!("./easytier/{}", file_name);
+
+    let easytier_dir = path::Path::new("./easytier");
+    if !easytier_dir.exists() {
+        fs::create_dir_all(&easytier_dir).unwrap();
+    }
+
     let path = path::Path::new(&file_path);
 
     let mut file = match File::create(&path) {
@@ -183,7 +189,14 @@ fn unzip(fname: &path::Path) {
         //         fs::create_dir_all(p).unwrap();
         //     }
         // }
-        let out_file_path = path::Path::new("./").join(outpath.file_name().clone().unwrap());
+
+        let easytier_dir = path::Path::new("./easytier");
+        // if !easytier_dir.exists() {
+        //     fs::create_dir_all(&easytier_dir).unwrap();
+        // }
+
+        // let out_file_path = path::Path::new("./").join(outpath.file_name().clone().unwrap());
+        let out_file_path = easytier_dir.join(outpath.file_name().clone().unwrap());
         println!("outFilePath: {}", out_file_path.display());
         let mut outfile = fs::File::create(&out_file_path).unwrap();
         std::io::copy(&mut file, &mut outfile).unwrap();
@@ -196,10 +209,7 @@ fn run_command(
     args: Vec<String>,
     stop_signal: tauri::State<Arc<AtomicBool>>,
 ) {
-    // if !path::Path::new("easytier-core.exe").exists() {
-    //     app_handle.emit("command-output", "easytier-core.exe 不存在");
-    //     return
-    // }
+
     let (tx, rx) = mpsc::channel();
     stop_signal.store(false, Ordering::Relaxed);
     let app_handle1 = app_handle.clone();
@@ -208,7 +218,7 @@ fn run_command(
     let stop_signal2 = Arc::clone(&stop_signal);
     let args2 = args.clone();
     thread::spawn(move || {
-        let mut child = Command::new("easytier-core.exe")
+        let mut child = Command::new("easytier/easytier-core.exe")
             .args(args)
             .creation_flags(0x08000000)
             .stdout(Stdio::piped())

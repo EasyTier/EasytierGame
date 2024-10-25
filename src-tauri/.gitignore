@@ -2,5 +2,3 @@
 # will have compiled files and executables
 /target/
 /gen/schemas
-/easytier-windows-x86_64-v2.0.3.zip
-/easytier-windows-x86_64/

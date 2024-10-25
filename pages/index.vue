@@ -361,7 +361,7 @@
 			const unListen = await listen("config", (event) => {
 				// console.log("config", event.payload);
 				const ipv4 = config.ipv4;
-				mainStore.$patch(event.payload);
+				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
 			});
 			this.unListenConfigStart = unListen;
@@ -651,7 +651,7 @@
 		await etWindows(
 			"log",
 			{
-				title: "日志",
+				title: "联机日志",
 				width: 600,
 				height: 380,
 				resizable: false,
@@ -662,7 +662,7 @@
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
 					appWindow.emitTo("log", "logs", data.log);
-				}, 3000);
+				}, 600);
 			},
 			() => {
 				data.logVisible = false;

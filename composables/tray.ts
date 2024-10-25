@@ -92,7 +92,7 @@ export async function MenuItemShow(text: string) {
 
 export async function setTrayRunState(tray: TrayIcon | null, isRunning: boolean = false) {
 	if (!tray) return;
-	tray.setIcon(isRunning ? "icons/icon-inactive.ico" : "icons/icon.ico");
+	tray.setIcon(isRunning ? "easytier/icons/icon-inactive.ico" : "easytier/icons/icon.ico");
 }
 
 // export async function setTrayTooltip(tooltip: string) {

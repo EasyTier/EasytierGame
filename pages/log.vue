@@ -5,7 +5,7 @@
 		v-model="data.log"
 		resize="none"
 		readonly
-		placeholder="等待日志中..."
+		placeholder="等待日志中，请先'启动联机'..."
 	/>
 </template>
 <script setup lang="ts">

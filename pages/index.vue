@@ -23,7 +23,7 @@
 					<ElTag
 						v-else
 						type="info">
-						core-{{ data.coreVersion }}
+						{{ data.coreVersion }}
 					</ElTag>
 					<ElButton
 						:disabled="data.isStart"
@@ -150,19 +150,29 @@
 					v-model="config.ipv4"></ElInput>
 			</ElFormItem>
 		</div>
-		<div class="flex items-start gap-[0_30px]">
-			<div class="w-[95px]">
+		<div class="flex items-start gap-[0_12px]">
+			<div class="w-[122px]">
 				<div>
-					<ElButton
+					<ElDropdown
+						@command="handleStartCommand"
+						split-button
+						size="default"
 						:type="!data.isStart ? 'primary' : 'danger'"
 						:disabled="data.startLoading || !data.coreVersion || data.update"
-						@click="handleConnection"
-						size="default">
+						@click="handleConnection">
 						{{ !data.isStart ? "启动联机" : "停止联机" }}
-					</ElButton>
+						<template #dropdown>
+							<ElDropdownMenu>
+								<ElDropdownItem
+									command="toml"
+									:disabled="data.isStart"
+									>配置文件启动</ElDropdownItem
+								>
+							</ElDropdownMenu>
+						</template>
+					</ElDropdown>
 				</div>
 				<div class="mt-[6px] pl-[2px]">
-					<!-- <ElButtonGroup> -->
 					<ElTooltip
 						placement="left"
 						content="日志">
@@ -183,7 +193,6 @@
 							type="success"
 							size="small"></ElButton>
 					</ElTooltip>
-					<!-- </ElButtonGroup> -->
 				</div>
 			</div>
 			<div>
@@ -192,24 +201,12 @@
 					size="small">
 					强制中转
 				</ElCheckbox>
-				<!-- <ElCheckbox
-					v-model="config.disableIpv6"
-					size="small"
-				>
-					禁用ipv6
-				</ElCheckbox> -->
 				<ElCheckbox
 					@change="handleAutoStart"
 					:model-value="config.autoStart"
 					size="small">
 					开机自启
 				</ElCheckbox>
-				<!-- <ElCheckbox
-					v-model="config.disbleListenner"
-					size="small"
-				>
-					禁用端口监听
-				</ElCheckbox> -->
 				<div>
 					<ElButton
 						@click="handleShowCidrDialog"
@@ -254,20 +251,65 @@
 			</div>
 		</div>
 	</ElForm>
+	<ElDialog
+		width="95%"
+		top="10px"
+		v-model="configStart.visible"
+		:close-on-press-escape="false"
+		title="配置文件启动">
+		<div class="flex items-center gap-[0_4px]">
+			<span>启用</span><ElSwitch v-model="mainStore.configStartEnable"></ElSwitch
+			><ElTooltip content="启用后将完全使用选中的配置文件作为联机配置，其余界面配置不会生效">
+				<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon> </ElTooltip
+			><ElButton
+				@click="openConfigDir"
+				size="small"
+				>打开配置目录</ElButton
+			>
+			<ElButton
+				@click="handleStartCommand('toml')"
+				type="primary"
+				:icon="RefreshRight"
+				size="small"
+				>刷新</ElButton
+			>
+		</div>
+		<div class="mt-[5px]">
+			<ElSelect
+				v-model="mainStore.configPath"
+				no-data-text="目录没有配置文件"
+				placeholder="选择配置文件">
+				<ElOption
+					v-for="item in configStart.list"
+					:key="item.path"
+					:value="item.path"
+					:label="item.name"></ElOption>
+			</ElSelect>
+		</div>
+		<div class="mt-[5px] text-right">
+			<ElButton
+				@click="configStart.visible = false"
+				type="danger"
+				>关闭</ElButton
+			>
+		</div>
+	</ElDialog>
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray, setTrayRunState } from "~/composables/tray";
 	import useMainStore from "@/stores/index";
-	import { ElMessage } from "element-plus";
+	import { ElDropdownMenu, ElMessage } from "element-plus";
 	import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
+	import { resourceDir as getResourceDir, join } from '@tauri-apps/api/path';
+	import { readDir, exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
 
 	let is_close = false;
 
@@ -295,6 +337,12 @@
 		isSuccessGetIp: false,
 		startLoading: false,
 		isStart: false,
+	});
+
+	const configStart = reactive({
+		visible: false,
+		loading: false,
+		list: [], //配置文件列表
 	});
 
 	const closePrevent = async () => {
@@ -508,6 +556,7 @@
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		await listenObj.listenConfigStart();
+		await initConfigDir();
 		closePrevent();
 	});
 
@@ -518,9 +567,17 @@
 		logsTimer && clearInterval(logsTimer);
 	});
 
-	const getArgs = () => {
+	const getArgs = async () => {
 		// console.log(config.proxyNetworks);
 		const args = [];
+		if (mainStore.configStartEnable && mainStore.configPath) {
+			// const resourceDir = await getResourceDir();
+			// const configPath = await join(resourceDir, mainStore.configPath);
+			// args.push("-c", configPath);
+			
+			args.push("-c", mainStore.configPath);
+			return args;
+		}
 		if (config.dhcp) {
 			args.push("-d");
 		}
@@ -611,15 +668,63 @@
 		if (data.isStart) {
 			await reset();
 		} else {
+			const args = await getArgs();
+
+			if (!args || args.length <= 0) {
+				return ElMessage.error("无配置");
+			}
 			data.log = ""; //清空日志
 			data.startLoading = true;
 			await unListenAll();
 			await listenObj.listenOutput();
-			const args = getArgs();
+
 			await invoke("run_command", {
 				args,
 			});
 		}
+	};
+
+	//configStart
+	const handleStartCommand = async (command: string | number | object) => {
+		if (command === "toml") {
+			configStart.visible = true;
+			const path = import.meta.env.VITE_CONFIG_PATH;
+			const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
+			if (isExists) {
+				const entries = await readDir(path, { baseDir: BaseDirectory.Resource });
+				configStart.list = entries
+					.filter((item) => item.isFile)
+					.map((item) => ({
+						name: item.name,
+						path: `${path}${item.name}`,
+					})) as any;
+			} else {
+				mainStore.configStartEnable = false;
+				mainStore.configPath = "";
+				try {
+					await mkdir(path, { baseDir: BaseDirectory.Resource });
+				} catch (err) {}
+			}
+		}
+	};
+
+	const initConfigDir = async () => {
+		const path = import.meta.env.VITE_CONFIG_PATH;
+		const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
+		if (!isExists) {
+			mainStore.configStartEnable = false;
+			mainStore.configPath = "";
+			try {
+				await mkdir(path, { baseDir: BaseDirectory.Resource });
+			} catch (err) {}
+		}
+	};
+
+	const openConfigDir = async () => {
+		const resourceDir = await getResourceDir();
+		const configPath = await join(resourceDir, import.meta.env.VITE_CONFIG_PATH);
+		console.log(configPath)
+		await Command.create("explorer", [configPath]).execute();
 	};
 
 	const handleShowMemberDialog = async () => {

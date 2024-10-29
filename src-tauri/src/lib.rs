@@ -209,7 +209,6 @@ fn run_command(
     args: Vec<String>,
     stop_signal: tauri::State<Arc<AtomicBool>>,
 ) {
-
     let (tx, rx) = mpsc::channel();
     stop_signal.store(false, Ordering::Relaxed);
     let app_handle1 = app_handle.clone();
@@ -350,6 +349,7 @@ pub fn run() {
     let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec![AUTOSTART_ARG]),

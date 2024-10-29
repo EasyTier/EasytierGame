@@ -44,8 +44,19 @@
 					"args": ["run"],
 					"cmd": "easytier/tool/WinIPBroadcast",
 					"name": "WinIPBroadcast"
-				}
+				},
+        {
+          "args": true,
+          "cmd": "explorer",
+          "name": "explorer"
+        }
 			]
-		}
+		},
+		"fs:default",
+		"fs:allow-read-dir",
+		"fs:allow-exists",
+		"fs:allow-open",
+		"fs:allow-resource-read",
+		"fs:allow-resource-read-recursive"
 	]
 }

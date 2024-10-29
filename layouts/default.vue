@@ -5,6 +5,8 @@
 <script setup lang="tsx">
 	//屏蔽右键菜单
 	document.addEventListener("contextmenu", (e: MouseEvent) => {
-		// e.preventDefault();
+		if (import.meta.env.PROD) {
+			e.preventDefault();
+		}
 	});
 </script>

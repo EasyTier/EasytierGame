@@ -150,7 +150,7 @@
 					v-model="config.ipv4"></ElInput>
 			</ElFormItem>
 		</div>
-		<div class="flex items-start gap-[0_12px]">
+		<div class="flex items-start gap-[0_10px]">
 			<div class="w-[122px]">
 				<div>
 					<ElDropdown

@@ -3,7 +3,7 @@
 	"private": true,
 	"author": "leizi97",
 	"description": "A simple network initiator based on Easytier",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"scripts": {
 		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
 		"build": "nuxt generate --dotenv env/.env.prod"
@@ -38,6 +38,7 @@
 		"xlsx": "^0.18.5"
 	},
 	"dependencies": {
-		"@tauri-apps/plugin-autostart": "~2"
+		"@tauri-apps/plugin-autostart": "~2",
+		"@tauri-apps/plugin-fs": "~2"
 	}
 }

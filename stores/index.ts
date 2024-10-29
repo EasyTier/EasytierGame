@@ -24,6 +24,8 @@ export default defineStore("main", {
 				disbleP2p: false, // 是否使用P2P
 				dhcp: true, // 是否使用DHCP
 			},
+			configStartEnable: false, //使用配置文件启动
+			configPath: "", //配置文件路径
 			cidrEnable: false,
 			basePeers: ["public.easytier.top:11010"],
 		};

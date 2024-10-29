@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "easytier-game",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"identifier": "com.tauri.easytier-game",
 
 	"build": {
@@ -33,6 +33,7 @@
 		"active": false,
 		"targets": "all",
 		"resources": [
+			"easytier/config/",
 			"easytier/tool/WinIPBroadcast.exe",
 			"easytier/icons/icon-inactive.ico",
 			"easytier/icons/icon.ico",

@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.0.8"
+version = "1.0.9"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -36,6 +36,7 @@ reqwest = { version = "0.12", features = ["json"] }
 zip = "2.2.0"
 sysinfo = '0.32.0'
 planif = { git = "https://github.com/mattrobineau/planif", tag = "1.0.1" }
+tauri-plugin-fs = "2"
 # prost = "0.13"
 # prost-types = "0.13"
 

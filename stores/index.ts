@@ -11,6 +11,7 @@ export default defineStore("main", {
 				ipv4: "",
 				proxyNetworks: "", // 子网代理
 				autoStart: false, // 是否自动启动
+				coonectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: false, // 是否禁用加密
@@ -23,6 +24,8 @@ export default defineStore("main", {
 				relayAllPeerrpc: false, // 是否启用所有对等RPC
 				disbleP2p: false, // 是否使用P2P
 				dhcp: true, // 是否使用DHCP
+				saveErrorLog: true, // 是否保存错误日志
+				logLevel: "error", //日志等级
 			},
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
@@ -41,6 +44,7 @@ export default defineStore("main", {
 			"config.networkPassword",
 			"config.disbleP2p",
 			"config.autoStart",
+			"config.coonectAfterStart",
 			"config.disableIpv6",
 			"config.disbleListenner",
 			"config.disableEncryption",
@@ -53,6 +57,8 @@ export default defineStore("main", {
 			"config.relayAllPeerrpc",
 			"config.hostname",
 			"config.dhcp",
+			"config.saveErrorLog",
+			"config.logLevel"
 		],
 	},
 });

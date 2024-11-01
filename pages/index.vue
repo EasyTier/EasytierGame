@@ -2,27 +2,32 @@
 	<ElForm
 		size="small"
 		label-position="top"
-		:model="config">
+		:model="config"
+	>
 		<ElFormItem
 			label="服务器"
-			prop="serverUrl">
+			prop="serverUrl"
+		>
 			<template #label>
 				<div class="flex items-center gap-[0_5px]">
 					<div>服务器</div>
 					<span>-</span>
 					<ElTag
 						effect="dark"
-						:type="data.isSuccessGetIp ? 'success' : 'info'">
+						:type="data.isSuccessGetIp ? 'success' : 'info'"
+					>
 						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
 					</ElTag>
 					<ElButton
 						v-if="!data.coreVersion"
-						@click="getCoreVersion(true)">
+						@click="getCoreVersion(true)"
+					>
 						获取工具版本
 					</ElButton>
 					<ElTag
 						v-else
-						type="info">
+						type="info"
+					>
 						{{ data.coreVersion }}
 					</ElTag>
 					<ElButton
@@ -30,8 +35,9 @@
 						:loading="data.update"
 						type="warning"
 						@click="handleUpdateCore"
-						size="small">
-						{{ data.coreVersion ? "更新" : "下载" }}
+						size="small"
+					>
+						{{ data.coreVersion ? "更新插件" : "下载插件" }}
 					</ElButton>
 				</div>
 			</template>
@@ -40,7 +46,8 @@
 				filterable
 				default-first-option
 				v-model="config.serverUrl"
-				@change="handleServerUrlChange">
+				@change="handleServerUrlChange"
+			>
 				<template #prefix>
 					<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
 						<ElSelect
@@ -49,12 +56,14 @@
 							collapse-tags
 							@click.stop
 							v-model="config.protocol"
-							@change="handleServerUrlChange">
+							@change="handleServerUrlChange"
+						>
 							<ElOption
 								v-for="item in protocols"
 								:key="item"
 								:label="item"
-								:value="item"></ElOption>
+								:value="item"
+							></ElOption>
 						</ElSelect>
 					</div>
 				</template>
@@ -62,14 +71,16 @@
 					v-for="item in mainStore.basePeers"
 					:key="item"
 					:label="item"
-					:value="item">
+					:value="item"
+				>
 					<div class="flex items-center justify-between">
 						<span style="float: left">{{ item }}</span>
 						<ElButton
 							@click.stop="handleDeleteServerUrl(item)"
 							round
 							:icon="Delete"
-							type="danger"></ElButton>
+							type="danger"
+						></ElButton>
 					</div>
 				</ElOption>
 			</ElSelect>
@@ -88,7 +99,8 @@
 					<ElInput
 						maxlength="100"
 						placeholder="请输入网络名"
-						v-model="config.networkName"></ElInput>
+						v-model="config.networkName"
+					></ElInput>
 				</ElFormItem>
 			</div>
 			<div class="flex-1">
@@ -106,7 +118,8 @@
 						maxlength="100"
 						placeholder="请输入网络密码"
 						v-model="config.networkPassword"
-						type="password"></ElInput>
+						type="password"
+					></ElInput>
 				</ElFormItem>
 			</div>
 		</div>
@@ -123,11 +136,13 @@
 				<ElInput
 					maxlength="100"
 					placeholder="例如: Player1"
-					v-model="config.hostname"></ElInput>
+					v-model="config.hostname"
+				></ElInput>
 			</ElFormItem>
 			<ElFormItem
 				class="w-[70%]"
-				label="局域网IP">
+				label="局域网IP"
+			>
 				<template #label>
 					<div class="flex items-center h-[20px]">
 						虚拟网IP
@@ -140,14 +155,16 @@
 							inline-prompt
 							inactive-text="固定IP"
 							active-text="动态获取IP"
-							size="small"></ElSwitch>
+							size="small"
+						></ElSwitch>
 					</div>
 				</template>
 				<ElInput
 					maxlength="100"
 					:disabled="config.dhcp"
 					:placeholder="data.isStart ? '等待动态分配IP...' : '例如: 10.126.126.1'"
-					v-model="config.ipv4"></ElInput>
+					v-model="config.ipv4"
+				></ElInput>
 			</ElFormItem>
 		</div>
 		<div class="flex items-start gap-[0_10px]">
@@ -159,15 +176,17 @@
 						size="default"
 						:type="!data.isStart ? 'primary' : 'danger'"
 						:disabled="data.startLoading || !data.coreVersion || data.update"
-						@click="handleConnection">
+						@click="handleConnection"
+					>
 						{{ !data.isStart ? "启动联机" : "停止联机" }}
 						<template #dropdown>
 							<ElDropdownMenu>
 								<ElDropdownItem
 									command="toml"
 									:disabled="data.isStart"
-									>配置文件启动</ElDropdownItem
 								>
+									配置文件启动
+								</ElDropdownItem>
 							</ElDropdownMenu>
 						</template>
 					</ElDropdown>
@@ -175,49 +194,57 @@
 				<div class="mt-[6px] pl-[2px]">
 					<ElTooltip
 						placement="left"
-						content="日志">
+						content="日志"
+					>
 						<ElButton
 							:type="!data.logVisible ? 'info' : 'warning'"
 							@click="handleShowLogDialog"
 							:icon="List"
 							size="small"
-							plain></ElButton>
+							plain
+						></ElButton>
 					</ElTooltip>
 					<ElTooltip
 						placement="left"
-						content="成员">
+						content="成员"
+					>
 						<ElButton
 							@click="handleShowMemberDialog"
 							:icon="UserFilled"
 							plain
 							type="success"
-							size="small"></ElButton>
+							size="small"
+						></ElButton>
 					</ElTooltip>
 				</div>
 			</div>
 			<div>
 				<ElCheckbox
 					v-model="config.disbleP2p"
-					size="small">
+					size="small"
+				>
 					强制中转
 				</ElCheckbox>
 				<ElCheckbox
-					@change="handleAutoStart"
+					@change="handleAutoStartByTask"
 					:model-value="config.autoStart"
-					size="small">
+					size="small"
+				>
 					开机自启
 				</ElCheckbox>
 				<div>
 					<ElButton
 						@click="handleShowCidrDialog"
 						:icon="Share"
-						>子网代理</ElButton
 					>
+						子网代理
+					</ElButton>
 					<ElButton
 						@click="handleShowAdvanceDialog"
 						:icon="Setting"
-						>高级选项</ElButton
 					>
+						高级选项
+					</ElButton>
 				</div>
 				<div class="flex items-center gap-[0_5px]">
 					<div>
@@ -225,7 +252,8 @@
 							class="!text-[11px]"
 							type="info"
 							:underline="false"
-							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')">
+							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
+						>
 							WinIPBroadcast
 							<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
 								<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
@@ -238,13 +266,15 @@
 							size="small"
 							label="WinIPBroadcast"
 							active-text="开启"
-							inactive-text="关闭"></ElSwitch>
+							inactive-text="关闭"
+						></ElSwitch>
 					</div>
 					<ElLink
 						class="!text-[11px] pb-[2px] ml-[15px]"
 						type="info"
 						:underline="false"
-						@click="open('https://github.com/EasyTier/EasytierGame')">
+						@click="open('https://github.com/EasyTier/EasytierGame')"
+					>
 						主页
 					</ElLink>
 				</div>
@@ -256,42 +286,50 @@
 		top="10px"
 		v-model="configStart.visible"
 		:close-on-press-escape="false"
-		title="配置文件启动">
+		title="配置文件启动"
+	>
 		<div class="flex items-center gap-[0_4px]">
-			<span>启用</span><ElSwitch v-model="mainStore.configStartEnable"></ElSwitch
-			><ElTooltip content="启用后将完全使用选中的配置文件作为联机配置，其余界面配置不会生效">
-				<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon> </ElTooltip
-			><ElButton
+			<span>启用</span>
+			<ElSwitch v-model="mainStore.configStartEnable"></ElSwitch>
+			<ElTooltip content="启用后将完全使用选中的配置文件作为联机配置，其余界面配置不会生效">
+				<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<ElButton
 				@click="openConfigDir"
 				size="small"
-				>打开配置目录</ElButton
 			>
+				打开配置目录
+			</ElButton>
 			<ElButton
 				@click="handleStartCommand('toml')"
 				type="primary"
 				:icon="RefreshRight"
 				size="small"
-				>刷新</ElButton
 			>
+				刷新
+			</ElButton>
 		</div>
 		<div class="mt-[5px]">
 			<ElSelect
 				v-model="mainStore.configPath"
 				no-data-text="目录没有配置文件"
-				placeholder="选择配置文件">
+				placeholder="选择配置文件"
+			>
 				<ElOption
 					v-for="item in configStart.list"
 					:key="item.path"
 					:value="item.path"
-					:label="item.name"></ElOption>
+					:label="item.name"
+				></ElOption>
 			</ElSelect>
 		</div>
 		<div class="mt-[5px] text-right">
 			<ElButton
 				@click="configStart.visible = false"
 				type="danger"
-				>关闭</ElButton
 			>
+				关闭
+			</ElButton>
 		</div>
 	</ElDialog>
 </template>
@@ -301,14 +339,14 @@
 	import { open, Command } from "@tauri-apps/plugin-shell";
 	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
-	import { useTray, setTrayRunState } from "~/composables/tray";
+	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import useMainStore from "@/stores/index";
 	import { ElDropdownMenu, ElMessage } from "element-plus";
-	import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
+	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
-	import { resourceDir as getResourceDir, join } from '@tauri-apps/api/path';
+	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
 
 	let is_close = false;
@@ -336,21 +374,22 @@
 		coreVersion: "",
 		isSuccessGetIp: false,
 		startLoading: false,
-		isStart: false,
+		isStart: false
 	});
 
-	const configStart = reactive({
+	const configStart = reactive<{ list: Array<{ path: string; name: string }>; [key: string]: any }>({
 		visible: false,
 		loading: false,
-		list: [], //配置文件列表
+		list: [] //配置文件列表
 	});
 
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
-			appWindow.onCloseRequested(async (event) => {
-				console.log(appWindow.label);
+			appWindow.onCloseRequested(async event => {
+				// console.log(appWindow.label);
 				if (!is_close) {
+					console.log(1);
 					event.preventDefault();
 					appWindow.hide();
 				}
@@ -381,7 +420,7 @@
 		thread_id: null,
 		async listenOutput() {
 			const appWindow = getCurrentWindow();
-			const unListen = await listen("command-output", async (event) => {
+			const unListen = await listen("command-output", async event => {
 				data.isStart = true;
 				if (event.payload) {
 					data.startLoading = false;
@@ -390,6 +429,7 @@
 						data.isSuccessGetIp = true;
 						await setTrayRunState(tray, true);
 						config.ipv4 = ipv4;
+						await setTrayTooltip(tray, `IP: ${ipv4}`);
 					}
 				}
 				appWindow.emitTo("log", "logs", data.log);
@@ -398,7 +438,7 @@
 			this.unListenOutPut = unListen;
 		},
 		async listenThreadId() {
-			const unListen = await listen("thread-id", (event) => {
+			const unListen = await listen("thread-id", event => {
 				if (event.payload) {
 					this.thread_id = event.payload;
 				}
@@ -406,14 +446,14 @@
 			this.unListenThreadId = unListen;
 		},
 		async listenConfigStart() {
-			const unListen = await listen("config", (event) => {
+			const unListen = await listen("config", event => {
 				// console.log("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
 			});
 			this.unListenConfigStart = unListen;
-		},
+		}
 	};
 
 	const unListenAll = async () => {
@@ -547,16 +587,49 @@
 		}
 	};
 
+	const handleAutoStartByTask = async () => {
+		await invoke("spawn_autostart", { enabled: !config.autoStart });
+		const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
+		config.autoStart = is_enable_by_task;
+	};
+
+	const compatibleInitAutoStart = async () => {
+		try {
+			const is_enable = await tauriAutoStart.isEnabled();
+			if (is_enable) {
+				await tauriAutoStart.disable();
+				await invoke("spawn_autostart", { enabled: true });
+				const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
+				config.autoStart = is_enable_by_task;
+			} else {
+				const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
+				config.autoStart = is_enable_by_task;
+			}
+		} catch (err) {
+			await invoke("spawn_autostart", { enabled: false });
+			config.autoStart = false;
+		}
+	};
+
+	const initConnectAfterStart = async () => {
+		if (config.coonectAfterStart && data.coreVersion) {
+			await reset();
+			await handleConnection();
+		}
+	};
+
 	let logsTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
-		await initAutoStart();
+		await compatibleInitAutoStart();
+		// await initAutoStart();
 		await initStartWinIpBroadcast();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		await listenObj.listenConfigStart();
 		await initConfigDir();
+		await initConnectAfterStart();
 		closePrevent();
 	});
 
@@ -574,7 +647,7 @@
 			// const resourceDir = await getResourceDir();
 			// const configPath = await join(resourceDir, mainStore.configPath);
 			// args.push("-c", configPath);
-			
+
 			args.push("-c", mainStore.configPath);
 			return args;
 		}
@@ -595,7 +668,7 @@
 		}
 		if (config.serverUrl) {
 			const formatUrl = config.serverUrl.replace(/\\/g, "/");
-			args.push("--peers", ...config.protocol.map((protocol) => `${protocol}://${formatUrl}`));
+			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
 		}
 		if (config.disbleP2p) {
 			args.push("--disable-p2p");
@@ -611,8 +684,8 @@
 			const reg = /\d+\.\d+\.\d+\.\d+\/\d+/g;
 			const formatProxyNetworks = config.proxyNetworks
 				.split("\n")
-				.map((item) => item.trim())
-				.filter((item) => item && reg.test(item));
+				.map(item => item.trim())
+				.filter(item => item && reg.test(item));
 			args.push("--proxy-networks", ...formatProxyNetworks);
 			config.proxyNetworks = formatProxyNetworks.join("\n");
 		}
@@ -640,6 +713,9 @@
 		if (config.relayAllPeerrpc) {
 			args.push("--relay-all-peer-rpc");
 		}
+		if (config.saveErrorLog) {
+			args.push("--file-log-level", config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
+		}
 		return args;
 	};
 
@@ -650,7 +726,7 @@
 			config.ipv4 = "";
 		}
 		const memberDialog = await getAllWebviewWindows();
-		const memberDialogs = memberDialog.filter((item) => item.label === "member");
+		const memberDialogs = memberDialog.filter(item => item.label === "member");
 		if (memberDialogs && memberDialogs.length > 0) {
 			data.memberVisible = false;
 			for (const memberDialog of memberDialogs) {
@@ -661,6 +737,7 @@
 			}
 		}
 		await setTrayRunState(tray, false);
+		await setTrayTooltip(tray);
 		await unListenAll();
 	};
 
@@ -679,7 +756,7 @@
 			await listenObj.listenOutput();
 
 			await invoke("run_command", {
-				args,
+				args
 			});
 		}
 	};
@@ -693,10 +770,10 @@
 			if (isExists) {
 				const entries = await readDir(path, { baseDir: BaseDirectory.Resource });
 				configStart.list = entries
-					.filter((item) => item.isFile)
-					.map((item) => ({
+					.filter(item => item.isFile)
+					.map(item => ({
 						name: item.name,
-						path: `${path}${item.name}`,
+						path: `${path}${item.name}`
 					})) as any;
 			} else {
 				mainStore.configStartEnable = false;
@@ -723,7 +800,7 @@
 	const openConfigDir = async () => {
 		const resourceDir = await getResourceDir();
 		const configPath = await join(resourceDir, import.meta.env.VITE_CONFIG_PATH);
-		console.log(configPath)
+		console.log(configPath);
 		await Command.create("explorer", [configPath]).execute();
 	};
 
@@ -741,7 +818,7 @@
 				title: "成员列表",
 				width: 470,
 				height: 380,
-				url: "#/member",
+				url: "#/member"
 			},
 			() => {
 				data.memberVisible = true;
@@ -760,7 +837,7 @@
 				width: 600,
 				height: 380,
 				resizable: false,
-				url: "#/log",
+				url: "#/log"
 			},
 			(_, appWindow) => {
 				data.logVisible = true;
@@ -783,7 +860,7 @@
 				width: 600,
 				height: 380,
 				resizable: false,
-				url: "#/cidr",
+				url: "#/cidr"
 			},
 			(_, appWindow) => {
 				data.cidrVisible = true;
@@ -802,7 +879,7 @@
 				width: 600,
 				height: 380,
 				resizable: false,
-				url: "#/advance",
+				url: "#/advance"
 			},
 			(_, appWindow) => {
 				data.advanceVisible = true;

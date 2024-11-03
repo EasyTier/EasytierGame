@@ -21,6 +21,3 @@ uri = "tcp://public.easytier.top:11010"
 
 [[peer]]
 uri = "udp://public.easytier.top:11010"
-
-[[proxy_network]]
-cidr = "192.168.1.0/24"

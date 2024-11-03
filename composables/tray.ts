@@ -25,11 +25,11 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 				id: DEFAULT_TRAY_NAME,
 				menu: await Menu.new({
 					id: "main",
-					items: await generateMenuItem(beforExit)
+					items: await generateMenuItem(beforExit),
 				}),
-				action: async e => {
+				action: async (e) => {
 					toggleVisibility();
-				}
+				},
 			});
 		}
 	} catch (error) {
@@ -43,7 +43,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 		tray.setMenu(
 			await Menu.new({
 				id: "main",
-				items: await generateMenuItem(beforExit)
+				items: await generateMenuItem(beforExit),
 			})
 		);
 	}
@@ -52,7 +52,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 }
 
 export async function generateMenuItem(beforExit: Function) {
-	return [await MenuItemExit("退出", beforExit), await PredefinedMenuItem.new({ item: "Separator" }), await MenuItemShow("显示 / 隐藏")];
+	return [await MenuItemShow("显示 / 隐藏"), await PredefinedMenuItem.new({ item: "Separator" }), await MenuItemExit("退出", beforExit)];
 }
 
 export async function MenuItemExit(text: string, beforExit: Function) {
@@ -64,7 +64,7 @@ export async function MenuItemExit(text: string, beforExit: Function) {
 				await beforExit();
 			}
 			await getCurrentWindow().close();
-		}
+		},
 	});
 }
 
@@ -74,7 +74,7 @@ export async function MenuItemShow(text: string) {
 		text,
 		action: async () => {
 			await toggleVisibility();
-		}
+		},
 	});
 }
 

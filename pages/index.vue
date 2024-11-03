@@ -389,7 +389,7 @@
 			appWindow.onCloseRequested(async event => {
 				// console.log(appWindow.label);
 				if (!is_close) {
-					console.log(1);
+					// console.log(1);
 					event.preventDefault();
 					appWindow.hide();
 				}

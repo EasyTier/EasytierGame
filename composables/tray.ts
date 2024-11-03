@@ -92,15 +92,14 @@ export async function MenuItemShow(text: string) {
 
 export async function setTrayRunState(tray: TrayIcon | null, isRunning: boolean = false) {
 	if (!tray) return;
-	tray.setIcon(isRunning ? "easytier/icons/icon-inactive.ico" : "easytier/icons/icon.ico");
+	await tray.setIcon(isRunning ? "easytier/icons/icon-inactive.ico" : "easytier/icons/icon.ico");
 }
 
-// export async function setTrayTooltip(tooltip: string) {
-//   if (tooltip) {
-//     const tray = await useTray()
-//     if (!tray)
-//       return
-//     tray.setTooltip(`EasyTier\n${pkg.version}\n${tooltip}`)
-//     tray.setTitle(`EasyTier\n${pkg.version}\n${tooltip}`)
-//   }
-// }
+export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | null) {
+	if (!tray) return;
+	if (tooltip) {
+		await tray.setTooltip(`EasyTier\n${pkg.version}\n${tooltip}`);
+	} else {
+		await tray.setTooltip(`EasyTier\n${pkg.version}`);
+	}
+}

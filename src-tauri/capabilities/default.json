@@ -45,11 +45,16 @@
 					"cmd": "easytier/tool/WinIPBroadcast",
 					"name": "WinIPBroadcast"
 				},
-        {
-          "args": true,
-          "cmd": "explorer",
-          "name": "explorer"
-        }
+				{
+					"args": true,
+					"cmd": "easytier/tool/nssm",
+					"name": "nssm"
+				},
+				{
+					"args": true,
+					"cmd": "explorer",
+					"name": "explorer"
+				}
 			]
 		},
 		"fs:default",

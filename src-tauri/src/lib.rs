@@ -1,3 +1,7 @@
+use planif::enums::TaskCreationFlags;
+use planif::schedule::TaskScheduler as planIfTaskScheduler;
+use planif::schedule_builder::{Action, ScheduleBuilder};
+use planif::settings::{Duration, LogonType, PrincipalSettings, RunLevel};
 use reqwest::{Client, Error};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,6 +19,10 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
+use windows::core::{BSTR, VARIANT};
+use windows::Win32::Foundation::VARIANT_BOOL;
+use windows::Win32::System::Com::*;
+use windows::Win32::System::TaskScheduler::*;
 
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
@@ -217,6 +225,7 @@ fn run_command(
     let stop_signal2 = Arc::clone(&stop_signal);
     let args2 = args.clone();
     thread::spawn(move || {
+        // trace, debug, info, warn, error, off
         let mut child = Command::new("easytier/easytier-core.exe")
             .args(args)
             .creation_flags(0x08000000)
@@ -341,6 +350,165 @@ fn search_pid_by_pname(target_process_name: String) -> u32 {
     return 0;
 }
 
+#[tauri::command]
+fn get_exe_directory() -> Vec<String> {
+    let mut ret_vec: Vec<String> = Vec::new();
+    match std::env::current_exe() {
+        Ok(exe_path) => {
+            println!("Path of this executable is: {}", exe_path.display());
+            ret_vec.push(exe_path.display().to_string());
+            ret_vec.push(exe_path.parent().unwrap().display().to_string());
+            return ret_vec;
+        }
+        Err(e) => {
+            println!("failed to get current exe path: {e}");
+            ret_vec.push("".to_string());
+            ret_vec.push("".to_string());
+            return ret_vec;
+        }
+    };
+}
+
+#[tauri::command]
+fn spawn_autostart(enabled: bool) {
+    let (tx, rx) = mpsc::channel();
+
+    thread::spawn(move || match autostart(enabled) {
+        Ok(_) => {
+            let _ = tx.send(true);
+        }
+        Err(e) => {
+            println!("Error: {}", e);
+            let _ = tx.send(false);
+        }
+    });
+
+    match rx.recv() {
+        Ok(_) => {
+            // println!("autostart enabled: {}", enabled);
+        }
+        Err(_e) => {}
+    }
+}
+
+fn autostart_enabled() -> Result<bool, Box<dyn std::error::Error>> {
+    unsafe {
+        let task_service: ITaskService = CoCreateInstance(&TaskScheduler, None, CLSCTX_ALL)?;
+        task_service
+            .Connect(
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+            )
+            ?;
+
+        // 指定要删除的任务文件夹路径
+        let folder_path = BSTR::from("\\easytierGame");
+        // let root = BSTR::from("\\");
+        let task_name = BSTR::from("auto start");
+        let mut penabled = VARIANT_BOOL::from(false);
+        let bool_ptr: *mut VARIANT_BOOL = &mut penabled;
+
+        // 获取任务文件夹F
+        let task_folder: ITaskFolder = task_service
+            .GetFolder(&folder_path)
+            ?;
+        let task = task_folder
+            .GetTask(&task_name)
+            ?;
+        task.Definition()
+            ?
+            .Triggers()
+            ?
+            .get_Item(1)
+            ?
+            .Enabled(bool_ptr)
+            ?;
+        // 释放 COM 库
+        CoUninitialize();
+        // return penabled.as_bool();
+        Ok(penabled.as_bool())
+    }
+}
+
+#[tauri::command]
+fn autostart_is_enabled() -> bool {
+    match autostart_enabled() {
+        Ok(enabled) => {
+            println!("autostart enabled: {}", enabled);
+            return enabled;
+        }
+        Err(e) => {
+            println!("autostart enabled: false -> {}", e);
+            return false;
+        }
+    }
+}
+
+fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    if !enabled {
+        unsafe {
+            let task_service: ITaskService = CoCreateInstance(&TaskScheduler, None, CLSCTX_ALL)?;
+            task_service.Connect(
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+            )?;
+
+            // 指定要删除的任务文件夹路径
+            let folder_path = BSTR::from("\\easytierGame");
+            let root = BSTR::from("\\");
+            let task_name = BSTR::from("auto start");
+
+            // 获取任务文件夹
+            let task_folder: ITaskFolder = task_service.GetFolder(&folder_path)?;
+            task_folder.DeleteTask(&task_name, 0)?;
+            println!("Task AutoStart Task deleted successfully.");
+
+            let task_folder: ITaskFolder = task_service.GetFolder(&root)?;
+
+            // 删除任务文件夹
+            task_folder.DeleteFolder(&folder_path, 0)?;
+
+            println!("Task folder easytierGame deleted successfully.");
+
+            // 释放 COM 库
+            CoUninitialize();
+        }
+    } else {
+        let ts = planIfTaskScheduler::new()?;
+        let com = ts.get_com();
+        let sb = ScheduleBuilder::new(&com).unwrap();
+
+        let exe = std::env::current_exe()?;
+        let exe = exe.to_str().unwrap();
+
+        let settings = PrincipalSettings {
+            display_name: "".to_string(),
+            group_id: None,
+            id: "".to_string(),
+            logon_type: LogonType::InteractiveToken,
+            run_level: RunLevel::Highest,
+            user_id: Some(whoami::username()),
+        };
+        sb.create_logon()
+            .author("heixiansen")?
+            .trigger("trigger", enabled)?
+            .action(Action::new("auto start", exe, "", ""))?
+            .in_folder("easytierGame")?
+            .principal(settings)?
+            .delay(Duration {
+                seconds: Some(6),
+                ..Default::default()
+            })?
+            .build()?
+            .register("auto start", TaskCreationFlags::CreateOrUpdate as i32)?;
+    }
+    Ok(())
+}
+
 pub const AUTOSTART_ARG: &str = "--autostart";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -399,7 +567,10 @@ pub fn run() {
             download_easytier_zip,
             get_cli_version,
             get_members_by_cli,
-            search_pid_by_pname
+            search_pid_by_pname,
+            get_exe_directory,
+            spawn_autostart,
+            autostart_is_enabled
         ])
         .run(context)
         .expect("error while running tauri application");

@@ -23,6 +23,7 @@
 		"@types/lodash-es": "^4.17.12",
 		"@types/qs": "^6.9.15",
 		"@vitejs/plugin-vue-jsx": "^3.1.0",
+		"@vueuse/core": "^11.2.0",
 		"dayjs": "^1.11.10",
 		"defu": "^6.1.4",
 		"element-plus": "^2.8.6",

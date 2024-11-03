@@ -13,7 +13,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "easytier-game",
+				"title": "easytier-game 1.1.1",
 				"width": 335,
 				"height": 305,
 				"resizable": false,

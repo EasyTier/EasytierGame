@@ -13,7 +13,7 @@
 		<div>
 			<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">转发所有对等节点的RPC数据包，即使对等节点不在转发网络白名单内</ElCheckbox>
 		</div>
-		<div class="flex items-center gap-[5px] flex-nowrap">
+		<div class="flex items-center gap-[15px] flex-nowrap">
 			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
 			<div class="w-[140px]">
 				<ElSelect

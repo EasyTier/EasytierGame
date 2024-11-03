@@ -226,7 +226,7 @@
 					强制中转
 				</ElCheckbox>
 				<ElCheckbox
-					@change="handleAutoStartByTask"
+					@change="handleAutoStart"
 					:model-value="config.autoStart"
 					size="small"
 				>
@@ -389,7 +389,7 @@
 			appWindow.onCloseRequested(async event => {
 				// console.log(appWindow.label);
 				if (!is_close) {
-					console.log(1);
+					// console.log(1);
 					event.preventDefault();
 					appWindow.hide();
 				}
@@ -595,18 +595,16 @@
 
 	const compatibleInitAutoStart = async () => {
 		try {
-			const is_enable = await tauriAutoStart.isEnabled();
-			if (is_enable) {
-				await tauriAutoStart.disable();
-				await invoke("spawn_autostart", { enabled: true });
-				const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-				config.autoStart = is_enable_by_task;
-			} else {
-				const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-				config.autoStart = is_enable_by_task;
+			const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
+			if (is_enable_by_task) {
+				await tauriAutoStart.enable();
+				await invoke("spawn_autostart", { enabled: false });
 			}
+			const is_enable = await tauriAutoStart.isEnabled();
+			config.autoStart = is_enable;
 		} catch (err) {
 			await invoke("spawn_autostart", { enabled: false });
+			await tauriAutoStart.disable();
 			config.autoStart = false;
 		}
 	};

@@ -6,6 +6,7 @@
 		"components/**/*.ts",
 		"components/**/*.js",
 		"components/**/*.vue",
+		"app.vue",
 		"pages/**/*.ts",
 		"pages/**/*.js",
 		"pages/**/*.vue",

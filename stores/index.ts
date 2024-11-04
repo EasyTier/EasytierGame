@@ -26,6 +26,8 @@ export default defineStore("main", {
 				dhcp: true, // 是否使用DHCP
 				saveErrorLog: true, // 是否保存错误日志
 				logLevel: "error", //日志等级
+				devName: false, //自定义网卡名
+				devNameValue: "", //自定义网卡名
 			},
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径

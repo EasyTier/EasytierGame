@@ -5,13 +5,11 @@
 			<ElTable
 				stripe
 				:data="data.member"
-				v-else
-			>
+				v-else>
 				<ElTableColumn
 					v-for="prop in showTableHeader"
 					:label="prop[1]"
-					:key="prop[0]"
-				>
+					:key="prop[0]">
 					<template #default="{ row }">
 						<span v-if="prop[0] == 'loss_rate'">
 							{{ row[prop[0]] && row[prop[0]] != "-" ? Number(row[prop[0]] * 100).toFixed(2) + "%" : row[prop[0]] }}
@@ -20,8 +18,7 @@
 						<ElTag
 							v-else
 							effect="dark"
-							:type="row[prop[0]] == 'p2p' ? 'success' : 'info'"
-						>
+							:type="row[prop[0]] == 'p2p' ? 'success' : 'info'">
 							{{ row[prop[0]] }}
 						</ElTag>
 					</template>
@@ -35,22 +32,23 @@
 	import { reactive, onMounted, onBeforeUnmount } from "vue";
 	import { parsePeerInfo } from "@/utils";
 	const data = reactive<{ member: any[] }>({
-		member: []
+		member: [],
 	});
 
 	const showTableHeader = [
-		["ipv4", "虚拟网IP"],
 		["hostname", "主机名"],
-		["cost", "路由"],
 		["lat_ms", "延迟/ms"],
+		["ipv4", "虚拟网IP"],
+		["cost", "路由"],
 		["loss_rate", "丢包率"],
-		["version", "版本"]
+		["nat_type", "NAT类型"],
+		["version", "版本"],
 	];
 
 	const listenOutput = async () => {
 		const member = await invoke("get_members_by_cli");
 		const peerInfo = parsePeerInfo(member as string);
-		peerInfo.forEach(value => {
+		peerInfo.forEach((value) => {
 			if (value.cost === "Local") {
 				value.cost = "本机";
 			}
@@ -58,6 +56,7 @@
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
+		console.log(peerInfo);
 		data.member = peerInfo;
 	};
 

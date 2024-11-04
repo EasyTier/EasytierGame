@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 		autoImport: false
 	},
 
-	css: ["~/assets/css/main.css"],
+	css: ["~/assets/css/main.css", 'element-plus/theme-chalk/dark/css-vars.css'],
 	modules: ["@element-plus/nuxt", "@pinia/nuxt", "@pinia-plugin-persistedstate/nuxt", "@nuxtjs/tailwindcss"],
 
 	alias: {

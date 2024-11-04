@@ -714,6 +714,9 @@
 		if (config.saveErrorLog) {
 			args.push("--file-log-level", config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
 		}
+		if(config.devName && config.devNameValue) {
+			args.push("--dev-name", config.devNameValue);
+		}
 		return args;
 	};
 

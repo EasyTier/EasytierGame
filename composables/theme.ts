@@ -1,6 +1,6 @@
 import { useDark, useToggle, usePreferredDark } from "@vueuse/core";
 import { isFunction } from "lodash-es";
-const isDark = usePreferredDark();
+// const isDark = usePreferredDark();
 const darkConfig = useDark({
 	selector: "html",
 	attribute: "class",
@@ -8,9 +8,9 @@ const darkConfig = useDark({
 	valueLight: "",
 });
 const toggleDark = useToggle(darkConfig);
-export const initTheme = () => {
+export const initTheme = (isDark: boolean) => {
 	if (isDark && isFunction(toggleDark)) {
-		toggleDark(isDark.value);
+		toggleDark(isDark);
 	}
 };
 

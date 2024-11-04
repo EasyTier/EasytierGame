@@ -29,6 +29,7 @@ export default defineStore("main", {
 				devName: false, //自定义网卡名
 				devNameValue: "", //自定义网卡名
 			},
+			theme: false, //主题  false light true dark
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
 			cidrEnable: false,
@@ -39,6 +40,7 @@ export default defineStore("main", {
 		paths: [
 			"basePeers",
 			"cidrEnable",
+			"theme",
 			"config.proxyNetworks",
 			"config.serverUrl",
 			"config.networkName",
@@ -60,7 +62,9 @@ export default defineStore("main", {
 			"config.hostname",
 			"config.dhcp",
 			"config.saveErrorLog",
-			"config.logLevel"
+			"config.logLevel",
+			"config.devName",
+			"config.devNameValue",
 		],
 	},
 });

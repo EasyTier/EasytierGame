@@ -2,6 +2,8 @@ import { Menu, MenuItem, PredefinedMenuItem } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import pkg from "@/package.json";
+import { setTheme } from "~/composables/theme";
+import useMainStore from "@/stores/index";
 
 const DEFAULT_TRAY_NAME = "main";
 
@@ -20,8 +22,8 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 		tray = await TrayIcon.getById(DEFAULT_TRAY_NAME);
 		if (!tray) {
 			tray = await TrayIcon.new({
-				tooltip: `EasyTier\n${pkg.version}`,
-				title: `EasyTier\n${pkg.version}`,
+				tooltip: `EasyTierGame\n${pkg.version}`,
+				title: `EasyTierGame\n${pkg.version}`,
 				id: DEFAULT_TRAY_NAME,
 				menu: await Menu.new({
 					id: "main",
@@ -38,7 +40,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 	}
 
 	if (init) {
-		tray.setTooltip(`EasyTier\n${pkg.version}`);
+		tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 		tray.setMenuOnLeftClick(false);
 		tray.setMenu(
 			await Menu.new({
@@ -52,7 +54,12 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 }
 
 export async function generateMenuItem(beforExit: Function) {
-	return [await MenuItemShow("显示 / 隐藏"), await PredefinedMenuItem.new({ item: "Separator" }), await MenuItemExit("退出", beforExit)];
+	return [
+		await MenuItemShow("显示 / 隐藏"),
+		await MenuItemTheme(),
+		await PredefinedMenuItem.new({ item: "Separator" }),
+		await MenuItemExit("退出", beforExit),
+	];
 }
 
 export async function MenuItemExit(text: string, beforExit: Function) {
@@ -78,6 +85,20 @@ export async function MenuItemShow(text: string) {
 	});
 }
 
+export async function MenuItemTheme() {
+	return await MenuItem.new({
+		id: "theme",
+		text: "主题切换",
+		action: async () => {
+			const mainStore = useMainStore();
+			mainStore.theme = !mainStore.theme;
+			// const appWindow = getCurrentWindow();
+			// appWindow.emitTo("main", "config", { theme: mainStore.theme });
+			await setTheme(mainStore.theme);
+		},
+	});
+}
+
 // export async function setTrayMenu(items: (MenuItem | PredefinedMenuItem)[] | undefined = undefined) {
 //   // const tray = await useTray()
 //   const tray = await TrayIcon.getById(DEFAULT_TRAY_NAME)
@@ -98,8 +119,8 @@ export async function setTrayRunState(tray: TrayIcon | null, isRunning: boolean 
 export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | null) {
 	if (!tray) return;
 	if (tooltip) {
-		await tray.setTooltip(`EasyTier\n${pkg.version}\n${tooltip}`);
+		await tray.setTooltip(`EasyTierGame\n${pkg.version}\n${tooltip}`);
 	} else {
-		await tray.setTooltip(`EasyTier\n${pkg.version}`);
+		await tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 	}
 }

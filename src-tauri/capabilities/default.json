@@ -1,67 +1,80 @@
 {
-	"$schema": "../gen/schemas/desktop-schema.json",
-	"identifier": "default",
-	"description": "enables the default permissions",
-	"windows": ["main", "log", "member", "cidr", "advance"],
-	"permissions": [
-		"core:default",
-		"core:window:allow-minimize",
-		"core:window:allow-hide",
-		"core:window:allow-close",
-		"shell:allow-open",
-		"core:window:allow-show",
-		"core:window:allow-create",
-		"core:window:allow-set-position",
-		"core:window:allow-destroy",
-		"core:webview:allow-create-webview-window",
-		"core:webview:allow-set-webview-size",
-		"core:webview:allow-set-webview-position",
-		"core:webview:allow-create-webview",
-		"core:webview:allow-webview-show",
-		"core:webview:allow-webview-hide",
-		"core:webview:allow-webview-close",
-		"autostart:default",
-		"autostart:allow-enable",
-		"autostart:allow-disable",
-		"autostart:allow-is-enabled",
-		"core:tray:allow-get-by-id",
-		"core:tray:allow-set-icon",
-		"core:tray:allow-new",
-		{
-			"identifier": "shell:allow-spawn",
-			"allow": [
-				{
-					"args": ["run"],
-					"cmd": "easytier/tool/WinIPBroadcast",
-					"name": "WinIPBroadcast"
-				}
-			]
-		},
-		{
-			"identifier": "shell:allow-execute",
-			"allow": [
-				{
-					"args": ["run"],
-					"cmd": "easytier/tool/WinIPBroadcast",
-					"name": "WinIPBroadcast"
-				},
-				{
-					"args": true,
-					"cmd": "easytier/tool/nssm",
-					"name": "nssm"
-				},
-				{
-					"args": true,
-					"cmd": "explorer",
-					"name": "explorer"
-				}
-			]
-		},
-		"fs:default",
-		"fs:allow-read-dir",
-		"fs:allow-exists",
-		"fs:allow-open",
-		"fs:allow-resource-read",
-		"fs:allow-resource-read-recursive"
-	]
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "enables the default permissions",
+  "windows": [
+    "main",
+    "log",
+    "member",
+    "cidr",
+    "advance"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "shell:allow-open",
+    "core:window:allow-show",
+    "core:window:allow-create",
+    "core:window:allow-set-position",
+    "core:window:allow-destroy",
+    "core:webview:allow-create-webview-window",
+    "core:webview:allow-set-webview-size",
+    "core:webview:allow-set-webview-position",
+    "core:webview:allow-create-webview",
+    "core:webview:allow-webview-show",
+    "core:webview:allow-webview-hide",
+    "core:webview:allow-webview-close",
+    "autostart:default",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
+    "core:tray:allow-get-by-id",
+    "core:tray:allow-set-icon",
+    "core:tray:allow-new",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "args": [
+            "run"
+          ],
+          "cmd": "easytier/tool/WinIPBroadcast",
+          "name": "WinIPBroadcast"
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "args": [
+            "run"
+          ],
+          "cmd": "easytier/tool/WinIPBroadcast",
+          "name": "WinIPBroadcast"
+        },
+        {
+          "args": true,
+          "cmd": "easytier/tool/nssm",
+          "name": "nssm"
+        },
+        {
+          "args": true,
+          "cmd": "explorer",
+          "name": "explorer"
+        }
+      ]
+    },
+    "fs:default",
+    "fs:allow-read-dir",
+    "fs:allow-exists",
+    "fs:allow-open",
+    "fs:allow-resource-read",
+    "fs:allow-resource-read-recursive",
+    "clipboard-manager:allow-clear",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
+  ]
 }

@@ -394,14 +394,12 @@ fn spawn_autostart(enabled: bool) {
 fn autostart_enabled() -> Result<bool, Box<dyn std::error::Error>> {
     unsafe {
         let task_service: ITaskService = CoCreateInstance(&TaskScheduler, None, CLSCTX_ALL)?;
-        task_service
-            .Connect(
-                &VARIANT::default(),
-                &VARIANT::default(),
-                &VARIANT::default(),
-                &VARIANT::default(),
-            )
-            ?;
+        task_service.Connect(
+            &VARIANT::default(),
+            &VARIANT::default(),
+            &VARIANT::default(),
+            &VARIANT::default(),
+        )?;
 
         // 指定要删除的任务文件夹路径
         let folder_path = BSTR::from("\\easytierGame");
@@ -411,20 +409,12 @@ fn autostart_enabled() -> Result<bool, Box<dyn std::error::Error>> {
         let bool_ptr: *mut VARIANT_BOOL = &mut penabled;
 
         // 获取任务文件夹F
-        let task_folder: ITaskFolder = task_service
-            .GetFolder(&folder_path)
-            ?;
-        let task = task_folder
-            .GetTask(&task_name)
-            ?;
-        task.Definition()
-            ?
-            .Triggers()
-            ?
-            .get_Item(1)
-            ?
-            .Enabled(bool_ptr)
-            ?;
+        let task_folder: ITaskFolder = task_service.GetFolder(&folder_path)?;
+        let task = task_folder.GetTask(&task_name)?;
+        task.Definition()?
+            .Triggers()?
+            .get_Item(1)?
+            .Enabled(bool_ptr)?;
         // 释放 COM 库
         CoUninitialize();
         // return penabled.as_bool();
@@ -517,6 +507,7 @@ pub fn run() {
     let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,

@@ -182,10 +182,23 @@
 						<template #dropdown>
 							<ElDropdownMenu>
 								<ElDropdownItem
+									command="import_config"
+									:icon="Link"
+								>
+									导入配置
+								</ElDropdownItem>
+								<ElDropdownItem
+									command="share_config"
+									:icon="Share"
+								>
+									分享配置
+								</ElDropdownItem>
+								<ElDropdownItem
+									:icon="Tools"
 									command="toml"
 									:disabled="data.isStart"
 								>
-									配置文件启动
+									使用外部配置文件
 								</ElDropdownItem>
 							</ElDropdownMenu>
 						</template>
@@ -284,6 +297,36 @@
 	<ElDialog
 		width="95%"
 		top="10px"
+		class="!mb-0"
+		v-model="importConfigData.visible"
+		:close-on-press-escape="false"
+		title="导入分享"
+	>
+		<ElInput
+			type="textarea"
+			:rows="6"
+			placeholder="请粘贴分享的配置"
+			v-model="importConfigData.data"
+		></ElInput>
+		<template #footer>
+			<div>
+				<el-text type="danger">导入成功后，您当前的配置将被完全替换</el-text>
+			</div>
+			<div class="text-right">
+				<ElButton
+					size="small"
+					@click="handleStartImport"
+					type="primary"
+				>
+					导入
+				</ElButton>
+			</div>
+		</template>
+	</ElDialog>
+	<ElDialog
+		width="95%"
+		top="30px"
+		class="!mb-0"
 		v-model="configStart.visible"
 		:close-on-press-escape="false"
 		title="配置文件启动"
@@ -323,31 +366,35 @@
 				></ElOption>
 			</ElSelect>
 		</div>
-		<div class="mt-[5px] text-right">
-			<ElButton
-				@click="configStart.visible = false"
-				type="danger"
-			>
-				关闭
-			</ElButton>
-		</div>
+		<template #footer>
+			<div class="text-right">
+				<ElButton
+					size="small"
+					@click="configStart.visible = false"
+					type="danger"
+				>
+					关闭
+				</ElButton>
+			</div>
+		</template>
 	</ElDialog>
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import useMainStore from "@/stores/index";
-	import { ElDropdownMenu, ElMessage } from "element-plus";
+	import { ElDropdownMenu, ElMessage, ElMessageBox } from "element-plus";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
+	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 
 	let is_close = false;
 
@@ -374,13 +421,20 @@
 		coreVersion: "",
 		isSuccessGetIp: false,
 		startLoading: false,
-		isStart: false
+		isStart: false,
+		connectionSuccess: false
 	});
 
 	const configStart = reactive<{ list: Array<{ path: string; name: string }>; [key: string]: any }>({
 		visible: false,
 		loading: false,
 		list: [] //配置文件列表
+	});
+
+	const importConfigData = reactive<{ data: ""; [key: string]: any }>({
+		visible: false,
+		loading: false,
+		data: ""
 	});
 
 	const closePrevent = async () => {
@@ -425,11 +479,19 @@
 				if (event.payload) {
 					data.startLoading = false;
 					let ipv4 = /new: Some\((\d+\.\d+\.\d+\.\d+)\/.*\)/g.exec(event.payload as string)?.[1];
-					if (ipv4) {
-						data.isSuccessGetIp = true;
-						await setTrayRunState(tray, true);
-						config.ipv4 = ipv4;
-						await setTrayTooltip(tray, `IP: ${ipv4}`);
+					if (config.dhcp) {
+						if (ipv4) {
+							config.ipv4 = ipv4;
+							await setTrayRunState(tray, true);
+							data.isSuccessGetIp = true;
+							await setTrayTooltip(tray, `IP: ${ipv4}`);
+						}
+					} else {
+						if ((event.payload as string).includes("new peer connection added")) {
+							await setTrayRunState(tray, true);
+							data.isSuccessGetIp = true;
+							await setTrayTooltip(tray, `IP: ${config.ipv4}`);
+						}
 					}
 				}
 				appWindow.emitTo("log", "logs", data.log);
@@ -474,11 +536,11 @@
 		await getReleaseList();
 		const latestVersionFileName = data.releaseList?.[0]?.[0]?.[1] as string;
 		if (latestVersionFileName) {
-			console.log(latestVersionFileName, /\-v(\d+\.\d+\.\d+)/g.exec(latestVersionFileName));
+			// console.log(latestVersionFileName, /\-v(\d+\.\d+\.\d+)/g.exec(latestVersionFileName));
 			const latestVersion = /\-v(\d+\.\d+\.\d+)/g.exec(latestVersionFileName)?.[1];
 			const currentVersion = /(\d+\.\d+\.\d+)/g.exec(data.coreVersion || "")?.[1];
 			if (latestVersion && currentVersion != latestVersion) {
-				console.log({ currentVersion, latestVersion });
+				// console.log({ currentVersion, latestVersion });
 				ElMessage.success(`更新 -> ${latestVersion}`);
 				const downloadUrl = data.releaseList?.[0]?.[0]?.[2];
 				return [true, downloadUrl, latestVersionFileName];
@@ -714,7 +776,7 @@
 		if (config.saveErrorLog) {
 			args.push("--file-log-level", config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
 		}
-		if(config.devName && config.devNameValue) {
+		if (config.devName && config.devNameValue) {
 			args.push("--dev-name", config.devNameValue);
 		}
 		return args;
@@ -784,6 +846,36 @@
 				} catch (err) {}
 			}
 		}
+		if (command === "share_config") {
+			try {
+				await writeText(btoa(JSON.stringify({ config: mainStore.config })));
+				ElMessage.success("配置已复制");
+			} catch (err) {
+				ElMessage.error("分享失败");
+			}
+		}
+		if (command === "import_config") {
+			importConfigData.data = "";
+			importConfigData.visible = true;
+		}
+	};
+
+	const handleStartImport = async () => {
+		try {
+			await ElMessageBox.confirm("确定导入?", "提示", {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消"
+			});
+			const payload = JSON.parse(atob(importConfigData.data));
+			mainStore.$patch(payload);
+			ElMessage.success("导入成功");
+			importConfigData.visible = false;
+			mainStore.basePeers = [...new Set([config.serverUrl, ...mainStore.basePeers])];
+		} catch (err) {
+			if (err !== "cancel") {
+				ElMessage.error("导入失败");
+			}
+		}
 	};
 
 	const initConfigDir = async () => {
@@ -801,7 +893,7 @@
 	const openConfigDir = async () => {
 		const resourceDir = await getResourceDir();
 		const configPath = await join(resourceDir, import.meta.env.VITE_CONFIG_PATH);
-		console.log(configPath);
+		// console.log(configPath);
 		await Command.create("explorer", [configPath]).execute();
 	};
 
@@ -844,7 +936,7 @@
 				data.logVisible = true;
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
-					appWindow.emitTo("log", "logs", data.log);
+					appWindow.emitTo("log", "logs", data.log ? (data.log as string).split("\n").slice(-1000).join("\n") : "");
 				}, 600);
 			},
 			() => {

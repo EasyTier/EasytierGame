@@ -60,6 +60,7 @@ export default defineStore("main", {
 			"config.disableUdpHolePunching",
 			"config.relayAllPeerrpc",
 			"config.hostname",
+			"config.ipv4",
 			"config.dhcp",
 			"config.saveErrorLog",
 			"config.logLevel",

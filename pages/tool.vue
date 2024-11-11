@@ -314,7 +314,7 @@
 	const appWindow = getCurrentWindow();
 	mainStore.$subscribe((...a) => {
 		// console.log("subscribe", a);
-		appWindow.emitTo("main", "config", { winIpBcAutoStart: mainStore.winIpBcAutoStart });
+		appWindow.emitTo("main", "config", { winIpBcAutoStart: mainStore.winIpBcAutoStart, config: { ...mainStore.config } });
 	});
 
 	onMounted(() => {

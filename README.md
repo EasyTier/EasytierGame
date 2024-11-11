@@ -32,7 +32,14 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
     ![game-step6](/assets/game-step6.png)
 
 - 1.1.4更新了 配置分享功能 可以与朋友之间分享配置，方便联机
-    ![game-step7](/assets/game-step7.png)
+
+
+![game-step7](/assets/game-step7.png)
+
+- 1.1.5 合并额外插件于 "增强工具" 窗口 新增了网卡跃点设置 关闭防火墙功能 ping功能
+![game-step8](/assets/game-step8.png)
+
+![game-step9](/assets/game-step9.png)
 
 ## 特性
 

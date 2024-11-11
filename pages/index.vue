@@ -30,15 +30,25 @@
 					>
 						{{ data.coreVersion }}
 					</ElTag>
-					<ElButton
-						:disabled="data.isStart"
-						:loading="data.update"
-						type="warning"
-						@click="handleUpdateCore"
-						size="small"
+					<ElPopconfirm
+						width="325"
+						cancel-button-text="取消"
+						confirm-button-text="继续"
+						title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
+						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
+						@confirm="handleUpdateCore"
 					>
-						{{ data.coreVersion ? "更新内核" : "下载内核" }}
-					</ElButton>
+						<template #reference>
+							<ElButton
+								:disabled="data.isStart"
+								:loading="data.update"
+								type="warning"
+								size="small"
+							>
+								{{ data.coreVersion ? "更新内核" : "下载内核" }}
+							</ElButton>
+						</template>
+					</ElPopconfirm>
 				</div>
 			</template>
 			<ElSelect
@@ -554,7 +564,7 @@
 		const [isNeedUpdate, downloadUrl, latestVersionFileName] = await checkUpdate();
 		if (isNeedUpdate) {
 			await reset();
-			console.log(downloadUrl);
+			// console.log(downloadUrl);
 			await invoke("download_easytier_zip", { download_url: downloadUrl, file_name: latestVersionFileName });
 		}
 		await getCoreVersion();

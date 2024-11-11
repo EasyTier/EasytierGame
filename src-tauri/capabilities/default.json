@@ -7,7 +7,8 @@
     "log",
     "member",
     "cidr",
-    "advance"
+    "advance",
+    "tool"
   ],
   "permissions": [
     "core:default",
@@ -64,6 +65,16 @@
           "args": true,
           "cmd": "explorer",
           "name": "explorer"
+        },
+        {
+          "args": true,
+          "cmd": "netsh",
+          "name": "netsh"
+        },
+        {
+          "args": true,
+          "cmd": "ping",
+          "name": "ping"
         }
       ]
     },

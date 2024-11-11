@@ -22,7 +22,7 @@
 						v-if="!data.coreVersion"
 						@click="getCoreVersion(true)"
 					>
-						获取工具版本
+						获取内核版本
 					</ElButton>
 					<ElTag
 						v-else
@@ -37,7 +37,7 @@
 						@click="handleUpdateCore"
 						size="small"
 					>
-						{{ data.coreVersion ? "更新插件" : "下载插件" }}
+						{{ data.coreVersion ? "更新内核" : "下载内核" }}
 					</ElButton>
 				</div>
 			</template>
@@ -261,34 +261,23 @@
 				</div>
 				<div class="flex items-center gap-[0_5px]">
 					<div>
-						<ElLink
-							class="!text-[11px]"
-							type="info"
-							:underline="false"
-							@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
-						>
-							WinIPBroadcast
-							<ElTooltip content="找不到游戏房间时，就开启它后再刷新尝试(默认开启)">
-								<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
-							</ElTooltip>
-						</ElLink>
-						<ElSwitch
-							inline-prompt
-							:model-value="data.winipBcStart"
-							@change="handleWinipBcStart"
+						<ElButton
+							plain
+							type="primary"
 							size="small"
-							label="WinIPBroadcast"
-							active-text="开启"
-							inactive-text="关闭"
-						></ElSwitch>
+							:icon="MagicStick"
+							@click="handleShowToolDialog"
+						>
+							增强工具
+						</ElButton>
 					</div>
 					<ElLink
-						class="!text-[11px] pb-[2px] ml-[15px]"
+						class="!text-[10px] pb-[2px] ml-[8px]"
 						type="info"
 						:underline="false"
 						@click="open('https://github.com/EasyTier/EasytierGame')"
 					>
-						主页
+						EasytierGame主页
 					</ElLink>
 				</div>
 			</div>
@@ -383,9 +372,10 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
+	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElDropdownMenu, ElMessage, ElMessageBox } from "element-plus";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -412,6 +402,7 @@
 		logVisible: false,
 		cidrVisible: false,
 		advanceVisible: false,
+		toolVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
 		memberVisible: false,
@@ -573,44 +564,6 @@
 	const getReleaseList = async () => {
 		const list = await invoke("fetch_easytier_list");
 		data.releaseList = list as never[];
-	};
-
-	const getWinIpBroadcastPid = async () => {
-		const pid = await invoke("search_pid_by_pname", { target_process_name: "WinIPBroadcast" });
-		data.winipBcPid = (pid as number) || 0;
-		if (data.winipBcPid && data.winipBcPid > 0) {
-			data.winipBcStart = true;
-		} else {
-			data.winipBcStart = false;
-		}
-	};
-
-	const handleWinipBcStart = async () => {
-		if (!data.winipBcStart) {
-			try {
-				await invoke("stop_command", { child_id: data.winipBcPid || 0 });
-				const child = await Command.create("WinIPBroadcast", ["run"]).spawn();
-				data.winipBcPid = child.pid || 0;
-				if (data.winipBcPid) {
-					data.winipBcStart = true;
-				} else {
-					ElMessage.error(`启动失败`);
-				}
-			} catch (err) {
-				ElMessage.error(`启动失败`);
-				console.log(err);
-			}
-		} else {
-			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
-			await getWinIpBroadcastPid();
-		}
-	};
-
-	const initStartWinIpBroadcast = async () => {
-		await getWinIpBroadcastPid();
-		if (!data.winipBcStart) {
-			await handleWinipBcStart();
-		}
 	};
 
 	const handleAutoStart = async () => {
@@ -979,6 +932,25 @@
 			},
 			() => {
 				data.advanceVisible = false;
+			}
+		);
+	};
+
+	const handleShowToolDialog = async () => {
+		await etWindows(
+			"tool",
+			{
+				title: "增强工具",
+				width: 460,
+				height: 480,
+				resizable: true,
+				url: "#/tool"
+			},
+			(_, appWindow) => {
+				data.toolVisible = true;
+			},
+			() => {
+				data.toolVisible = false;
 			}
 		);
 	};

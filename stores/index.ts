@@ -33,6 +33,9 @@ export default defineStore("main", {
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
 			cidrEnable: false,
+			winipBcPid: 0,
+			winipBcStart: false,
+			winIpBcAutoStart: true,
 			basePeers: ["public.easytier.top:11010"],
 		};
 	},
@@ -41,6 +44,7 @@ export default defineStore("main", {
 			"basePeers",
 			"cidrEnable",
 			"theme",
+			"winIpBcAutoStart",
 			"config.proxyNetworks",
 			"config.serverUrl",
 			"config.networkName",

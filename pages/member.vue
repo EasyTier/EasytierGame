@@ -4,10 +4,13 @@
 			<span v-if="!data.member || data.member.length <= 0">{{ "等待成员信息中..." }}</span>
 			<ElTable
 				stripe
+				border
 				:data="data.member"
 				v-else>
 				<ElTableColumn
 					v-for="prop in showTableHeader"
+					sortable
+					:prop="prop[0]"
 					:label="prop[1]"
 					:key="prop[0]">
 					<template #default="{ row }">

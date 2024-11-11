@@ -44,6 +44,8 @@ export default defineStore("main", {
 			"basePeers",
 			"cidrEnable",
 			"theme",
+			"configStartEnable",
+			"configPath",
 			"winIpBcAutoStart",
 			"config.proxyNetworks",
 			"config.serverUrl",

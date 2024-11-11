@@ -4,179 +4,185 @@
 		label-position="top"
 		:model="config"
 	>
-		<ElFormItem
-			label="服务器"
-			prop="serverUrl"
-		>
-			<template #label>
-				<div class="flex items-center gap-[0_5px]">
-					<div>服务器</div>
-					<span>-</span>
-					<ElTag
-						effect="dark"
-						:type="data.isSuccessGetIp ? 'success' : 'info'"
-					>
-						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
-					</ElTag>
-					<ElButton
-						v-if="!data.coreVersion"
-						@click="getCoreVersion(true)"
-					>
-						获取内核版本
-					</ElButton>
-					<ElTag
-						v-else
-						type="info"
-					>
-						{{ data.coreVersion }}
-					</ElTag>
-					<ElPopconfirm
-						width="325"
-						cancel-button-text="取消"
-						confirm-button-text="继续"
-						title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
-						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
-						@confirm="handleUpdateCore"
-					>
-						<template #reference>
-							<ElButton
-								:disabled="data.isStart"
-								:loading="data.update"
-								type="warning"
-								size="small"
-							>
-								{{ data.coreVersion ? "更新内核" : "下载内核" }}
-							</ElButton>
-						</template>
-					</ElPopconfirm>
-				</div>
-			</template>
-			<ElSelect
-				allow-create
-				filterable
-				default-first-option
-				v-model="config.serverUrl"
-				@change="handleServerUrlChange"
-			>
-				<template #prefix>
-					<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
-						<ElSelect
-							placeholder="协议"
-							multiple
-							collapse-tags
-							@click.stop
-							v-model="config.protocol"
-							@change="handleServerUrlChange"
-						>
-							<ElOption
-								v-for="item in protocols"
-								:key="item"
-								:label="item"
-								:value="item"
-							></ElOption>
-						</ElSelect>
-					</div>
-				</template>
-				<ElOption
-					v-for="item in mainStore.basePeers"
-					:key="item"
-					:label="item"
-					:value="item"
-				>
-					<div class="flex items-center justify-between">
-						<span style="float: left">{{ item }}</span>
-						<ElButton
-							@click.stop="handleDeleteServerUrl(item)"
-							round
-							:icon="Delete"
-							type="danger"
-						></ElButton>
-					</div>
-				</ElOption>
-			</ElSelect>
-		</ElFormItem>
-		<div class="flex flex-wrap gap-[0_10px] items-center">
-			<div class="flex-1">
-				<ElFormItem label="网络名">
-					<template #label>
-						<div class="flex items-center">
-							网络名
-							<ElTooltip content="对应命令行参数 --network-name">
-								<ElIcon><QuestionFilled /></ElIcon>
-							</ElTooltip>
-						</div>
-					</template>
-					<ElInput
-						maxlength="100"
-						placeholder="请输入网络名"
-						v-model="config.networkName"
-					></ElInput>
-				</ElFormItem>
-			</div>
-			<div class="flex-1">
-				<ElFormItem label="网络密码">
-					<template #label>
-						<div class="flex items-center">
-							网络密码
-							<ElTooltip content="对应命令行参数 --network-secret">
-								<ElIcon><QuestionFilled /></ElIcon>
-							</ElTooltip>
-						</div>
-					</template>
-					<ElInput
-						show-password
-						maxlength="100"
-						placeholder="请输入网络密码"
-						v-model="config.networkPassword"
-						type="password"
-					></ElInput>
-				</ElFormItem>
-			</div>
-		</div>
-		<div class="flex gap-[0_10px]">
-			<ElFormItem label="主机名">
-				<template #label>
-					<div class="flex items-center">
-						主机名
-						<ElTooltip content="对应命令行参数 --hostname">
-							<ElIcon><QuestionFilled /></ElIcon>
-						</ElTooltip>
-					</div>
-				</template>
-				<ElInput
-					maxlength="100"
-					placeholder="例如: Player1"
-					v-model="config.hostname"
-				></ElInput>
-			</ElFormItem>
+		<!-- element-loading-custom-class="config-start"
+			v-loading="mainStore.configStartEnable"
+			:element-loading-spinner="'<path />'"
+			element-loading-text="-------已经启用配置文件，界面配置不再生效-------" -->
+		<!-- <div> -->
 			<ElFormItem
-				class="w-[70%]"
-				label="局域网IP"
+				label="服务器"
+				prop="serverUrl"
 			>
 				<template #label>
-					<div class="flex items-center h-[20px]">
-						虚拟网IP
-						<ElTooltip content="对应命令行参数 --ipv4">
-							<ElIcon><QuestionFilled /></ElIcon>
-						</ElTooltip>
-						<ElSwitch
-							v-model="config.dhcp"
-							class="ml-[5px]"
-							inline-prompt
-							inactive-text="固定IP"
-							active-text="动态获取IP"
-							size="small"
-						></ElSwitch>
+					<div class="flex items-center gap-[0_5px]">
+						<div>服务器</div>
+						<span>-</span>
+						<ElTag
+							effect="dark"
+							:type="data.isSuccessGetIp ? 'success' : 'info'"
+						>
+							{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
+						</ElTag>
+						<ElButton
+							v-if="!data.coreVersion"
+							@click="getCoreVersion(true)"
+						>
+							获取内核版本
+						</ElButton>
+						<ElTag
+							v-else
+							type="info"
+						>
+							{{ data.coreVersion }}
+						</ElTag>
+						<ElPopconfirm
+							width="325"
+							cancel-button-text="取消"
+							confirm-button-text="继续"
+							title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
+						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
+							@confirm="handleUpdateCore"
+						>
+							<template #reference>
+								<ElButton
+									:disabled="data.isStart"
+									:loading="data.update"
+									type="warning"
+									size="small"
+								>
+									{{ data.coreVersion ? "更新内核" : "下载内核" }}
+								</ElButton>
+							</template>
+						</ElPopconfirm>
 					</div>
 				</template>
-				<ElInput
-					maxlength="100"
-					:disabled="config.dhcp"
-					:placeholder="data.isStart ? '等待动态分配IP...' : '例如: 10.126.126.1'"
-					v-model="config.ipv4"
-				></ElInput>
+				<ElSelect
+					allow-create
+					filterable
+					default-first-option
+					v-model="config.serverUrl"
+					@change="handleServerUrlChange"
+				>
+					<template #prefix>
+						<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
+							<ElSelect
+								placeholder="协议"
+								multiple
+								collapse-tags
+								@click.stop
+								v-model="config.protocol"
+								@change="handleServerUrlChange"
+							>
+								<ElOption
+									v-for="item in protocols"
+									:key="item"
+									:label="item"
+									:value="item"
+								></ElOption>
+							</ElSelect>
+						</div>
+					</template>
+					<ElOption
+						v-for="item in mainStore.basePeers"
+						:key="item"
+						:label="item"
+						:value="item"
+					>
+						<div class="flex items-center justify-between">
+							<span style="float: left">{{ item }}</span>
+							<ElButton
+								@click.stop="handleDeleteServerUrl(item)"
+								round
+								:icon="Delete"
+								type="danger"
+							></ElButton>
+						</div>
+					</ElOption>
+				</ElSelect>
 			</ElFormItem>
-		</div>
+			<div class="flex flex-wrap gap-[0_10px] items-center">
+				<div class="flex-1">
+					<ElFormItem label="网络名">
+						<template #label>
+							<div class="flex items-center">
+								网络名
+								<ElTooltip content="对应命令行参数 --network-name">
+									<ElIcon><QuestionFilled /></ElIcon>
+								</ElTooltip>
+							</div>
+						</template>
+						<ElInput
+							maxlength="100"
+							placeholder="请输入网络名"
+							v-model="config.networkName"
+						></ElInput>
+					</ElFormItem>
+				</div>
+				<div class="flex-1">
+					<ElFormItem label="网络密码">
+						<template #label>
+							<div class="flex items-center">
+								网络密码
+								<ElTooltip content="对应命令行参数 --network-secret">
+									<ElIcon><QuestionFilled /></ElIcon>
+								</ElTooltip>
+							</div>
+						</template>
+						<ElInput
+							show-password
+							maxlength="100"
+							placeholder="请输入网络密码"
+							v-model="config.networkPassword"
+							type="password"
+						></ElInput>
+					</ElFormItem>
+				</div>
+			</div>
+			<div class="flex gap-[0_10px]">
+				<ElFormItem label="主机名">
+					<template #label>
+						<div class="flex items-center">
+							主机名
+							<ElTooltip content="对应命令行参数 --hostname">
+								<ElIcon><QuestionFilled /></ElIcon>
+							</ElTooltip>
+						</div>
+					</template>
+					<ElInput
+						maxlength="100"
+						placeholder="例如: Player1"
+						v-model="config.hostname"
+					></ElInput>
+				</ElFormItem>
+				<ElFormItem
+					class="w-[70%]"
+					label="局域网IP"
+				>
+					<template #label>
+						<div class="flex items-center h-[20px]">
+							虚拟网IP
+							<ElTooltip content="对应命令行参数 --ipv4">
+								<ElIcon><QuestionFilled /></ElIcon>
+							</ElTooltip>
+							<ElSwitch
+								v-model="config.dhcp"
+								class="ml-[5px]"
+								inline-prompt
+								inactive-text="固定IP"
+								active-text="动态获取IP"
+								size="small"
+							></ElSwitch>
+						</div>
+					</template>
+					<ElInput
+						maxlength="100"
+						:disabled="config.dhcp"
+						:placeholder="data.isStart && config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
+						v-model="config.ipv4"
+					></ElInput>
+				</ElFormItem>
+			</div>
+		<!-- </div> -->
 		<div class="flex items-start gap-[0_10px]">
 			<div class="w-[122px]">
 				<div>
@@ -479,8 +485,8 @@
 				data.isStart = true;
 				if (event.payload) {
 					data.startLoading = false;
-					let ipv4 = /new: Some\((\d+\.\d+\.\d+\.\d+)\/.*\)/g.exec(event.payload as string)?.[1];
-					if (config.dhcp) {
+					let ipv4 = /dhcp ip changed. old: None, new: Some\((\d+\.\d+\.\d+\.\d+).*\)/g.exec(event.payload as string)?.[1];
+					if (config.dhcp || mainStore.configStartEnable) {
 						if (ipv4) {
 							config.ipv4 = ipv4;
 							await setTrayRunState(tray, true);
@@ -495,8 +501,11 @@
 						}
 					}
 				}
-				appWindow.emitTo("log", "logs", data.log);
+				const logArr = data.log.split("\n");
+				const start = logArr.length > 1000 ? logArr.length - 1000 : 0;
+				data.log = logArr.slice(start).join("\n");
 				data.log += (event.payload as string) + "\n";
+
 			});
 			this.unListenOutPut = unListen;
 		},
@@ -772,9 +781,14 @@
 			await reset();
 		} else {
 			const args = await getArgs();
-
 			if (!args || args.length <= 0) {
 				return ElMessage.error("无配置");
+			}
+			if(args[0] === "-c") {
+				ElMessage.warning({
+					message: "使用配置文件中.",
+					duration: 5000,
+				});
 			}
 			data.log = ""; //清空日志
 			data.startLoading = true;
@@ -864,9 +878,9 @@
 		if (!data.isStart) {
 			return ElMessage.warning("请先开始联机");
 		}
-		if (!mainStore.config.ipv4) {
-			return ElMessage.warning("请等待获取IP");
-		}
+		// if (!mainStore.config.ipv4) {
+		// 	return ElMessage.warning("请等待获取IP");
+		// }
 
 		await etWindows(
 			"member",
@@ -899,7 +913,7 @@
 				data.logVisible = true;
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
-					appWindow.emitTo("log", "logs", data.log ? (data.log as string).split("\n").slice(-1000).join("\n") : "");
+					appWindow.emitTo("log", "logs", data.log);
 				}, 600);
 			},
 			() => {

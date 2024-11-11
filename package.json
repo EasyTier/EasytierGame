@@ -3,7 +3,7 @@
 	"private": true,
 	"author": "leizi97",
 	"description": "A simple network initiator based on Easytier",
-	"version": "1.1.5",
+	"version": "1.1.6",
 	"scripts": {
 		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
 		"build": "nuxt generate --dotenv env/.env.prod"

@@ -15,10 +15,11 @@
 			{
 				"title": "easytier-game 1.1.6",
 				"minWidth": 340,
-				"minHeight": 305,
 				"width": 340,
 				"height": 305,
-				"maxWidth": 350,
+				"minHeight": 305,
+				"maxHeight": 305,
+				"maxWidth": 360,
 				"resizable": true,
 				"fullscreen": false,
 				"decorations": true,

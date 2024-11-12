@@ -27,51 +27,25 @@ export default defineStore("main", {
 				saveErrorLog: true, // 是否保存错误日志
 				logLevel: "error", //日志等级
 				devName: false, //自定义网卡名
-				devNameValue: "", //自定义网卡名
+				devNameValue: "" //自定义网卡名
 			},
+			cidrEnable: false,
+			basePeers: ["public.easytier.top:11010"],
 			theme: false, //主题  false light true dark
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
-			cidrEnable: false,
+			winIpBcAutoStart: true,
+
 			winipBcPid: 0,
 			winipBcStart: false,
-			winIpBcAutoStart: true,
-			basePeers: ["public.easytier.top:11010"],
+
 		};
 	},
 	persist: {
-		paths: [
-			"basePeers",
-			"cidrEnable",
-			"theme",
-			"configStartEnable",
-			"configPath",
-			"winIpBcAutoStart",
-			"config.proxyNetworks",
-			"config.serverUrl",
-			"config.networkName",
-			"config.protocol",
-			"config.networkPassword",
-			"config.disbleP2p",
-			"config.autoStart",
-			"config.coonectAfterStart",
-			"config.disableIpv6",
-			"config.disbleListenner",
-			"config.disableEncryption",
-			"config.multiThread",
-			"config.enablExitNode",
-			"config.noTun",
-			"config.latencyfirst",
-			"config.useSmoltcp",
-			"config.disableUdpHolePunching",
-			"config.relayAllPeerrpc",
-			"config.hostname",
-			"config.ipv4",
-			"config.dhcp",
-			"config.saveErrorLog",
-			"config.logLevel",
-			"config.devName",
-			"config.devNameValue",
-		],
-	},
+		// 除了这些，其他都要存下来
+		omit: [
+			"winipBcPid",
+			"winipBcStart"
+		]
+	}
 });

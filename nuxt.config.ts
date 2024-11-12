@@ -14,7 +14,18 @@ export default defineNuxtConfig({
 	},
 
 	css: ["~/assets/css/main.css", "element-plus/theme-chalk/dark/css-vars.css"],
-	modules: ["@element-plus/nuxt", "@pinia/nuxt", "pinia-plugin-persistedstate/nuxt", "@nuxtjs/tailwindcss"],
+	modules: [
+		"@element-plus/nuxt",
+		"@pinia/nuxt",
+		[
+			"pinia-plugin-persistedstate/nuxt",
+			{
+				key: "__glj_persisted_%id",
+				storage: "localStorage"
+			}
+		],
+		"@nuxtjs/tailwindcss"
+	],
 
 	alias: {
 		"@": path.resolve(__dirname, "./")

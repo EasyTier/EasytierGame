@@ -1,17 +1,5 @@
-import { ElMessage } from "element-plus";
-import Clipboard from "vue-clipboard3";
-
 export const ENV = import.meta.env;
 
-export const clipBoardCopy = async (text: string) => {
-	const { toClipboard } = Clipboard();
-	try {
-		await toClipboard(text);
-		ElMessage.success("复制成功");
-	} catch (e) {
-		ElMessage.error("复制失败");
-	}
-};
 
 //防抖
 export const bounce = (time = 3000) => {

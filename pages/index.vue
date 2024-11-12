@@ -825,9 +825,11 @@
 		}
 		if (command === "share_config") {
 			try {
-				await writeText(btoa(JSON.stringify({ config: mainStore.config })));
+				const WT = btoa(encodeURIComponent(JSON.stringify({ config: mainStore.config })))
+				await writeText(WT);
 				ElMessage.success("配置已复制");
 			} catch (err) {
+				console.log(err);
 				ElMessage.error("分享失败");
 			}
 		}
@@ -843,7 +845,7 @@
 				confirmButtonText: "确定",
 				cancelButtonText: "取消"
 			});
-			const payload = JSON.parse(atob(importConfigData.data));
+			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
 			mainStore.$patch(payload);
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;

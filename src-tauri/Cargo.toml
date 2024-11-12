@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.1.6"
+version = "1.1.7"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -18,20 +18,20 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.2", features = [] }
+tauri-build = { version = "2.0.3", features = [] }
 # prost-build = "0.13.2"
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.0.6", features = [
+tauri = { version = "2.1.1", features = [
     "tray-icon",
     "image-png",
     "image-ico",
 ] }
 
-tauri-plugin-log = "2.0.1"
+tauri-plugin-log = "2.0.2"
 tauri-plugin-shell = "2.0.2"
 reqwest = { version = "0.12", features = ["json"] }
 zip = "2.2.0"
@@ -39,7 +39,7 @@ sysinfo = '0.32.0'
 planif = { git = "https://github.com/mattrobineau/planif", tag = "1.0.1" }
 whoami = "1.5.2"
 tauri-plugin-fs = "2"
-tauri-plugin-clipboard-manager = "2.0.0-rc"
+tauri-plugin-clipboard-manager = "2.0.2"
 # prost = "0.13"
 # prost-types = "0.13"
 

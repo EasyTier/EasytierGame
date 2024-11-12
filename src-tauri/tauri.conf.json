@@ -14,9 +14,12 @@
 		"windows": [
 			{
 				"title": "easytier-game 1.1.6",
-				"width": 335,
+				"minWidth": 340,
+				"minHeight": 305,
+				"width": 340,
 				"height": 305,
-				"resizable": false,
+				"maxWidth": 350,
+				"resizable": true,
 				"fullscreen": false,
 				"decorations": true,
 				"center": true,

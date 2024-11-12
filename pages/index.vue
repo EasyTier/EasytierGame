@@ -183,8 +183,8 @@
 				</ElFormItem>
 			</div>
 		<!-- </div> -->
-		<div class="flex items-start gap-[0_10px]">
-			<div class="w-[122px]">
+		<div class="flex items-start">
+			<div>
 				<div>
 					<ElDropdown
 						@command="handleStartCommand"
@@ -247,7 +247,7 @@
 					</ElTooltip>
 				</div>
 			</div>
-			<div>
+			<div class="ml-auto">
 				<ElCheckbox
 					v-model="config.disbleP2p"
 					size="small"
@@ -288,7 +288,7 @@
 						</ElButton>
 					</div>
 					<ElLink
-						class="!text-[10px] pb-[2px] ml-[8px]"
+						class="!text-[9px] pb-[2px] ml-[8px] truncate"
 						type="info"
 						:underline="false"
 						@click="open('https://github.com/EasyTier/EasytierGame')"
@@ -480,7 +480,7 @@
 		unListenConfigStart: null,
 		thread_id: null,
 		async listenOutput() {
-			const appWindow = getCurrentWindow();
+			// const appWindow = getCurrentWindow();
 			const unListen = await listen("command-output", async event => {
 				data.isStart = true;
 				if (event.payload) {

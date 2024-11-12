@@ -1,4 +1,3 @@
-
 import { ElMessage } from "element-plus";
 import Clipboard from "vue-clipboard3";
 
@@ -79,36 +78,43 @@ export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefi
 
 export const parsePeerInfo = (content: string) => {
 	// 将表格字符串分割成行
-	const lines = content.split('\n')
-  
+	const lines = content.split("\n");
+
 	// 提取表头（keys）
 	const headers = lines[1]
-	  .split('│')
-	  .slice(1, -1)
-	  .map((h) => h.trim())
-  
+		.split("│")
+		.slice(1, -1)
+		.map(h => h.trim());
+
 	// 初始化结果数组
-	const result: any[] = []
-  
+	const result: any[] = [];
+
 	// 遍历数据行
 	for (let i = 3; i < lines.length - 1; i += 2) {
-	  if (lines[i].trim() === '') continue // 跳过空行
-  
-	  // 分割每一行的数据
-	  const values = lines[i]
-		.split('│')
-		.slice(1, -1)
-		.map((v) => v.trim())
-  
-	  // 创建对象并添加到结果数组
-	  const obj: any = {}
-	  headers.forEach((header, index) => {
-		obj[header] = values[index] === '-' || values[index] === '' ? null : values[index]
-	  })
-  
-	  // 每行数据都作为一个新对象添加到结果数组中
-	  result.push(obj)
+		if (lines[i].trim() === "") continue; // 跳过空行
+
+		// 分割每一行的数据
+		const values = lines[i]
+			.split("│")
+			.slice(1, -1)
+			.map(v => v.trim());
+
+		// 创建对象并添加到结果数组
+		const obj: any = {};
+		headers.forEach((header, index) => {
+			obj[header] = values[index] === "-" || values[index] === "" ? null : values[index];
+		});
+
+		// 每行数据都作为一个新对象添加到结果数组中
+		result.push(obj);
 	}
-  
-	return result
-  }
+
+	return result;
+};
+
+export function isValidIP(ip: string) {
+	const ipv4Pattern =
+		/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+	const ipv6Pattern = /^(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}$/;
+	return ipv4Pattern.test(ip) || ipv6Pattern.test(ip);
+}

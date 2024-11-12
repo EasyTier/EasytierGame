@@ -144,7 +144,7 @@
 					<ElInputNumber
 						controls-position="right"
 						size="small"
-                        :precision="0"
+						:precision="0"
 						v-model="data.pingNum"
 						:min="1"
 						:max="10"
@@ -155,6 +155,7 @@
 					</ElInputNumber>
 					<ElButton
 						size="small"
+						:disabled="data.isPing"
 						@click="handleTestPing"
 					>
 						Ping一下
@@ -181,6 +182,7 @@
 	import useMainStore from "@/stores/index";
 	import { handleWinipBcStart, initStartWinIpBroadcast } from "@/composables/netcard";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
+	import { isValidIP } from "~/utils";
 
 	const mainStore = useMainStore();
 	const data = reactive({
@@ -189,6 +191,7 @@
 		pingNum: 1,
 		winipBcStart: false,
 		pingIp: "",
+		isPing: false,
 		pingLog: "",
 		firewallStatus: {
 			domain: false,
@@ -228,28 +231,41 @@
 		}
 	};
 
+	const awaitTime = (time: number) => {
+		return new Promise(res => {
+			setTimeout(res, time);
+		});
+	};
+
 	const handleTestPing = async () => {
-		/^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(?::(?:[0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?$/;
+		// const is = isValidIP(data.pingIp);
 		if (data.pingIp) {
 			data.pingLog = "";
+			data.isPing = true;
 			try {
 				for (let i = 0; i < data.pingNum; i++) {
 					const output = await Command.create("ping", ["-n", "1", data.pingIp], {
 						encoding: "gb2312"
 					}).execute();
-
-					data.pingLog = data.pingLog.slice(-1000);
 					if (output.stdout) {
-						data.pingLog += output.stdout.split("\n")[2];
+						data.pingLog += `${i + 1} - ${output.stdout.split("\n")[2]}`;
 					}
 					if (output.stderr) {
-						data.pingLog += output.stderr;
+						data.pingLog += `${i + 1}error - ${output.stderr}`;
+					}
+					if(i != data.pingNum - 1) {
+						await awaitTime(1000);
 					}
 				}
+				data.pingLog += '完毕'
 			} catch (err) {
 				ElMessage.error("Ping发生错误");
 				console.log(err);
+			} finally {
+				data.isPing = false;
 			}
+		}else {
+			ElMessage.error("请输入正确的IP");
 		}
 	};
 
@@ -306,6 +322,7 @@
 				}
 			}
 		} catch (err) {
+			// netsh advfirewall firewall add rule name="EXE名称" dir=out action=allow program="EXE绝对路径"
 			ElMessage.error("获取防火墙状态失败");
 			console.log(err);
 		}
@@ -318,6 +335,7 @@
 	});
 
 	onMounted(() => {
+		data.pingIp = mainStore.config.ipv4;
 		initStartWinIpBroadcast();
 	});
 </script>

@@ -1,4 +1,4 @@
-import { createPersistedState } from "pinia-plugin-persistedstate";
+import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { defineNuxtPlugin } from "nuxt/app";
 export default defineNuxtPlugin((nuxtApp: any) => {
 	nuxtApp.$pinia.use(

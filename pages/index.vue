@@ -189,6 +189,7 @@
 					<ElDropdown
 						@command="handleStartCommand"
 						split-button
+						trigger="click"
 						size="default"
 						:type="!data.isStart ? 'primary' : 'danger'"
 						:disabled="data.startLoading || !data.coreVersion || data.update"
@@ -393,7 +394,7 @@
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
-	import { ElDropdownMenu, ElMessage, ElMessageBox } from "element-plus";
+	import { ElMessage, ElMessageBox } from "element-plus";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";

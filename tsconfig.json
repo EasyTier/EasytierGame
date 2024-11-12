@@ -29,6 +29,7 @@
 		"target": "ESNext",
 		"module": "ESNext",
 		// 	"types": ["element-plus/global"]
+		// "moduleResolution":"Bundler",
 		"resolveJsonModule": true,
 		// 从 Vue 3.4 开始，Vue 不再隐式注册全局 JSX 命名空间。要指示 TypeScript 使用 Vue 的 JSX 类型定义，请确保在你的 tsconfig.json 中包含以下内容
 		"jsx": "preserve",

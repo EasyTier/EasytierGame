@@ -1,16 +1,7 @@
 import { defineNuxtConfig } from "nuxt/config";
-import fs from "fs";
 import path from "path";
 import vueJSX from "@vitejs/plugin-vue-jsx";
-const isDev = process?.argv?.[2] == "_dev" || process?.argv?.[2] == "dev";
-const optimizeDepsElementPlusIncludes = ["element-plus/es"];
-fs.readdirSync("node_modules/element-plus/es/components").map(dirname => {
-	fs.access(`node_modules/element-plus/es/components/${dirname}/style/css.mjs`, err => {
-		if (!err) {
-			optimizeDepsElementPlusIncludes.push(`element-plus/es/components/${dirname}/style/css`);
-		}
-	});
-});
+
 export default defineNuxtConfig({
 	ssr: false,
 
@@ -22,8 +13,8 @@ export default defineNuxtConfig({
 		autoImport: false
 	},
 
-	css: ["~/assets/css/main.css", 'element-plus/theme-chalk/dark/css-vars.css'],
-	modules: ["@element-plus/nuxt", "@pinia/nuxt", "@pinia-plugin-persistedstate/nuxt", "@nuxtjs/tailwindcss"],
+	css: ["~/assets/css/main.css", "element-plus/theme-chalk/dark/css-vars.css"],
+	modules: ["@element-plus/nuxt", "@pinia/nuxt", "pinia-plugin-persistedstate/nuxt", "@nuxtjs/tailwindcss"],
 
 	alias: {
 		"@": path.resolve(__dirname, "./")
@@ -44,12 +35,10 @@ export default defineNuxtConfig({
 	},
 
 	vite: {
-		plugins: [
-			vueJSX({}),
-		],
+		plugins: [vueJSX({})],
 		envDir: "env",
 		optimizeDeps: {
-			include: [...optimizeDepsElementPlusIncludes]
+			// include: [...optimizeDepsElementPlusIncludes]
 		},
 		// prevent vite from obscuring rust errors
 		clearScreen: false,
@@ -84,7 +73,7 @@ export default defineNuxtConfig({
 
 	app: {
 		rootId: "__easytier",
-		cdnURL: "./", 
+		cdnURL: "./",
 		buildAssetsDir: "__easytier/",
 		head: {
 			meta: [
@@ -102,5 +91,6 @@ export default defineNuxtConfig({
 			// script: [],
 			// noscript: []
 		}
-	}
+	},
+	compatibilityDate: "2024-11-12"
 });

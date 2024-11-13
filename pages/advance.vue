@@ -3,30 +3,47 @@
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.devName">自定义网卡名</ElCheckbox>
-			<ElInput maxlength="10" v-model="mainStore.config.devNameValue" placeholder="请输入网卡名"/>
+			<ElInput
+				maxlength="10"
+				v-model="mainStore.config.devNameValue"
+				placeholder="请输入网卡名"
+			/>
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.coonectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
 		<div class="flex items-center gap-[15px] flex-nowrap">
 			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
 			<div class="w-[140px]">
 				<ElSelect
 					v-model="mainStore.config.logLevel"
 					placeholder="请选择日志等级"
-					class="ml-[5px]">
+					class="ml-[5px]"
+				>
 					<ElOption
 						v-for="item in data"
 						:key="item"
 						:label="`level - ${item}`"
-						:value="item"></ElOption>
+						:value="item"
+					></ElOption>
 				</ElSelect>
 			</div>
 			<ElButton
 				@click="openLogDir"
-				size="small">
+				size="small"
+			>
 				打开日志目录
 			</ElButton>
 		</div>
+		<div><ElCheckbox v-model="mainStore.config.coonectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
+		<div class="flex items-center gap-[15px] flex-nowrap">
+			<ElCheckbox v-model="mainStore.createConfigInEasytier">自动生成界面配置文件easytier/config.json</ElCheckbox>
+			<ElButton
+				@click="openConfigJsonDir"
+				size="small"
+			>
+				打开config.json目录
+			</ElButton>
+		</div>
+
 		<ElDivider />
 		<div><ElCheckbox v-model="mainStore.config.enablExitNode">允许此节点成为出口节点</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableEncryption">禁用对等节点通信的加密，默认为false，必须与对等节点相同</ElCheckbox></div>
@@ -47,6 +64,7 @@
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { Command } from "@tauri-apps/plugin-shell";
 	import { exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
+	import { ElMessage } from "element-plus";
 
 	const mainStore = useMainStore();
 	const appWindow = getCurrentWindow();
@@ -63,8 +81,21 @@
 		}
 		await Command.create("explorer", [logDirPath]).execute();
 	};
-	mainStore.$subscribe((...a) => {
+	const openConfigJsonDir = async () => {
+		const resourceDir = await getResourceDir();
+		const easytierDir = await join(resourceDir, "easytier/");
+		const isExists = await exists("easytier/", { baseDir: BaseDirectory.Resource });
+		if (isExists) {
+			await Command.create("explorer", [easytierDir]).execute();
+		} else {
+			ElMessage.error("config.json的目录不存在");
+		}
+	};
+	mainStore.$subscribe(async (...a) => {
 		// console.log("subscribe", a);
-		appWindow.emitTo("main", "config", { config: { ...mainStore.config } });
+		await appWindow.emitTo("main", "config", { config: { ...mainStore.config }, createConfigInEasytier: mainStore.createConfigInEasytier });
+		// if(mainStore.createConfigInEasytier) {
+		// 	updateConfigJson();
+		// }
 	});
 </script>

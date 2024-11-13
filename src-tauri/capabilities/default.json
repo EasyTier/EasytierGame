@@ -84,6 +84,8 @@
     "fs:allow-open",
     "fs:allow-resource-read",
     "fs:allow-resource-read-recursive",
+    "fs:allow-resource-write",
+    "fs:allow-resource-write-recursive",
     "clipboard-manager:allow-clear",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text"

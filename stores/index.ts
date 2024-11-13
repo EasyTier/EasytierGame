@@ -35,6 +35,7 @@ export default defineStore("main", {
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
 			winIpBcAutoStart: true,
+			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 
 			winipBcPid: 0,
 			winipBcStart: false,

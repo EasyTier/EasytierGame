@@ -1,0 +1,22 @@
+{
+    // 如果您的配置过于复杂，可以参考 使用配置文件进行联机的办法，以下是基础的界面配置，用于快速分享联机
+    "protocol": [
+        "tcp",
+        "udp"
+    ], // 协议类型
+    "serverUrl": "public.easytier.top:11010", // easytier服务地址
+    "networkName": "",  // 网络名
+    "networkPassword": "", // 网络密码
+    "hostname": "configTest", // 主机名
+    "ipv4": "10.126.126.1", // IP地址(选填，下面有dhcp)
+    "disableIpv6": false, // 禁用ipv6
+    "disbleListenner": true, // 禁用端口监听
+    "disableEncryption": false, // 禁用加密
+    "noTun": false, // 禁用tun
+    "latencyfirst": false, // 延迟优先
+    "disableUdpHolePunching": false, // 禁用udp打洞
+    "disbleP2p": false,  // 禁用p2p, 强制中转
+    "dhcp": false,  // 动态分配IP
+    "devName": false, // 是否启用自定义网卡名
+    "devNameValue": "" // 网卡名(启用devName之后才生效)
+}

@@ -9,179 +9,179 @@
 			:element-loading-spinner="'<path />'"
 			element-loading-text="-------已经启用配置文件，界面配置不再生效-------" -->
 		<!-- <div> -->
-			<ElFormItem
-				label="服务器"
-				prop="serverUrl"
-			>
-				<template #label>
-					<div class="flex items-center gap-[0_5px]">
-						<div>服务器</div>
-						<span>-</span>
-						<ElTag
-							effect="dark"
-							:type="data.isSuccessGetIp ? 'success' : 'info'"
-						>
-							{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
-						</ElTag>
-						<ElButton
-							v-if="!data.coreVersion"
-							@click="getCoreVersion(true)"
-						>
-							获取内核版本
-						</ElButton>
-						<ElTag
-							v-else
-							type="info"
-						>
-							{{ data.coreVersion }}
-						</ElTag>
-						<ElPopconfirm
-							width="325"
-							cancel-button-text="取消"
-							confirm-button-text="继续"
-							title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
+		<ElFormItem
+			label="服务器"
+			prop="serverUrl"
+		>
+			<template #label>
+				<div class="flex items-center gap-[0_5px]">
+					<div>服务器</div>
+					<span>-</span>
+					<ElTag
+						effect="dark"
+						:type="data.isSuccessGetIp ? 'success' : 'info'"
+					>
+						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
+					</ElTag>
+					<ElButton
+						v-if="!data.coreVersion"
+						@click="getCoreVersion(true)"
+					>
+						获取内核版本
+					</ElButton>
+					<ElTag
+						v-else
+						type="info"
+					>
+						{{ data.coreVersion }}
+					</ElTag>
+					<ElPopconfirm
+						width="325"
+						cancel-button-text="取消"
+						confirm-button-text="继续"
+						title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
 						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
-							@confirm="handleUpdateCore"
+						@confirm="handleUpdateCore"
+					>
+						<template #reference>
+							<ElButton
+								:disabled="data.isStart"
+								:loading="data.update"
+								type="warning"
+								size="small"
+							>
+								{{ data.coreVersion ? "更新内核" : "下载内核" }}
+							</ElButton>
+						</template>
+					</ElPopconfirm>
+				</div>
+			</template>
+			<ElSelect
+				allow-create
+				filterable
+				default-first-option
+				v-model="config.serverUrl"
+				@change="handleServerUrlChange"
+			>
+				<template #prefix>
+					<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
+						<ElSelect
+							placeholder="协议"
+							multiple
+							collapse-tags
+							@click.stop
+							v-model="config.protocol"
+							@change="handleServerUrlChange"
 						>
-							<template #reference>
-								<ElButton
-									:disabled="data.isStart"
-									:loading="data.update"
-									type="warning"
-									size="small"
-								>
-									{{ data.coreVersion ? "更新内核" : "下载内核" }}
-								</ElButton>
-							</template>
-						</ElPopconfirm>
+							<ElOption
+								v-for="item in protocols"
+								:key="item"
+								:label="item"
+								:value="item"
+							></ElOption>
+						</ElSelect>
 					</div>
 				</template>
-				<ElSelect
-					allow-create
-					filterable
-					default-first-option
-					v-model="config.serverUrl"
-					@change="handleServerUrlChange"
+				<ElOption
+					v-for="item in mainStore.basePeers"
+					:key="item"
+					:label="item"
+					:value="item"
 				>
-					<template #prefix>
-						<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
-							<ElSelect
-								placeholder="协议"
-								multiple
-								collapse-tags
-								@click.stop
-								v-model="config.protocol"
-								@change="handleServerUrlChange"
-							>
-								<ElOption
-									v-for="item in protocols"
-									:key="item"
-									:label="item"
-									:value="item"
-								></ElOption>
-							</ElSelect>
-						</div>
-					</template>
-					<ElOption
-						v-for="item in mainStore.basePeers"
-						:key="item"
-						:label="item"
-						:value="item"
-					>
-						<div class="flex items-center justify-between">
-							<span style="float: left">{{ item }}</span>
-							<ElButton
-								@click.stop="handleDeleteServerUrl(item)"
-								round
-								:icon="Delete"
-								type="danger"
-							></ElButton>
-						</div>
-					</ElOption>
-				</ElSelect>
-			</ElFormItem>
-			<div class="flex flex-wrap gap-[0_10px] items-center">
-				<div class="flex-1">
-					<ElFormItem label="网络名">
-						<template #label>
-							<div class="flex items-center">
-								网络名
-								<ElTooltip content="对应命令行参数 --network-name">
-									<ElIcon><QuestionFilled /></ElIcon>
-								</ElTooltip>
-							</div>
-						</template>
-						<ElInput
-							maxlength="100"
-							placeholder="请输入网络名"
-							v-model="config.networkName"
-						></ElInput>
-					</ElFormItem>
-				</div>
-				<div class="flex-1">
-					<ElFormItem label="网络密码">
-						<template #label>
-							<div class="flex items-center">
-								网络密码
-								<ElTooltip content="对应命令行参数 --network-secret">
-									<ElIcon><QuestionFilled /></ElIcon>
-								</ElTooltip>
-							</div>
-						</template>
-						<ElInput
-							show-password
-							maxlength="100"
-							placeholder="请输入网络密码"
-							v-model="config.networkPassword"
-							type="password"
-						></ElInput>
-					</ElFormItem>
-				</div>
-			</div>
-			<div class="flex gap-[0_10px]">
-				<ElFormItem label="主机名">
+					<div class="flex items-center justify-between">
+						<span style="float: left">{{ item }}</span>
+						<ElButton
+							@click.stop="handleDeleteServerUrl(item)"
+							round
+							:icon="Delete"
+							type="danger"
+						></ElButton>
+					</div>
+				</ElOption>
+			</ElSelect>
+		</ElFormItem>
+		<div class="flex flex-wrap gap-[0_10px] items-center">
+			<div class="flex-1">
+				<ElFormItem label="网络名">
 					<template #label>
 						<div class="flex items-center">
-							主机名
-							<ElTooltip content="对应命令行参数 --hostname">
+							网络名
+							<ElTooltip content="对应命令行参数 --network-name">
 								<ElIcon><QuestionFilled /></ElIcon>
 							</ElTooltip>
 						</div>
 					</template>
 					<ElInput
 						maxlength="100"
-						placeholder="例如: Player1"
-						v-model="config.hostname"
-					></ElInput>
-				</ElFormItem>
-				<ElFormItem
-					class="w-[70%]"
-					label="局域网IP"
-				>
-					<template #label>
-						<div class="flex items-center h-[20px]">
-							虚拟网IP
-							<ElTooltip content="对应命令行参数 --ipv4">
-								<ElIcon><QuestionFilled /></ElIcon>
-							</ElTooltip>
-							<ElSwitch
-								v-model="config.dhcp"
-								class="ml-[5px]"
-								inline-prompt
-								inactive-text="固定IP"
-								active-text="动态获取IP"
-								size="small"
-							></ElSwitch>
-						</div>
-					</template>
-					<ElInput
-						maxlength="100"
-						:disabled="config.dhcp"
-						:placeholder="data.isStart && config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
-						v-model="config.ipv4"
+						placeholder="请输入网络名"
+						v-model="config.networkName"
 					></ElInput>
 				</ElFormItem>
 			</div>
+			<div class="flex-1">
+				<ElFormItem label="网络密码">
+					<template #label>
+						<div class="flex items-center">
+							网络密码
+							<ElTooltip content="对应命令行参数 --network-secret">
+								<ElIcon><QuestionFilled /></ElIcon>
+							</ElTooltip>
+						</div>
+					</template>
+					<ElInput
+						show-password
+						maxlength="100"
+						placeholder="请输入网络密码"
+						v-model="config.networkPassword"
+						type="password"
+					></ElInput>
+				</ElFormItem>
+			</div>
+		</div>
+		<div class="flex gap-[0_10px]">
+			<ElFormItem label="主机名">
+				<template #label>
+					<div class="flex items-center">
+						主机名
+						<ElTooltip content="对应命令行参数 --hostname">
+							<ElIcon><QuestionFilled /></ElIcon>
+						</ElTooltip>
+					</div>
+				</template>
+				<ElInput
+					maxlength="100"
+					placeholder="例如: Player1"
+					v-model="config.hostname"
+				></ElInput>
+			</ElFormItem>
+			<ElFormItem
+				class="w-[70%]"
+				label="局域网IP"
+			>
+				<template #label>
+					<div class="flex items-center h-[20px]">
+						虚拟网IP
+						<ElTooltip content="对应命令行参数 --ipv4">
+							<ElIcon><QuestionFilled /></ElIcon>
+						</ElTooltip>
+						<ElSwitch
+							v-model="config.dhcp"
+							class="ml-[5px]"
+							inline-prompt
+							inactive-text="固定IP"
+							active-text="动态获取IP"
+							size="small"
+						></ElSwitch>
+					</div>
+				</template>
+				<ElInput
+					maxlength="100"
+					:disabled="config.dhcp"
+					:placeholder="data.isStart && config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
+					v-model="config.ipv4"
+				></ElInput>
+			</ElFormItem>
+		</div>
 		<!-- </div> -->
 		<div class="flex items-start">
 			<div>
@@ -303,6 +303,8 @@
 	<ElDialog
 		width="95%"
 		top="10px"
+		append-to-body
+		:z-index="10"
 		class="!mb-0"
 		v-model="importConfigData.visible"
 		:close-on-press-escape="false"
@@ -316,7 +318,7 @@
 		></ElInput>
 		<template #footer>
 			<div>
-				<el-text type="danger">导入成功后，您当前的配置将被完全替换</el-text>
+				<el-text type="danger">导入成功后，您当前的部分配置将被替换</el-text>
 			</div>
 			<div class="text-right">
 				<ElButton
@@ -332,6 +334,8 @@
 	<ElDialog
 		width="95%"
 		top="30px"
+		append-to-body
+		:z-index="10"
 		class="!mb-0"
 		v-model="configStart.visible"
 		:close-on-press-escape="false"
@@ -400,8 +404,10 @@
 	import etWindows from "@/composables/windows";
 	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
+	import { readDir, exists, mkdir, BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
+	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
+	import { bounce } from "~/utils";
 
 	let is_close = false;
 
@@ -506,7 +512,6 @@
 				const start = logArr.length > 1000 ? logArr.length - 1000 : 0;
 				data.log = logArr.slice(start).join("\n");
 				data.log += (event.payload as string) + "\n";
-
 			});
 			this.unListenOutPut = unListen;
 		},
@@ -630,15 +635,15 @@
 
 	const compatibleInitAutoStart = async () => {
 		try {
-			const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-			if (is_enable_by_task) {
-				await tauriAutoStart.enable();
-				await invoke("spawn_autostart", { enabled: false });
-			}
+			// const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
+			// if (is_enable_by_task) {
+			// 	await tauriAutoStart.enable();
+			// 	await invoke("spawn_autostart", { enabled: false });
+			// }
 			const is_enable = await tauriAutoStart.isEnabled();
 			config.autoStart = is_enable;
 		} catch (err) {
-			await invoke("spawn_autostart", { enabled: false });
+			// await invoke("spawn_autostart", { enabled: false });
 			await tauriAutoStart.disable();
 			config.autoStart = false;
 		}
@@ -651,10 +656,49 @@
 		}
 	};
 
+	const initGuiJson = async () => {
+		const path = import.meta.env.VITE_CONFIG_FILE_NAME;
+		const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
+		if (isExists) {
+			const guiJsonStr = await readTextFile(path, { baseDir: BaseDirectory.Resource });
+			if (guiJsonStr) {
+				try {
+					const regex = /^(\s*\/\/.*)/gm;
+					const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
+					const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
+					const guiJson = JSON.parse(resultStr);
+					mainStore.$patch({
+						config: {
+							...mainStore.config,
+							...guiJson
+						}
+					});
+					if (guiJson.serverUrl) {
+						mainStore.basePeers = [...new Set([guiJson.serverUrl, ...mainStore.basePeers])];
+					}
+				} catch (err) {
+					ElMessage.error(`config.json格式错误`);
+				}
+			}
+		}
+		const b = bounce(600);
+		mainStore.$subscribe(
+			(...a) => {
+				if (mainStore.createConfigInEasytier) {
+					b(async () => {
+						await updateConfigJson();
+					});
+				}
+			},
+			{ immediate: true }
+		);
+	};
+
 	let logsTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
+		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();
 		await initStartWinIpBroadcast();
@@ -785,10 +829,10 @@
 			if (!args || args.length <= 0) {
 				return ElMessage.error("无配置");
 			}
-			if(args[0] === "-c") {
+			if (args[0] === "-c") {
 				ElMessage.warning({
 					message: "使用配置文件中.",
-					duration: 5000,
+					duration: 5000
 				});
 			}
 			data.log = ""; //清空日志
@@ -826,7 +870,20 @@
 		}
 		if (command === "share_config") {
 			try {
-				const WT = btoa(encodeURIComponent(JSON.stringify({ config: mainStore.config })))
+				const {
+					proxyNetworks,
+					autoStart,
+					coonectAfterStart,
+					multiThread,
+					hostname,
+					enablExitNode,
+					useSmoltcp,
+					saveErrorLog,
+					logLevel,
+					ipv4,
+					...otherConfig
+				} = mainStore.config;
+				const WT = btoa(encodeURIComponent(JSON.stringify({ config: otherConfig })));
 				await writeText(WT);
 				ElMessage.success("配置已复制");
 			} catch (err) {
@@ -847,11 +904,17 @@
 				cancelButtonText: "取消"
 			});
 			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
-			mainStore.$patch(payload);
+			mainStore.$patch({
+				config: {
+					...mainStore.config,
+					...payload.config
+				}
+			});
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
 			mainStore.basePeers = [...new Set([config.serverUrl, ...mainStore.basePeers])];
 		} catch (err) {
+			console.log(err);
 			if (err !== "cancel") {
 				ElMessage.error("导入失败");
 			}

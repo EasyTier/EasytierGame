@@ -43,7 +43,7 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 
 - 1.1.8 新增了 生成 easytier/config.json 的功能 会将一部分配置写入到 config.json 文件中，方便用户自定义配置，你可以在高级设置里启用和关闭这个功能(默认关闭)
 **需要注意的是，如果config.json存在，每次启动easytierGame默认按照config.json的配置为准**
-**你可以查看 config_template.json 里的注释进行配置**
+**解压zip后你可以查看 easytier/config_template.json 里的注释进行配置**
 ![game-step10](/assets/game-step10.png)
 
 ## 特性

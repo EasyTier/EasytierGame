@@ -60,7 +60,8 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_core_version() -> String {
-    match Command::new("easytier/easytier-core.exe")
+    let core_path = get_tool_exe_path(String::from("\\easytier\\easytier-core.exe"));
+    match Command::new(&core_path)
         .arg("--version")
         .creation_flags(0x08000000)
         .output()
@@ -73,19 +74,27 @@ fn get_core_version() -> String {
     }
 }
 
-#[tauri::command(rename_all = "snake_case")]
-fn get_cli_version() -> String {
-    match Command::new("easytier/easytier-cli.exe")
-        .arg("--version")
-        .creation_flags(0x08000000)
-        .output()
-    {
-        Ok(output) => {
-            let output_str = String::from_utf8_lossy(&output.stdout);
-            return output_str.trim().to_string();
-        }
-        Err(_e) => return "".to_string(),
-    }
+// #[tauri::command(rename_all = "snake_case")]
+// #[warn(dead_code)]
+// fn get_cli_version() -> String {
+//     let cli_path = get_tool_exe_path(String::from("\\easytier\\easytier-cli.exe"));
+//     match Command::new(&cli_path)
+//         .arg("--version")
+//         .creation_flags(0x08000000)
+//         .output()
+//     {
+//         Ok(output) => {
+//             let output_str = String::from_utf8_lossy(&output.stdout);
+//             return output_str.trim().to_string();
+//         }
+//         Err(_e) => return "".to_string(),
+//     }
+// }
+
+fn get_tool_exe_path(path: String) -> String {
+    let cur_vec = get_exe_directory();
+    let tool_path = cur_vec[1].to_string() + &path.to_string();
+    return tool_path;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -122,7 +131,8 @@ struct MyResponse {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_members_by_cli() -> String {
-    match Command::new("easytier/easytier-cli.exe")
+    let cli_path = get_tool_exe_path(String::from("\\easytier\\easytier-cli.exe"));
+    match Command::new(&cli_path)
         .arg("peer")
         .arg("list")
         .creation_flags(0x08000000)
@@ -142,14 +152,17 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
     let response = reqwest::get(target)
         .await
         .expect("error to download easytier url");
-    let file_path = format!("./easytier/{}", file_name);
+    let easytier_path = get_tool_exe_path(String::from("\\easytier"));
+    let file_path = format!("{}\\{}", easytier_path, file_name);
+    println!("download easytier to {}", file_path);
 
-    let easytier_dir = path::Path::new("./easytier");
+    let easytier_dir = path::Path::new(&easytier_path);
     if !easytier_dir.exists() {
         fs::create_dir_all(&easytier_dir).unwrap();
     }
 
     let path = path::Path::new(&file_path);
+    println!("download easytier to {}", path.display());
 
     let mut file = match File::create(&path) {
         Err(why) => panic!("couldn't create {}", why),
@@ -197,8 +210,8 @@ fn unzip(fname: &path::Path) {
         //         fs::create_dir_all(p).unwrap();
         //     }
         // }
-
-        let easytier_dir = path::Path::new("./easytier");
+        let easytier_path = get_tool_exe_path(String::from("\\easytier"));
+        let easytier_dir = path::Path::new(&easytier_path);
         // if !easytier_dir.exists() {
         //     fs::create_dir_all(&easytier_dir).unwrap();
         // }
@@ -225,8 +238,9 @@ fn run_command(
     let stop_signal2 = Arc::clone(&stop_signal);
     let args2 = args.clone();
     thread::spawn(move || {
+        let core_path = get_tool_exe_path(String::from("\\easytier\\easytier-core.exe"));
         // trace, debug, info, warn, error, off
-        let mut child = Command::new("easytier/easytier-core.exe")
+        let mut child = Command::new(&core_path)
             .args(args)
             .creation_flags(0x08000000)
             .stdout(Stdio::piped())
@@ -355,7 +369,7 @@ fn get_exe_directory() -> Vec<String> {
     let mut ret_vec: Vec<String> = Vec::new();
     match std::env::current_exe() {
         Ok(exe_path) => {
-            println!("Path of this executable is: {}", exe_path.display());
+            // println!("Path of this executable is: {}", exe_path.display());
             ret_vec.push(exe_path.display().to_string());
             ret_vec.push(exe_path.parent().unwrap().display().to_string());
             return ret_vec;
@@ -436,6 +450,8 @@ fn autostart_is_enabled() -> bool {
     }
 }
 
+pub const AUTOSTART_ARG: &str = "--autostart";
+pub const TASKAUTOSTART_ARG: &str = "--task-auto-start";
 fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error>> {
     if !enabled {
         unsafe {
@@ -486,7 +502,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
         sb.create_logon()
             .author("heixiansen")?
             .trigger("trigger", enabled)?
-            .action(Action::new("auto start", exe, "", ""))?
+            .action(Action::new("auto start", exe, "", &TASKAUTOSTART_ARG))?
             .in_folder("easytierGame")?
             .principal(settings)?
             .delay(Duration {
@@ -499,10 +515,11 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-pub const AUTOSTART_ARG: &str = "--autostart";
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 获取命令行参数
+    let _args: Vec<String> = std::env::args().collect();
+
     let stop_signal = Arc::new(AtomicBool::new(false)); // 创建一个原子布尔值，用于控制命令的停止
     let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
@@ -518,9 +535,11 @@ pub fn run() {
             let _ = app
                 .get_webview_window("main")
                 .expect("no main window")
-                .set_focus();
+                .set_focus()
+                .expect("failed to set focus");
         }))
-        .setup(|app| {
+        .setup(move |app| {
+            // let args = args.clone();
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
@@ -547,6 +566,13 @@ pub fn run() {
                 ))?)
                 .icon_as_template(false)
                 .build(app)?;
+            // 开机自启隐藏到托盘
+            // if args.contains(&String::from(TASKAUTOSTART_ARG)) {
+            //     app.get_webview_window("main")
+            //     .expect("no main window to hide")
+            //     .hide()?;
+            // }
+
             Ok(())
         })
         .manage(stop_signal_clone)
@@ -556,7 +582,6 @@ pub fn run() {
             get_core_version,
             fetch_easytier_list,
             download_easytier_zip,
-            get_cli_version,
             get_members_by_cli,
             search_pid_by_pname,
             get_exe_directory,

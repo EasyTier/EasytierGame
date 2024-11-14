@@ -41,7 +41,7 @@
           "args": [
             "run"
           ],
-          "cmd": "easytier/tool/WinIPBroadcast",
+          "cmd": "$RESOURCE/easytier/tool/WinIPBroadcast",
           "name": "WinIPBroadcast"
         }
       ]
@@ -53,12 +53,12 @@
           "args": [
             "run"
           ],
-          "cmd": "easytier/tool/WinIPBroadcast",
+          "cmd": "$RESOURCE/easytier/tool/WinIPBroadcast",
           "name": "WinIPBroadcast"
         },
         {
           "args": true,
-          "cmd": "easytier/tool/nssm",
+          "cmd": "$RESOURCE/easytier/tool/nssm",
           "name": "nssm"
         },
         {

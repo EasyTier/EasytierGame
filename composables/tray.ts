@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import pkg from "@/package.json";
 import { setTheme } from "~/composables/theme";
 import useMainStore from "@/stores/index";
+import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 
 const DEFAULT_TRAY_NAME = "main";
 
@@ -113,7 +114,10 @@ export async function MenuItemTheme() {
 
 export async function setTrayRunState(tray: TrayIcon | null, isRunning: boolean = false) {
 	if (!tray) return;
-	await tray.setIcon(isRunning ? "easytier/icons/icon-inactive.ico" : "easytier/icons/icon.ico");
+	const resourceDir = await getResourceDir();
+	const path = await join(resourceDir, isRunning ? "easytier/icons/icon-inactive.ico" : "easytier/icons/icon.ico");
+	// "easytier/icons/icon-inactive.ico", { baseDir: BaseDirectory.Resource }
+	await tray.setIcon(path);
 }
 
 export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | null) {

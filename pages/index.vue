@@ -59,6 +59,7 @@
 			<ElSelect
 				allow-create
 				filterable
+				placeholder="请选择服务器地址"
 				default-first-option
 				v-model="config.serverUrl"
 				@change="handleServerUrlChange"
@@ -88,14 +89,18 @@
 					:label="item"
 					:value="item"
 				>
-					<div class="flex items-center justify-between">
-						<span style="float: left">{{ item }}</span>
-						<ElButton
-							@click.stop="handleDeleteServerUrl(item)"
-							round
-							:icon="Delete"
-							type="danger"
-						></ElButton>
+					<div class="flex items-center gap-[20px] overflow-hidden flex-nowrap max-w-[calc(100vw-62px)]">
+						<ElTooltip :content="item">
+							<p class="truncate">{{ item }}</p>
+						</ElTooltip>
+						<div class="flex-shrink-0 ml-auto">
+							<ElButton
+								@click.stop="handleDeleteServerUrl(item)"
+								round
+								:icon="Delete"
+								type="danger"
+							></ElButton>
+						</div>
 					</div>
 				</ElOption>
 			</ElSelect>
@@ -407,6 +412,7 @@
 	import { readDir, exists, mkdir, BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
+	import { sortedUniq, uniq } from "lodash-es";
 	import { bounce } from "~/utils";
 
 	let is_close = false;
@@ -436,7 +442,8 @@
 		isSuccessGetIp: false,
 		startLoading: false,
 		isStart: false,
-		connectionSuccess: false
+		connectionSuccess: false,
+		configJsonSeverUrl: "" // 本地保存一次，用于回填config.json
 	});
 
 	const configStart = reactive<{ list: Array<{ path: string; name: string }>; [key: string]: any }>({
@@ -474,11 +481,11 @@
 			}
 			newBasePeers.splice(idx, 1);
 		}
-		mainStore.basePeers = [...new Set([...newBasePeers])];
+		mainStore.basePeers = uniq([...newBasePeers]);
 	};
 
 	const handleServerUrlChange = () => {
-		mainStore.basePeers = [...new Set([config.serverUrl, ...mainStore.basePeers])];
+		mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers]);
 	};
 
 	const listenObj: { [key: string]: any } = {
@@ -493,6 +500,7 @@
 				if (event.payload) {
 					data.startLoading = false;
 					let ipv4 = /dhcp ip changed. old: None, new: Some\((\d+\.\d+\.\d+\.\d+).*\)/g.exec(event.payload as string)?.[1];
+					let devName = /tun device ready. dev: (.*)/g.exec(event.payload as string)?.[1];
 					if (config.dhcp || mainStore.configStartEnable) {
 						if (ipv4) {
 							config.ipv4 = ipv4;
@@ -505,6 +513,26 @@
 							await setTrayRunState(tray, true);
 							data.isSuccessGetIp = true;
 							await setTrayTooltip(tray, `IP: ${config.ipv4}`);
+						}
+					}
+					if (
+						devName &&
+						mainStore.config.enableNetCardMetric &&
+						mainStore.config.netCardMetricValue &&
+						mainStore.config.netCardMetricValue >= 1 &&
+						mainStore.config.netCardMetricValue <= 9999
+					) {
+						try {
+							const output = await Command.create(
+								"netsh",
+								["interface", "ipv4", "set", "interface", devName, "metric=", `${mainStore.config.netCardMetricValue}`],
+								{
+									encoding: "gb2312"
+								}
+							).execute();
+						} catch (err) {
+							console.log(err);
+							ElMessage.error("跃点设置失败");
 						}
 					}
 				}
@@ -667,14 +695,28 @@
 					const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
 					const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
 					const guiJson = JSON.parse(resultStr);
+					let saveServerUrl = "";
+					if (guiJson.serverUrl) {
+						if (Array.isArray(guiJson.serverUrl)) {
+							mainStore.basePeers = uniq([...guiJson.serverUrl, ...mainStore.basePeers]);
+						}
+						if (typeof guiJson.serverUrl === "string") {
+							mainStore.basePeers = uniq([...guiJson.serverUrl.split(","), ...mainStore.basePeers]);
+						}
+						saveServerUrl = mainStore.basePeers[0] || "";
+					} else {
+						saveServerUrl = mainStore.basePeers.length > 0 ? mainStore.basePeers[0] || "" : "";
+					}
+					data.configJsonSeverUrl = guiJson.serverUrl;
 					mainStore.$patch({
 						config: {
+							...guiJson,
 							...mainStore.config,
-							...guiJson
+							serverUrl: saveServerUrl
 						}
 					});
-					if (guiJson.serverUrl) {
-						mainStore.basePeers = [...new Set([guiJson.serverUrl, ...mainStore.basePeers])];
+					if (mainStore.createConfigInEasytier) {
+						await updateConfigJson(data.configJsonSeverUrl);
 					}
 				} catch (err) {
 					ElMessage.error(`config.json格式错误`);
@@ -682,16 +724,13 @@
 			}
 		}
 		const b = bounce(600);
-		mainStore.$subscribe(
-			(...a) => {
-				if (mainStore.createConfigInEasytier) {
-					b(async () => {
-						await updateConfigJson();
-					});
-				}
-			},
-			{ immediate: true }
-		);
+		mainStore.$subscribe((...a) => {
+			if (mainStore.createConfigInEasytier) {
+				b(async () => {
+					await updateConfigJson(data.configJsonSeverUrl);
+				});
+			}
+		});
 	};
 
 	let logsTimer: NodeJS.Timeout | null = null;
@@ -912,7 +951,7 @@
 			});
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
-			mainStore.basePeers = [...new Set([config.serverUrl, ...mainStore.basePeers])];
+			mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers]);
 		} catch (err) {
 			console.log(err);
 			if (err !== "cancel") {

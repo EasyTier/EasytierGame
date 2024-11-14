@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "easytier-game",
-	"version": "1.1.8",
+	"version": "1.1.9",
 	"identifier": "com.tauri.easytier-game",
 
 	"build": {
@@ -13,7 +13,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "easytier-game 1.1.8",
+				"title": "easytier-game 1.1.9",
 				"minWidth": 340,
 				"width": 340,
 				"height": 305,

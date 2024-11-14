@@ -27,7 +27,9 @@ export default defineStore("main", {
 				saveErrorLog: true, // 是否保存错误日志
 				logLevel: "error", //日志等级
 				devName: false, //自定义网卡名
-				devNameValue: "" //自定义网卡名
+				devNameValue: "", //自定义网卡名
+				enableNetCardMetric: false, //启用网卡自定义跃点
+				netCardMetricValue: 1 //自定义网卡跃点值
 			},
 			cidrEnable: false,
 			basePeers: ["public.easytier.top:11010"],
@@ -38,15 +40,49 @@ export default defineStore("main", {
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 
 			winipBcPid: 0,
-			winipBcStart: false,
-
+			winipBcStart: false
 		};
 	},
 	persist: {
-		// 除了这些，其他都要存下来
-		omit: [
-			"winipBcPid",
-			"winipBcStart"
-		]
+		// 防止持久化保存 用户使用config.json输入的无用的字段
+		pick: [
+			"config.protocol",
+			"config.serverUrl",
+			"config.networkName",
+			"config.networkPassword",
+			"config.hostname",
+			"config.ipv4",
+			"config.proxyNetworks",
+			"config.autoStart",
+			"config.coonectAfterStart",
+			"config.disableIpv6",
+			"config.disbleListenner",
+			"config.disableEncryption",
+			"config.multiThread",
+			"config.enablExitNode",
+			"config.noTun",
+			"config.latencyfirst",
+			"config.useSmoltcp",
+			"config.disableUdpHolePunching",
+			"config.relayAllPeerrpc",
+			"config.disbleP2p",
+			"config.dhcp",
+			"config.saveErrorLog",
+			"config.logLevel",
+			"config.devName",
+			"config.devNameValue",
+			"config.enableNetCardMetric",
+			"config.netCardMetricValue",
+
+			"cidrEnable",
+			"basePeers",
+			"theme",
+			"configStartEnable",
+			"configPath",
+			"winIpBcAutoStart",
+			"createConfigInEasytier"
+		],
+		// // 除了这些，其他都要存下来
+		// omit: ["winipBcPid", "winipBcStart"]
 	}
 });

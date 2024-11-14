@@ -3,3 +3,4 @@
 /target/
 /gen/schemas
 /easytier/logs
+/easytier/logs/*.*

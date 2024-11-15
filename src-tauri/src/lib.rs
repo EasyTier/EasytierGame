@@ -518,12 +518,17 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 获取命令行参数
-    let _args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
 
     let stop_signal = Arc::new(AtomicBool::new(false)); // 创建一个原子布尔值，用于控制命令的停止
     let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(tauri_plugin_window_state::StateFlags::SIZE)
+                .build(),
+        )
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
@@ -539,7 +544,7 @@ pub fn run() {
                 .expect("failed to set focus");
         }))
         .setup(move |app| {
-            // let args = args.clone();
+            let args = args.clone();
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
@@ -566,12 +571,13 @@ pub fn run() {
                 ))?)
                 .icon_as_template(false)
                 .build(app)?;
-            // 开机自启隐藏到托盘
-            // if args.contains(&String::from(TASKAUTOSTART_ARG)) {
-            //     app.get_webview_window("main")
-            //     .expect("no main window to hide")
-            //     .hide()?;
-            // }
+
+            // 开机自启隐藏到托盘或者显示主窗口
+            if !args.contains(&String::from(TASKAUTOSTART_ARG)) {
+                let main_window = app.get_webview_window("main").unwrap();
+                main_window.show().expect("failed to show window");
+                main_window.set_focus().expect("failed to set focus");
+            }
 
             Ok(())
         })

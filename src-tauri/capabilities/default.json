@@ -88,6 +88,8 @@
     "fs:allow-resource-write-recursive",
     "clipboard-manager:allow-clear",
     "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-write-text"
+    "clipboard-manager:allow-write-text",
+
+    "window-state:default"
   ]
 }

@@ -1176,7 +1176,7 @@ checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "easytier-game"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "log",
  "planif",
@@ -1192,6 +1192,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
+ "tauri-plugin-window-state",
  "whoami",
  "windows 0.58.0",
  "zip",
@@ -4541,6 +4542,21 @@ dependencies = [
  "thiserror 1.0.64",
  "windows-sys 0.59.0",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-window-state"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "683c8764751fbbcebf3a594bcee24cf84c62773fa0080d1b40fc80698472421e"
+dependencies = [
+ "bitflags 2.6.0",
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 1.0.64",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.2.0"
+version = "1.2.1"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -50,3 +50,4 @@ features = ["Win32_System_TaskScheduler"]
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-autostart = "2.0.1"
 tauri-plugin-single-instance = "2.0.1"
+tauri-plugin-window-state = "2"

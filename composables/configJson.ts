@@ -15,7 +15,7 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 			proxyNetworks,
 			autoStart,
 			relayAllPeerrpc,
-			coonectAfterStart,
+			connectAfterStart,
 			multiThread,
 			enablExitNode,
 			useSmoltcp,

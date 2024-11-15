@@ -570,7 +570,7 @@
 		},
 		async listenConfigStart() {
 			const unListen = await listen("config", event => {
-				// console.log("config", event.payload);
+				console.log("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
@@ -695,6 +695,7 @@
 			is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 			config.autoStart = is_enable_by_task;
 		} catch (err) {
+			console.log(err);
 			await invoke("spawn_autostart", { enabled: false });
 			const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 			config.autoStart = is_enable_by_task;
@@ -702,7 +703,7 @@
 	};
 
 	const initConnectAfterStart = async () => {
-		if (config.coonectAfterStart && data.coreVersion) {
+		if (config.connectAfterStart && data.coreVersion) {
 			await reset();
 			await handleConnection();
 		}
@@ -743,6 +744,7 @@
 						await updateConfigJson(data.configJsonSeverUrl);
 					}
 				} catch (err) {
+					console.log(err);
 					ElMessage.error(`config.json格式错误`);
 				}
 			}
@@ -936,7 +938,7 @@
 				const {
 					proxyNetworks,
 					autoStart,
-					coonectAfterStart,
+					connectAfterStart,
 					multiThread,
 					hostname,
 					enablExitNode,
@@ -992,7 +994,9 @@
 			mainStore.configPath = "";
 			try {
 				await mkdir(path, { baseDir: BaseDirectory.Resource });
-			} catch (err) {}
+			} catch (err) {
+				console.log(err);
+			}
 		}
 	};
 

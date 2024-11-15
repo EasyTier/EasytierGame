@@ -26,7 +26,7 @@
 				打开日志目录
 			</ElButton>
 		</div>
-		<div><ElCheckbox v-model="mainStore.config.coonectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
+		<div><ElCheckbox v-model="mainStore.config.connectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
 		<div class="flex items-center gap-[15px] flex-nowrap">
 			<ElCheckbox v-model="mainStore.createConfigInEasytier">自动生成界面配置文件easytier/config.json</ElCheckbox>
 			<ElButton

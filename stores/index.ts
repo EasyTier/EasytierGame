@@ -11,7 +11,7 @@ export default defineStore("main", {
 				ipv4: "",
 				proxyNetworks: "", // 子网代理
 				autoStart: false, // 是否自动启动
-				coonectAfterStart: false, //软件打开后，是否自动连接
+				connectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: false, // 是否禁用加密
@@ -54,7 +54,7 @@ export default defineStore("main", {
 			"config.ipv4",
 			"config.proxyNetworks",
 			"config.autoStart",
-			"config.coonectAfterStart",
+			"config.connectAfterStart",
 			"config.disableIpv6",
 			"config.disbleListenner",
 			"config.disableEncryption",

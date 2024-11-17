@@ -36,7 +36,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 			});
 		}
 	} catch (error) {
-		console.warn("Error while creating tray icon:", error);
+		console.error("Error while creating tray icon:", error);
 		return null;
 	}
 

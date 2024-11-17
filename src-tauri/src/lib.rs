@@ -70,7 +70,10 @@ fn get_core_version() -> String {
             let output_str = String::from_utf8_lossy(&output.stdout);
             return output_str.trim().to_string();
         }
-        Err(_e) => return "".to_string(),
+        Err(_e) => {
+            log::error!("{}", _e.to_string());
+            return "".to_string();
+        }
     }
 }
 
@@ -176,7 +179,7 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
     unzip(path);
     match fs::remove_file(path) {
         Ok(_) => println!("删除zip文件成功"),
-        Err(_) => println!("删除zip文件失败"),
+        Err(_) => log::error!("删除zip文件失败"),
     }
 }
 
@@ -263,7 +266,7 @@ fn run_command(
                     tx.send(line).expect("failed to send line");
                 }
                 Err(e) => {
-                    eprintln!("error reading line: {}", e);
+                    log::error!("error reading line: {}", e);
                     break;
                 }
             }
@@ -392,7 +395,7 @@ fn spawn_autostart(enabled: bool) {
             let _ = tx.send(true);
         }
         Err(e) => {
-            println!("Error: {}", e);
+            log::error!("Error: {}", e);
             let _ = tx.send(false);
         }
     });
@@ -444,7 +447,7 @@ fn autostart_is_enabled() -> bool {
             return enabled;
         }
         Err(e) => {
-            println!("autostart enabled: false -> {}", e);
+            log::error!("autostart enabled: false -> {}", e);
             return false;
         }
     }
@@ -545,13 +548,21 @@ pub fn run() {
         }))
         .setup(move |app| {
             let args = args.clone();
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            // if cfg!(debug_assertions) {
+            let log_path = get_tool_exe_path(String::from("\\easytier\\guiLogs"));
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .target(tauri_plugin_log::Target::new(
+                        tauri_plugin_log::TargetKind::Folder {
+                            path: std::path::PathBuf::from(log_path),
+                            file_name: None,
+                        },
+                    ))
+                    .max_file_size(50_000 /* bytes */)
+                    .level(log::LevelFilter::Error)
+                    .build(),
+            )?;
+            // }
             #[cfg(not(target_os = "android"))]
             let _tray_menu = TrayIconBuilder::with_id("main")
                 .menu_on_left_click(false)

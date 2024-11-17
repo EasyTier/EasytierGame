@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@tauri-apps/plugin-window-state':
-        specifier: ~2
-        version: 2.0.0
     devDependencies:
       '@element-plus/icons-vue':
         specifier: ^2.3.1
@@ -45,9 +41,15 @@ importers:
       '@tauri-apps/plugin-http':
         specifier: ^2.0.1
         version: 2.0.1
+      '@tauri-apps/plugin-log':
+        specifier: ^2.0.0
+        version: 2.0.0
       '@tauri-apps/plugin-shell':
         specifier: ~2
         version: 2.0.1
+      '@tauri-apps/plugin-window-state':
+        specifier: ~2
+        version: 2.0.0
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12
@@ -1047,6 +1049,9 @@ packages:
 
   '@tauri-apps/plugin-http@2.0.1':
     resolution: {integrity: sha512-j6IA3pVBybSCwPpsihpX4z8bs6PluuGtr06ahL/xy4D8HunNBTmRmadJrFOQi0gOAbaig4MkQ15nzNLBLy8R1A==}
+
+  '@tauri-apps/plugin-log@2.0.0':
+    resolution: {integrity: sha512-C+NII9vzswqnOQE8k7oRtnaw0z5TZsMmnirRhXkCKDEhQQH9841Us/PC1WHtGiAaJ8za1A1JB2xXndEq/47X/w==}
 
   '@tauri-apps/plugin-shell@2.0.1':
     resolution: {integrity: sha512-akU1b77sw3qHiynrK0s930y8zKmcdrSD60htjH+mFZqv5WaakZA/XxHR3/sF1nNv9Mgmt/Shls37HwnOr00aSw==}
@@ -4759,6 +4764,10 @@ snapshots:
       '@tauri-apps/api': 2.1.1
 
   '@tauri-apps/plugin-http@2.0.1':
+    dependencies:
+      '@tauri-apps/api': 2.1.1
+
+  '@tauri-apps/plugin-log@2.0.0':
     dependencies:
       '@tauri-apps/api': 2.1.1
 

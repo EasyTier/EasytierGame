@@ -3,7 +3,7 @@
 	"private": true,
 	"author": "leizi97",
 	"description": "A simple network initiator based on Easytier",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"scripts": {
 		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
 		"build": "nuxt generate --dotenv env/.env.prod"
@@ -20,6 +20,7 @@
 		"@tauri-apps/plugin-clipboard-manager": "^2.0.0",
 		"@tauri-apps/plugin-fs": "~2",
 		"@tauri-apps/plugin-http": "^2.0.1",
+		"@tauri-apps/plugin-log": "^2.0.0",
 		"@tauri-apps/plugin-shell": "~2",
 		"@tauri-apps/plugin-window-state": "~2",
 		"@types/lodash-es": "^4.17.12",

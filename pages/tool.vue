@@ -226,7 +226,7 @@
 				ElMessage.success("设置成功");
 				await initNetCardInfo();
 			} catch (err) {
-				console.log(err);
+				console.error(err);
 			}
 		}
 	};
@@ -260,7 +260,7 @@
 				data.pingLog += '完毕'
 			} catch (err) {
 				ElMessage.error("Ping发生错误");
-				console.log(err);
+				console.error(err);
 			} finally {
 				data.isPing = false;
 			}
@@ -291,7 +291,7 @@
 				}) as any;
 		} catch (err) {
 			ElMessage.error("网卡获取失败");
-			console.log(err);
+			console.error(err);
 		}
 	};
 
@@ -324,13 +324,13 @@
 		} catch (err) {
 			// netsh advfirewall firewall add rule name="EXE名称" dir=out action=allow program="EXE绝对路径"
 			ElMessage.error("获取防火墙状态失败");
-			console.log(err);
+			console.error(err);
 		}
 	};
 
 	const appWindow = getCurrentWindow();
 	mainStore.$subscribe((...a) => {
-		// console.log("subscribe", a);
+		// console.error("subscribe", a);
 		appWindow.emitTo("main", "config", { winIpBcAutoStart: mainStore.winIpBcAutoStart, config: { ...mainStore.config } });
 	});
 

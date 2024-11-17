@@ -115,7 +115,7 @@
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
-		// console.log(peerInfo);
+		// console.error(peerInfo);
 		data.member = peerInfo;
 	};
 

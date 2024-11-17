@@ -123,7 +123,7 @@
 		}
 	};
 	mainStore.$subscribe(async (...a) => {
-		// console.log("subscribe", a);
+		// console.error("subscribe", a);
 		await appWindow.emitTo("main", "config", { config: { ...mainStore.config }, createConfigInEasytier: mainStore.createConfigInEasytier });
 		// if(mainStore.createConfigInEasytier) {
 		// 	updateConfigJson();

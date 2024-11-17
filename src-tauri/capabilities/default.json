@@ -92,6 +92,9 @@
 
     "window-state:default",
     "window-state:allow-save-window-state",
-    "window-state:allow-restore-state"
+    "window-state:allow-restore-state",
+
+    "log:default",
+    "log:allow-log"
   ]
 }

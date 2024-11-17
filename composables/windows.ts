@@ -26,13 +26,13 @@ export default async (
 		if (appWindow) {
 			const appSize = await appWindow.outerSize();
 			// const monitor = await currentMonitor();
-			// console.log(monitor)
+			// console.error(monitor)
 			const factor = await appWindow.scaleFactor();
 			const appPosition = await appWindow.outerPosition();
-			// console.log((appPosition.x + appSize.width) / 1.25);
+			// console.error((appPosition.x + appSize.width) / 1.25);
 			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
 			defaultOpts.parent = appWindow;
-			// console.log(logicalPosition);
+			// console.error(logicalPosition);
 			defaultOpts.x = logicalPosition.x;
 			defaultOpts.y = logicalPosition.y;
 		}

@@ -39,7 +39,7 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 		}
 		await writeTextFile(path, JSON.stringify({ serverUrl: writeServerUrl, ...otherConfig }, null, 4), { baseDir: BaseDirectory.Resource });
 	} catch (err) {
-		console.log(err);
+		console.error(err);
 		ElMessage.error(`更新config.json失败`);
 	}
 };

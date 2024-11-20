@@ -32,20 +32,23 @@ set /p confirm=输入'y/n'进行确认:
 if /i "%confirm%"=="y" (
     echo 清除数据中,请稍后...
     echo ---
-    REM 删除任务计划程序文件夹
+    @REM REM 删除任务计划程序文件夹
     echo delete auto_start task ...
     echo ---
-    REM 获取文件夹中的所有任务
+
+    echo ---
     schtasks /delete /tn "%folder_name%\%task_name%" /f
     schtasks /delete /tn "%folder_name%" /f
+    echo ---
+    echo 开始清除本地缓存数据，没有使用开机自启上面就会报错，不影响数据清理...
 
     if exist "%target_data_dir%" (
         REM 删除目标文件夹及其内容
         rd /s /q "%target_data_dir%"
     )
-    echo 清楚本地缓存数据完毕.
+    echo 清除本地缓存数据完毕.
     echo ---
-    echo 您可以手动删除当前目录完成EasytierGame的卸载.
+    echo 您可以手动删除EasytierGame目录下所有文件，即可完成卸载.
 ) else (
     echo 取消清理数据
 )

@@ -1,8 +1,8 @@
 [如果界面无法打开]
 
-1.如果已经启动easytier-game.exe可能会在后台运行，打开任务管理器关闭easytier-game.exe
+1. 如果您已经启动easytier-game.exe，那它可能会在后台运行，打开任务管理器关闭easytier-game.exe
 
-2.使用easytier-game安装目录下的 easytier/tool/MicrosoftEdgeWebview2Setup.exe 安装webview2
+2. 使用easytier-game安装目录下的 easytier/tool/MicrosoftEdgeWebview2Setup.exe 安装webview2
 
 3. 再次启用easytier-game.exe
 
@@ -11,6 +11,6 @@
 
 1. 关闭easytierGame
 
-2. 运行easytier-game安装目录下的 easytier/tool/clear_local_data.bat (需要管理员权限) 输入y确认，清除本地存储数据
+2. 运行easytier-game安装目录下的 easytier/clear_local_data.bat (需要管理员权限) 输入y确认，清除本地存储数据
 
 3. 删除easytierGame文件夹

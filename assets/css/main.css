@@ -35,4 +35,5 @@ html.dark body {
 
 .full-label .el-form-item__label {
 	width: 100%;
+	padding-right: 0;
 }

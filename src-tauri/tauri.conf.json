@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "easytier-game",
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"identifier": "com.tauri.easytier-game",
 
 	"build": {
@@ -13,7 +13,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "easytier-game 1.2.2",
+				"title": "easytier-game 1.2.3",
 				"label": "main",
 				"minWidth": 340,
 				"width": 340,
@@ -42,13 +42,13 @@
 			"easytier/config/",
 			"easytier/icons/",
 			"easytier/config_template.json",
-			"easytier/tool/clear_local_data.bat",
 			"easytier/tool/WinIPBroadcast.exe",
 			"easytier/tool/MicrosoftEdgeWebview2Setup.exe",
 			"easytier/easytier-cli.exe",
 			"easytier/easytier-core.exe",
 			"easytier/Packet.dll",
 			"easytier/wintun.dll",
+			"easytier/clear_local_data.bat",
 			"easytier/帮助.txt"
 		],
 		"windows": {

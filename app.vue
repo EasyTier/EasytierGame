@@ -11,10 +11,20 @@
 		const original = console[fnName];
 		console[fnName] = (message) => {
 			original(message);
-			logger(message);
+			if (import.meta.env.PROD) {
+				try {
+					if (typeof message === "string") {
+						logger(message);
+					} else {
+						logger(JSON.stringify(message));
+					}
+				} catch (e) {
+					logger(`${message}`);
+				}
+			}
 		};
 	}
-	forwardConsole("log", trace);
+	forwardConsole("log", info);
 	forwardConsole("debug", debug);
 	forwardConsole("info", info);
 	forwardConsole("warn", warn);

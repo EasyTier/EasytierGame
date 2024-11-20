@@ -38,6 +38,7 @@ export default defineStore("main", {
 			configPath: "", //配置文件路径
 			winIpBcAutoStart: true,
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
+			githubFastUrl: "https://ghproxy.cc/",
 
 			winipBcPid: 0,
 			winipBcStart: false
@@ -80,7 +81,8 @@ export default defineStore("main", {
 			"configStartEnable",
 			"configPath",
 			"winIpBcAutoStart",
-			"createConfigInEasytier"
+			"createConfigInEasytier",
+			"githubFastUrl"
 		],
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]

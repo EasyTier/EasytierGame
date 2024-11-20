@@ -1,5 +1,5 @@
+import { open } from "@tauri-apps/plugin-shell";
 export const ENV = import.meta.env;
-
 
 //防抖
 export const bounce = (time = 3000) => {
@@ -50,8 +50,8 @@ export const numRemoveZero = (num: Number) => {
 // await-to-js
 export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefined) => {
 	return promise
-		.then(data => [null, data])
-		.catch(err => {
+		.then((data) => [null, data])
+		.catch((err) => {
 			if (errorExt) {
 				if (typeof errorExt !== "object") {
 					return [errorExt, undefined];
@@ -72,7 +72,7 @@ export const parsePeerInfo = (content: string) => {
 	const headers = lines[1]
 		.split("│")
 		.slice(1, -1)
-		.map(h => h.trim());
+		.map((h) => h.trim());
 
 	// 初始化结果数组
 	const result: any[] = [];
@@ -85,7 +85,7 @@ export const parsePeerInfo = (content: string) => {
 		const values = lines[i]
 			.split("│")
 			.slice(1, -1)
-			.map(v => v.trim());
+			.map((v) => v.trim());
 
 		// 创建对象并添加到结果数组
 		const obj: any = {};
@@ -98,6 +98,10 @@ export const parsePeerInfo = (content: string) => {
 	}
 
 	return result;
+};
+
+export const addQQGroup = () => {
+	open("https://qm.qq.com/q/Yo3HmaEIWC");
 };
 
 export function isValidIP(ip: string) {

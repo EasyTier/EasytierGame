@@ -32,3 +32,7 @@ html.dark body {
 	box-sizing: border-box;
 	padding: 3px 5px;
 }
+
+.full-label .el-form-item__label {
+	width: 100%;
+}

@@ -12,9 +12,10 @@
 		<ElFormItem
 			label="服务器"
 			prop="serverUrl"
+			class="full-label"
 		>
 			<template #label>
-				<div class="flex items-center gap-[0_5px]">
+				<div class="flex items-center flex-nowrap gap-[0_5px]">
 					<div>服务器</div>
 					<span>-</span>
 					<ElTag
@@ -29,31 +30,41 @@
 					>
 						获取内核版本
 					</ElButton>
-					<ElTag
+					<div
 						v-else
-						type="info"
+						class="flex-1 truncate"
 					>
-						{{ data.coreVersion }}
-					</ElTag>
-					<ElPopconfirm
+						<ElTooltip :content="data.coreVersion">
+							<ElTag
+								type="info"
+							>
+								{{ data.coreVersion }}
+							</ElTag>
+						</ElTooltip>
+					</div>
+
+					<!-- <ElPopconfirm
 						width="325"
 						cancel-button-text="取消"
 						confirm-button-text="继续"
 						title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
 						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
-						@confirm="handleUpdateCore"
+						@confirm="handleCoreManagement"
 					>
-						<template #reference>
-							<ElButton
-								:disabled="data.isStart"
-								:loading="data.update"
-								type="warning"
-								size="small"
-							>
-								{{ data.coreVersion ? "更新内核" : "下载内核" }}
-							</ElButton>
-						</template>
-					</ElPopconfirm>
+						<template #reference> -->
+					<ElButton
+						class="ml-auto"
+						:disabled="data.isStart"
+						@click="handleCoreManagement"
+						:loading="data.update"
+						type="primary"
+						size="small"
+					>
+						内核管理
+						<!-- {{ data.coreVersion ? "更新内核" : "下载内核" }} -->
+					</ElButton>
+					<!-- </template>
+					</ElPopconfirm> -->
 				</div>
 			</template>
 			<ElSelect
@@ -316,6 +327,36 @@
 		append-to-body
 		:z-index="10"
 		class="!mb-0"
+		v-model="coreManagementData.visible"
+		:close-on-press-escape="false"
+		title="内核管理"
+	>
+		<ElSelect v-model="coreManagementData.data">
+			<ElOption v-for="(release, idx) in data.releaseList" :key="`${idx}-ray`" :value="release[2]">
+				{{release[0]}}
+			</ElOption>
+		</ElSelect>
+		<template #footer>
+			<!-- <div>
+				<el-text type="danger">导入成功后，您当前的部分配置将被替换</el-text>
+			</div>
+			<div class="text-right">
+				<ElButton
+					size="small"
+					@click="handleStartImport"
+					type="primary"
+				>
+					导入
+				</ElButton>
+			</div> -->
+		</template>
+	</ElDialog>
+	<ElDialog
+		width="95%"
+		top="10px"
+		append-to-body
+		:z-index="10"
+		class="!mb-0"
 		v-model="importConfigData.visible"
 		:close-on-press-escape="false"
 		title="导入分享"
@@ -463,6 +504,12 @@
 		data: ""
 	});
 
+	const coreManagementData = reactive<{ data: ""; [key: string]: any }>({
+		visible: false,
+		loading: false,
+		data: ""
+	});
+
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
@@ -573,7 +620,7 @@
 		},
 		async listenConfigStart() {
 			const unListen = await listen("config", event => {
-				console.error("config", event.payload);
+				// console.error("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
@@ -621,6 +668,11 @@
 		return [false, null, null];
 	};
 
+	const handleCoreManagement = async () => {
+		coreManagementData.visible = true;
+		await getReleaseList();
+	};
+
 	const handleUpdateCore = async () => {
 		try {
 			data.update = true;
@@ -641,9 +693,11 @@
 	};
 
 	const getReleaseList = async () => {
+		coreManagementData.loading = true;
 		const list = await invoke("fetch_easytier_list");
 		data.releaseList = list as never[];
-		console.error(data.releaseList);
+		coreManagementData.loading = false;
+		console.log(data.releaseList);
 	};
 
 	const handleAutoStart = async () => {

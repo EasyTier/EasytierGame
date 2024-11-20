@@ -42,11 +42,14 @@
 			"easytier/config/",
 			"easytier/icons/",
 			"easytier/config_template.json",
+			"easytier/tool/clear_local_data.bat",
 			"easytier/tool/WinIPBroadcast.exe",
+			"easytier/tool/MicrosoftEdgeWebview2Setup.exe",
 			"easytier/easytier-cli.exe",
 			"easytier/easytier-core.exe",
 			"easytier/Packet.dll",
-			"easytier/wintun.dll"
+			"easytier/wintun.dll",
+			"easytier/帮助.txt"
 		],
 		"windows": {
 			"webviewInstallMode": {

@@ -28,7 +28,7 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 - 如果还是无法满足您的需求，可以使用配置文件进行启动，具体如何配置，可以查看文档[配置文件](/guide/network/config-file.html)
     ![game-step5](/assets/game-step5.png)
 
-- easytier内核升级后，可以点击更新插件按钮就可以进行更新，但是需要出国，如果无法更新，可以在群里获取
+- easytier内核升级后，可以点击内核管理按钮就可以进行内核切换和更新，但是需要出国或者github加速链接，如果无法更新，可以在群里获取
     ![game-step6](/assets/game-step6.png)
 
 - 1.1.4更新了 配置分享功能 可以与朋友之间分享配置，方便联机
@@ -45,6 +45,9 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 **需要注意的是，如果config.json存在，每次启动easytierGame默认按照config.json的配置为准**
 **解压zip后你可以查看 easytier/config_template.json 里的注释进行配置**
 ![game-step10](/assets/game-step10.png)
+
+- 1.2.3新增了帮助.txt 位于“easytier/帮助.txt" 内含 无法打开界面和卸载EasytierGame的办法，新增 "easytier/clear_local_data.bat" 用于清除easytierGame的本地缓存数据（需要管理员模式运行）
+![game-step11](/assets/game-step11.png)
 
 ## 特性
 

@@ -17,7 +17,7 @@ async function toggleVisibility() {
 	}
 }
 
-export async function useTray(init: boolean = false, beforExit: Function) {
+export async function useTray(init: boolean = false, beforExit: Function, handleConnection: Function) {
 	let tray;
 	try {
 		tray = await TrayIcon.getById(DEFAULT_TRAY_NAME);
@@ -28,7 +28,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 				id: DEFAULT_TRAY_NAME,
 				menu: await Menu.new({
 					id: "main",
-					items: await generateMenuItem(beforExit),
+					items: await generateMenuItem(beforExit, handleConnection),
 				}),
 				action: async (e) => {
 					toggleVisibility();
@@ -46,7 +46,7 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 		tray.setMenu(
 			await Menu.new({
 				id: "main",
-				items: await generateMenuItem(beforExit),
+				items: await generateMenuItem(beforExit, handleConnection),
 			})
 		);
 	}
@@ -54,9 +54,10 @@ export async function useTray(init: boolean = false, beforExit: Function) {
 	return tray;
 }
 
-export async function generateMenuItem(beforExit: Function) {
+export async function generateMenuItem(beforExit: Function, handleConnection:Function) {
 	return [
 		await MenuItemShow("显示 / 隐藏"),
+		await MenuItemExchangeConnection("联机 / 断开", handleConnection),
 		await MenuItemTheme(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemExit("退出", beforExit),
@@ -84,6 +85,17 @@ export async function MenuItemShow(text: string) {
 			await toggleVisibility();
 		},
 	});
+}
+
+export async function MenuItemExchangeConnection(text: string, handleConnection:Function) {
+	const menutItem =  await MenuItem.new({
+		id: "exchangeConnection",
+		text,
+		action: async () => {
+			const isStart = await handleConnection();
+		},
+	});
+	return menutItem;
 }
 
 export async function MenuItemTheme() {

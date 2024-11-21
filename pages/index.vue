@@ -508,6 +508,9 @@
 		is_close = true;
 		await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
 		await invoke("stop_command", { child_id: data.winipBcPid || 0 });
+	}, async () => {
+		await handleConnection();
+		return data.isStart
 	});
 
 	const mainStore = useMainStore();

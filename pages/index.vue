@@ -1031,6 +1031,7 @@
 		if (data.isStart) {
 			await reset();
 		} else {
+			await setTrayTooltip(tray, "请求联机中...");
 			const args = await getArgs();
 			if (!args || args.length <= 0) {
 				await reset();

@@ -63,11 +63,12 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 支持Windows 11 、Windows 10 、 Windows 7
 
 ## 群聊交流
-- 主群
-![main_group_qrcode.jpg](/assets/main_group_qrcode.jpg)
+- 主群 EasyTier 支持 
+### 949700262
 
-- 游戏联机交流群
-![group_qrcode.jpg](/assets/group_qrcode.jpg)
+- EasyTier游戏联机交流群
+### 596667137
+
 
 
 ## 请不要将本程序和仓库代码用于任何违法用途，由此产生的一切后果，仓库所有者和参与开发的人员不承担任何责任

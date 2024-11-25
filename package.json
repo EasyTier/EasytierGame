@@ -6,7 +6,8 @@
 	"version": "1.2.5",
 	"scripts": {
 		"dev": "nuxt dev --dotenv env/.env.dev --host 0.0.0.0",
-		"build": "nuxt generate --dotenv env/.env.prod"
+		"build": "nuxt generate --dotenv env/.env.prod",
+		"release": "node zip.js"
 	},
 	"devDependencies": {
 		"@element-plus/icons-vue": "^2.3.1",
@@ -26,6 +27,7 @@
 		"@types/lodash-es": "^4.17.12",
 		"@vitejs/plugin-vue-jsx": "^4.1.0",
 		"@vueuse/core": "^11.2.0",
+		"archiver": "^7.0.1",
 		"element-plus": "^2.8.7",
 		"less": "^4.2.0",
 		"lodash-es": "^4.17.21",

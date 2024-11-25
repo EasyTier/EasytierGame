@@ -59,6 +59,9 @@ importers:
       '@vueuse/core':
         specifier: ^11.2.0
         version: 11.2.0(vue@3.5.12(typescript@5.6.3))
+      archiver:
+        specifier: ^7.0.1
+        version: 7.0.1
       element-plus:
         specifier: ^2.8.7
         version: 2.8.7(vue@3.5.12(typescript@5.6.3))

@@ -77,7 +77,7 @@
 		<ElDivider />
 		<div><ElCheckbox v-model="mainStore.config.enablExitNode">允许此节点成为出口节点</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableEncryption">禁用对等节点通信的加密，默认为启用，必须与对等节点相同</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.multiThread">使用多线程运行时，默认为单线程</ElCheckbox></div>
+		<div><ElCheckbox v-model="mainStore.config.multiThread">启用多线程运行</ElCheckbox></div>
 		<ElDivider />
 
 		<div><ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox></div>

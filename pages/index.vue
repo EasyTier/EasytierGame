@@ -1,14 +1,10 @@
 <template>
 	<ElForm
+		v-if="!mainStore.enableCreateServer"
 		size="small"
 		label-position="top"
 		:model="config"
 	>
-		<!-- element-loading-custom-class="config-start"
-			v-loading="mainStore.configStartEnable"
-			:element-loading-spinner="'<path />'"
-			element-loading-text="-------已经启用配置文件，界面配置不再生效-------" -->
-		<!-- <div> -->
 		<ElFormItem
 			label="服务器"
 			prop="serverUrl"
@@ -40,16 +36,6 @@
 							</ElTag>
 						</ElTooltip>
 					</div>
-
-					<!-- <ElPopconfirm
-						width="325"
-						cancel-button-text="取消"
-						confirm-button-text="继续"
-						title="内核从github下载，需要出国工具，可能下载缓慢或失败，是否继续?
-						也可以从官方群里手动下载后解压到easytier-game.exe同级目录下的easytier目录里,全部覆盖即可"
-						@confirm="handleCoreManagement"
-					>
-						<template #reference> -->
 					<ElButton
 						class="ml-auto"
 						:disabled="data.isStart"
@@ -59,10 +45,7 @@
 						size="small"
 					>
 						内核管理
-						<!-- {{ data.coreVersion ? "更新内核" : "下载内核" }} -->
 					</ElButton>
-					<!-- </template>
-					</ElPopconfirm> -->
 				</div>
 			</template>
 			<ElSelect
@@ -196,129 +179,218 @@
 				></ElInput>
 			</ElFormItem>
 		</div>
-		<!-- </div> -->
-		<div class="flex items-start">
-			<div>
-				<div>
-					<ElDropdown
-						@command="handleStartCommand"
-						split-button
-						trigger="click"
-						size="default"
-						:type="!data.isStart ? 'primary' : 'danger'"
-						:disabled="data.startLoading || !data.coreVersion || data.update"
-						@click="handleConnection"
+	</ElForm>
+	<ElForm
+		v-else
+		size="small"
+		label-position="top"
+		class="flex-1 overflow-hidden pb-[5px]"
+		:model="config"
+	>
+		<ElFormItem
+			label="白名单"
+			prop="ServerWhiteList"
+			class="full-label full-content overflow-hidden !flex flex-col h-full !mb-[0]"
+		>
+			<template #label>
+				<div class="flex items-center flex-nowrap gap-[0_5px]">
+					<div>白名单</div>
+					<span>-</span>
+					<ElTag
+						effect="dark"
+						:type="data.isStart ? 'success' : 'info'"
 					>
-						{{ !data.isStart ? "启动联机" : "停止联机" }}
-						<template #dropdown>
-							<ElDropdownMenu>
-								<ElDropdownItem
-									command="import_config"
-									:icon="Link"
-								>
-									导入配置
-								</ElDropdownItem>
-								<ElDropdownItem
-									command="share_config"
-									:icon="Share"
-								>
-									分享配置
-								</ElDropdownItem>
-								<ElDropdownItem
-									:icon="Tools"
-									command="toml"
-									:disabled="data.isStart"
-								>
-									使用外部配置文件
-								</ElDropdownItem>
-							</ElDropdownMenu>
-						</template>
-					</ElDropdown>
-				</div>
-				<div class="mt-[6px] pl-[2px]">
-					<ElTooltip
-						placement="left"
-						content="日志"
+						{{ data.isSuccessGetIp ? "运行成功" : data.isStart && !data.isSuccessGetIp ? "运行中" : "未启动" }}
+					</ElTag>
+					<ElButton
+						v-if="!data.coreVersion"
+						@click="getCoreVersion(true)"
 					>
-						<ElButton
-							:type="!data.logVisible ? 'info' : 'warning'"
-							@click="handleShowLogDialog"
-							:icon="List"
-							size="small"
-							plain
-						></ElButton>
-					</ElTooltip>
-					<ElTooltip
-						placement="left"
-						content="成员"
+						获取内核版本
+					</ElButton>
+					<div
+						v-else
+						class="flex-1 truncate"
 					>
-						<ElButton
-							@click="handleShowMemberDialog"
-							:icon="UserFilled"
-							plain
-							type="success"
-							size="small"
-						></ElButton>
-					</ElTooltip>
-				</div>
-			</div>
-			<div class="ml-auto">
-				<ElCheckbox
-					v-model="config.disbleP2p"
-					size="small"
-				>
-					强制中转
-				</ElCheckbox>
-				<ElTooltip
-					placement="top-start"
-					content="自启后隐藏于托盘，不显示界面"
-				>
-					<ElCheckbox
-						@change="handleAutoStartByTask"
-						:model-value="config.autoStart"
+						<ElTooltip :content="data.coreVersion">
+							<ElTag type="info">
+								{{ data.coreVersion }}
+							</ElTag>
+						</ElTooltip>
+					</div>
+					<ElButton
+						class="ml-auto"
+						:disabled="data.isStart"
+						@click="handleCoreManagement"
+						:loading="data.update"
+						type="primary"
 						size="small"
 					>
-						开机自启
-					</ElCheckbox>
-				</ElTooltip>
-				<div>
-					<ElButton
-						@click="handleShowCidrDialog"
-						:icon="Share"
-					>
-						子网代理
-					</ElButton>
-					<ElButton
-						@click="handleShowAdvanceDialog"
-						:icon="Setting"
-					>
-						高级选项
+						内核管理
 					</ElButton>
 				</div>
-				<div class="flex items-center gap-[0_5px]">
-					<div>
-						<ElButton
-							plain
-							type="primary"
-							size="small"
-							:icon="MagicStick"
-							@click="handleShowToolDialog"
-						>
-							增强工具
-						</ElButton>
-					</div>
-					<ElLink
-						class="!text-[9px] pb-[2px] ml-[8px] truncate"
-						type="info"
-						:underline="false"
-						@click="open('https://github.com/EasyTier/EasytierGame')"
-					>
-						EasytierGame主页
-					</ElLink>
+			</template>
+			<div class="h-full w-full flex flex-col overflow-hidden">
+				<div class="flex-1 overflow-auto">
+					<ElInput
+						:disabled="!mainStore.enableWhiteList"
+						placeholder="一行一个，支持通配符列表，如（ab*）。当该参数的列表为空时，就不会为所有其他网络提供转发服务。"
+						:maxlength="1000"
+						v-model="mainStore.ServerWhiteList"
+						type="textarea"
+						:autosize="{
+							minRows: 9
+						}"
+						resize="none"
+					></ElInput>
+				</div>
+				<div class="text-center">
+					<ElCheckbox v-model="mainStore.enableWhiteList">启用白名单</ElCheckbox>
+					<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">转发所有对等节点的RPC数据包</ElCheckbox>
+					<ElTooltip content="帮助其他虚拟网建立P2P链接">
+						<ElIcon><QuestionFilled /></ElIcon>
+					</ElTooltip>
 				</div>
 			</div>
-		</div>
+		</ElFormItem>
 	</ElForm>
+	<div class="flex items-start mt-auto">
+		<div>
+			<div>
+				<ElDropdown
+					@command="handleStartCommand"
+					split-button
+					trigger="click"
+					size="default"
+					:type="!data.isStart ? 'primary' : 'danger'"
+					:disabled="data.startLoading || !data.coreVersion || data.update"
+					@click="handleConnection"
+				>
+					{{
+						!data.isStart
+							? mainStore.enableCreateServer
+								? "启动服务"
+								: "启动联机"
+							: mainStore.enableCreateServer
+							? "停止服务"
+							: "停止联机"
+					}}
+					<template #dropdown>
+						<ElDropdownMenu>
+							<ElDropdownItem
+								command="import_config"
+								:icon="Link"
+							>
+								导入配置
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="share_config"
+								:icon="Share"
+							>
+								分享联机相关配置
+							</ElDropdownItem>
+							<ElDropdownItem
+								:icon="SetUp"
+								command="create_server"
+							>
+								{{ mainStore.enableCreateServer ? "我要联机" : "我要开服(自建)" }}
+							</ElDropdownItem>
+							<ElDropdownItem
+								:icon="Tools"
+								command="toml"
+								:disabled="data.isStart"
+							>
+								使用外部配置文件
+							</ElDropdownItem>
+						</ElDropdownMenu>
+					</template>
+				</ElDropdown>
+			</div>
+			<div class="mt-[6px] pl-[2px]">
+				<ElTooltip
+					placement="left"
+					content="日志"
+				>
+					<ElButton
+						:type="!data.logVisible ? 'info' : 'warning'"
+						@click="handleShowLogDialog"
+						:icon="List"
+						size="small"
+						plain
+					></ElButton>
+				</ElTooltip>
+				<ElTooltip
+					placement="left"
+					content="成员"
+				>
+					<ElButton
+						@click="handleShowMemberDialog"
+						:icon="UserFilled"
+						plain
+						type="success"
+						size="small"
+					></ElButton>
+				</ElTooltip>
+			</div>
+		</div>
+		<div class="ml-auto">
+			<ElCheckbox
+				v-model="config.disbleP2p"
+				size="small"
+			>
+				强制中转
+			</ElCheckbox>
+			<ElTooltip
+				placement="top-start"
+				content="自启后隐藏于托盘，不显示界面"
+			>
+				<ElCheckbox
+					@change="handleAutoStartByTask"
+					:model-value="config.autoStart"
+					size="small"
+				>
+					开机自启
+				</ElCheckbox>
+			</ElTooltip>
+			<div>
+				<ElButton
+					@click="handleShowCidrDialog"
+					:icon="Share"
+					size="small"
+				>
+					子网代理
+				</ElButton>
+				<ElButton
+					@click="handleShowAdvanceDialog"
+					:icon="Setting"
+					size="small"
+				>
+					高级选项
+				</ElButton>
+			</div>
+			<div class="flex items-center gap-[0_5px]">
+				<div>
+					<ElButton
+						plain
+						type="primary"
+						size="small"
+						:icon="MagicStick"
+						@click="handleShowToolDialog"
+					>
+						增强工具
+					</ElButton>
+				</div>
+				<ElLink
+					class="!text-[9px] pb-[2px] ml-[8px] truncate"
+					type="info"
+					:underline="false"
+					@click="open('https://github.com/EasyTier/EasytierGame')"
+				>
+					EasytierGame主页
+				</ElLink>
+			</div>
+		</div>
+	</div>
 	<ElDialog
 		width="95%"
 		top="10px"
@@ -485,7 +557,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
@@ -504,14 +576,18 @@
 
 	let is_close = false;
 
-	const tray = await useTray(true, async () => {
-		is_close = true;
-		await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
-		await invoke("stop_command", { child_id: data.winipBcPid || 0 });
-	}, async () => {
-		await handleConnection();
-		return data.isStart
-	});
+	const tray = await useTray(
+		true,
+		async () => {
+			is_close = true;
+			await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
+			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
+		},
+		async () => {
+			await handleConnection();
+			return data.isStart;
+		}
+	);
 
 	const mainStore = useMainStore();
 	const config = mainStore.config;
@@ -908,6 +984,18 @@
 	const getArgs = async () => {
 		// console.error(config.proxyNetworks);
 		const args = [];
+		if (mainStore.enableCreateServer) {
+			if (config.relayAllPeerrpc) {
+				args.push("--relay-all-peer-rpc");
+			}
+			const whiteList = mainStore.ServerWhiteList.trim().split("\n").map(el => el.trim()).filter(el => el).join(" ");
+			if(whiteList && mainStore.enableWhiteList) {
+				args.push("--relay-network-whitelist", whiteList);
+			}if(!whiteList && mainStore.enableWhiteList) {
+				args.push("--relay-network-whitelist");
+			}
+			return args
+		}
 		if (mainStore.configStartEnable) {
 			if (mainStore.configPath) {
 				const isExists = await exists(mainStore.configPath, { baseDir: BaseDirectory.Resource });
@@ -1103,6 +1191,18 @@
 			importConfigData.data = "";
 			importConfigData.visible = true;
 		}
+		if (command === "create_server") {
+			mainStore.enableCreateServer = !mainStore.enableCreateServer;
+			if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
+				try {
+					await ElMessageBox.confirm("是否关闭RPC流量转发?", "提示", {
+						confirmButtonText: "关闭",
+						cancelButtonText: "取消"
+					});
+					mainStore.config.relayAllPeerrpc = false;
+				} catch (err) {}
+			}
+		}
 	};
 
 	const handleStartImport = async () => {
@@ -1190,7 +1290,7 @@
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
 					appWindow.emitTo("log", "logs", data.log);
-				}, 600);
+				}, 650);
 			},
 			() => {
 				data.logVisible = false;

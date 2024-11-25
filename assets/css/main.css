@@ -27,6 +27,9 @@ html.dark body {
 }
 
 #__easytier {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
 	height: 100%;
 	overflow: hidden;
 	box-sizing: border-box;
@@ -36,4 +39,11 @@ html.dark body {
 .full-label .el-form-item__label {
 	width: 100%;
 	padding-right: 0;
+}
+
+.full-content .el-form-item__content {
+	/* height: 100%; */
+	align-items: flex-start;
+	overflow: auto;
+	flex: 1;
 }

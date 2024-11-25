@@ -6,21 +6,25 @@
 				stripe
 				border
 				:data="data.member"
-				v-else>
+				v-else
+			>
 				<ElTableColumn
 					sortable
 					width="140"
 					label="主机名"
-					prop="hostname"></ElTableColumn>
+					prop="hostname"
+				></ElTableColumn>
 				<ElTableColumn
 					sortable
 					width="90"
 					prop="cost"
-					label="路由">
+					label="路由"
+				>
 					<template #default="{ row }">
 						<ElTag
 							effect="dark"
-							:type="row.cost == 'p2p' ? 'success' : 'info'">
+							:type="row.cost == 'p2p' ? 'success' : 'info'"
+						>
 							{{ row.cost }}
 						</ElTag>
 					</template>
@@ -29,17 +33,20 @@
 					sortable
 					width="120"
 					prop="ipv4"
-					label="虚拟网IP"></ElTableColumn>
+					label="虚拟网IP"
+				></ElTableColumn>
 				<ElTableColumn
 					sortable
 					prop="lat_ms"
 					width="130"
-					label="延迟/ms"></ElTableColumn>
+					label="延迟/ms"
+				></ElTableColumn>
 				<ElTableColumn
 					sortable
 					width="120"
 					prop="loss_rate"
-					label="丢包率">
+					label="丢包率"
+				>
 					<template #default="{ row }">
 						{{ row.loss_rate && row.loss_rate != "-" ? Number(row.loss_rate * 100).toFixed(2) + "%" : row.loss_rate }}
 					</template>
@@ -48,15 +55,23 @@
 					sortable
 					width="120"
 					label="nat_type"
-					prop="NAT类型">
+					prop="NAT类型"
+				>
 					<template #default="{ row }">
 						{{ natMaps[row.nat_type.toLowerCase() as natKyes] || row.nat_type || "-" }}
 					</template>
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
+					width="120"
 					prop="version"
-					label="版本"></ElTableColumn>
+					label="版本"
+				></ElTableColumn>
+				<ElTableColumn
+					sortable
+					prop="tunnel_proto"
+					label="隧道协议"
+				></ElTableColumn>
 			</ElTable>
 		</div>
 	</div>
@@ -86,14 +101,14 @@
 		restricted: "nat2",
 		portrestricted: "nat3",
 		symmetric: "nat4",
-		SymmetricEasyDec: "nat4-easydec",
-		SymmetricEasyInc: "nat4-easyinc",
-		SymUdpFirewall: "nat4-udpfirewall",
+		symmetriceasydec: "nat4-easydec",
+		symmetriceasyinc: "nat4-easyinc",
+		symUdpfirewall: "nat4-udpfirewall"
 	};
 	type natKyes = keyof typeof natMaps;
 
 	const data = reactive<{ member: any[] }>({
-		member: [],
+		member: []
 	});
 
 	const _showTableHeader = [
@@ -104,12 +119,13 @@
 		["loss_rate", "丢包率"],
 		["nat_type", "NAT类型"],
 		["version", "版本"],
+		["tunnel_proto", "隧道协议"]
 	];
 
 	const listenOutput = async () => {
 		const member = await invoke<string>("get_members_by_cli");
 		const peerInfo = parsePeerInfo(member);
-		peerInfo.forEach((value) => {
+		peerInfo.forEach(value => {
 			if (value.cost === "Local") {
 				value.cost = "本机";
 			}
@@ -117,7 +133,7 @@
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
-		// console.error(peerInfo);
+		console.error(peerInfo);
 		data.member = peerInfo;
 	};
 

@@ -14,7 +14,7 @@ export default defineStore("main", {
 				connectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
 				disbleListenner: false, // 是否禁用监听
-				disableEncryption: false, // 是否禁用加密
+				disableEncryption: true, // 是否禁用加密
 				multiThread: false, //使用多线程
 				enablExitNode: false, // 是否启用退出节点
 				noTun: false, // 是否使用TUN
@@ -39,6 +39,9 @@ export default defineStore("main", {
 			winIpBcAutoStart: true,
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 			githubFastUrl: "https://ghproxy.cc/",
+			enableCreateServer: false, // 自建服务器
+			enableWhiteList: true, // 是否启用白名单
+			ServerWhiteList: "", // 服务器流量转发白名单
 
 			winipBcPid: 0,
 			winipBcStart: false
@@ -82,7 +85,11 @@ export default defineStore("main", {
 			"configPath",
 			"winIpBcAutoStart",
 			"createConfigInEasytier",
-			"githubFastUrl"
+			"githubFastUrl",
+
+			"enableCreateServer",
+			"enableWhiteList",
+			"ServerWhiteList"
 		],
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]

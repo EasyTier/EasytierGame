@@ -984,18 +984,6 @@
 	const getArgs = async () => {
 		// console.error(config.proxyNetworks);
 		const args = [];
-		if (mainStore.enableCreateServer) {
-			if (config.relayAllPeerrpc) {
-				args.push("--relay-all-peer-rpc");
-			}
-			const whiteList = mainStore.ServerWhiteList.trim().split("\n").map(el => el.trim()).filter(el => el).join(" ");
-			if(whiteList && mainStore.enableWhiteList) {
-				args.push("--relay-network-whitelist", whiteList);
-			}if(!whiteList && mainStore.enableWhiteList) {
-				args.push("--relay-network-whitelist");
-			}
-			return args
-		}
 		if (mainStore.configStartEnable) {
 			if (mainStore.configPath) {
 				const isExists = await exists(mainStore.configPath, { baseDir: BaseDirectory.Resource });
@@ -1022,6 +1010,20 @@
 				return [];
 			}
 		}
+
+		if (mainStore.enableCreateServer) {
+			if (config.relayAllPeerrpc) {
+				args.push("--relay-all-peer-rpc");
+			}
+			const whiteList = mainStore.ServerWhiteList.trim().split("\n").map(el => el.trim()).filter(el => el).join(" ");
+			if(whiteList && mainStore.enableWhiteList) {
+				args.push("--relay-network-whitelist", whiteList);
+			}if(!whiteList && mainStore.enableWhiteList) {
+				args.push("--relay-network-whitelist");
+			}
+			return args
+		}
+		
 		if (config.dhcp) {
 			args.push("-d");
 		}

@@ -133,7 +133,7 @@
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
-		console.error(peerInfo);
+		// console.error(peerInfo);
 		data.member = peerInfo;
 	};
 

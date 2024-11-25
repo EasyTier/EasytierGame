@@ -1,7 +1,8 @@
 const releaseDir = "./src-tauri/target/release";
 const releaseDirEasytier = `${releaseDir}/easytier/`;
 const releaseExe = `${releaseDir}/easytier-game.exe`;
-const deleteEasytierFiles = ["logs/", "guiLogs/"]
+const releaseHelp = `${releaseDir}/帮助.txt`;
+const deleteEasytierFiles = ["logs/", "guiLogs/"];
 const pkg = require("./package.json");
 const fileName = `easytier-game_windows_x86_64_${pkg.version}.zip`;
 const releaseZipDir = "./release";
@@ -44,11 +45,11 @@ archive.on("error", function (err) {
 	throw err;
 });
 
-for(const f of deleteEasytierFiles) {
+for (const f of deleteEasytierFiles) {
 	fs.rmSync(path.join(__dirname, releaseDirEasytier + f), { recursive: true, force: true });
 }
-const r = path.join(__dirname, releaseZipDir)
-if(!fs.existsSync(r)) {
+const r = path.join(__dirname, releaseZipDir);
+if (!fs.existsSync(r)) {
 	fs.mkdirSync(r);
 }
 
@@ -56,4 +57,6 @@ if(!fs.existsSync(r)) {
 archive.pipe(output);
 archive
 	.append(fs.createReadStream(path.join(__dirname, releaseExe)), { name: "easytier-game.exe" })
-	.directory(path.join(__dirname, releaseDirEasytier), "easytier").finalize();
+	.append(fs.createReadStream(path.join(__dirname, releaseHelp)), { name: "帮助.txt" })
+	.directory(path.join(__dirname, releaseDirEasytier), "easytier")
+	.finalize();

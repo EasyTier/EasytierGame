@@ -49,7 +49,7 @@
 			"easytier/Packet.dll",
 			"easytier/wintun.dll",
 			"easytier/clear_local_data.bat",
-			"easytier/帮助.txt"
+			"帮助.txt"
 		],
 		"windows": {
 			"webviewInstallMode": {

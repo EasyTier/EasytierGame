@@ -49,6 +49,9 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 - 1.2.3新增了帮助.txt 位于“easytier/帮助.txt" 内含 无法打开界面和卸载EasytierGame的办法，新增 "easytier/clear_local_data.bat" 用于清除easytierGame的本地缓存数据（需要管理员模式运行）
 ![game-step11](/assets/game-step11.png)
 
+- 1.2.5新增 自建服务器功能，可以自行搭建服务器，但是需要一些网络知识，具体可以查看文档[自建服务器](https://www.easytier.top/guide/network/host-public-server.html)
+![game-step12](/assets/game-step12.png)
+
 ## 特性
 
 - 基于easytier组网工具开发，界面清晰简单

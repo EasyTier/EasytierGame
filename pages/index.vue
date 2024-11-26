@@ -290,6 +290,11 @@
 								分享联机相关配置
 							</ElDropdownItem>
 							<ElDropdownItem
+								disabled
+							>
+								<ElDivider class="!h-[2px] !m-0" />
+							</ElDropdownItem>
+							<ElDropdownItem
 								:icon="SetUp"
 								command="create_server"
 							>
@@ -573,6 +578,7 @@
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
 	import { bounce, addQQGroup } from "~/utils";
+	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 
 	let is_close = false;
 
@@ -1015,15 +1021,20 @@
 			if (config.relayAllPeerrpc) {
 				args.push("--relay-all-peer-rpc");
 			}
-			const whiteList = mainStore.ServerWhiteList.trim().split("\n").map(el => el.trim()).filter(el => el).join(" ");
-			if(whiteList && mainStore.enableWhiteList) {
+			const whiteList = mainStore.ServerWhiteList.trim()
+				.split("\n")
+				.map(el => el.trim())
+				.filter(el => el)
+				.join(" ");
+			if (whiteList && mainStore.enableWhiteList) {
 				args.push("--relay-network-whitelist", whiteList);
-			}if(!whiteList && mainStore.enableWhiteList) {
+			}
+			if (!whiteList && mainStore.enableWhiteList) {
 				args.push("--relay-network-whitelist");
 			}
-			return args
+			return args;
 		}
-		
+
 		if (config.dhcp) {
 			args.push("-d");
 		}
@@ -1194,25 +1205,31 @@
 			importConfigData.visible = true;
 		}
 		if (command === "create_server") {
+			if (data.isStart) {
+				const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
+					action: "`联机/服务`",
+					confirmButtonText: "继续",
+					cancelButtonText: "取消"
+				});
+				if (!error) await reset();
+			}
 			mainStore.enableCreateServer = !mainStore.enableCreateServer;
 			if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
-				try {
-					await ElMessageBox.confirm("是否关闭RPC流量转发?", "提示", {
-						confirmButtonText: "关闭",
-						cancelButtonText: "取消"
-					});
-					mainStore.config.relayAllPeerrpc = false;
-				} catch (err) {}
+				const [error] = await ElConfirmPrimary("是否关闭RPC流量转发?", "提示", {
+					confirmButtonText: "关闭",
+					cancelButtonText: "取消"
+				});
+				if (!error) mainStore.config.relayAllPeerrpc = false;
 			}
 		}
 	};
 
 	const handleStartImport = async () => {
-		try {
-			await ElMessageBox.confirm("确定导入?", "提示", {
-				confirmButtonText: "确定",
-				cancelButtonText: "取消"
-			});
+		const [err] = await ElConfirmPrimary("确定导入?", "提示", {
+			confirmButtonText: "确定",
+			cancelButtonText: "取消"
+		});
+		if (!err) {
 			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
 			mainStore.$patch({
 				config: {
@@ -1223,7 +1240,7 @@
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
 			mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers]);
-		} catch (err) {
+		} else {
 			console.error(err);
 			if (err !== "cancel") {
 				ElMessage.error("导入失败");

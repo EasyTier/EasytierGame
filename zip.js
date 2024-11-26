@@ -1,10 +1,14 @@
+/**
+ * 生成 release 发布包 zip 文件
+ */
+
 const releaseDir = "./src-tauri/target/release";
 const releaseDirEasytier = `${releaseDir}/easytier/`;
 const releaseExe = `${releaseDir}/easytier-game.exe`;
 const releaseHelp = `${releaseDir}/帮助.txt`;
 const deleteEasytierFiles = ["logs/", "guiLogs/"];
 const pkg = require("./package.json");
-const fileName = `easytier-game_windows_x86_64_${pkg.version}.zip`;
+const fileName = `easytier-game_windows_x86_64_${pkg.version}.zip`; // 发布包格式
 const releaseZipDir = "./release";
 const releaseZip = `${releaseZipDir}/${fileName}`;
 

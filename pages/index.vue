@@ -1,6 +1,5 @@
 <template>
 	<ElForm
-		v-if="!mainStore.enableCreateServer"
 		size="small"
 		label-position="top"
 		:model="config"
@@ -180,7 +179,7 @@
 			</ElFormItem>
 		</div>
 	</ElForm>
-	<ElForm
+	<!-- <ElForm
 		v-else
 		size="small"
 		label-position="top"
@@ -253,7 +252,7 @@
 				</div>
 			</div>
 		</ElFormItem>
-	</ElForm>
+	</ElForm> -->
 	<div class="flex items-start mt-auto">
 		<div>
 			<div>
@@ -266,15 +265,7 @@
 					:disabled="data.startLoading || !data.coreVersion || data.update"
 					@click="handleConnection"
 				>
-					{{
-						!data.isStart
-							? mainStore.enableCreateServer
-								? "启动服务"
-								: "启动联机"
-							: mainStore.enableCreateServer
-							? "停止服务"
-							: "停止联机"
-					}}
+					{{ !data.isStart ? "启动联机" : "停止联机" }}
 					<template #dropdown>
 						<ElDropdownMenu>
 							<ElDropdownItem
@@ -289,16 +280,14 @@
 							>
 								分享联机相关配置
 							</ElDropdownItem>
-							<ElDropdownItem
-								disabled
-							>
+							<ElDropdownItem disabled>
 								<ElDivider class="!h-[2px] !m-0" />
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="SetUp"
 								command="create_server"
 							>
-								{{ mainStore.enableCreateServer ? "我要联机" : "我要开服(自建)" }}
+								我要开服(自建)
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="Tools"
@@ -598,7 +587,7 @@
 	const mainStore = useMainStore();
 	const config = mainStore.config;
 	// console.error(config);
-	const protocols = ["tcp", "udp", "ws", "wss", "wg", "quic"];
+	const protocols = ["tcp", "udp", "ws", "wss", "quic"];
 	const data = reactive<{ [key: string]: any; releaseList: Array<Array<string>> }>({
 		logVisible: false,
 		cidrVisible: false,
@@ -1017,23 +1006,23 @@
 			}
 		}
 
-		if (mainStore.enableCreateServer) {
-			if (config.relayAllPeerrpc) {
-				args.push("--relay-all-peer-rpc");
-			}
-			const whiteList = mainStore.ServerWhiteList.trim()
-				.split("\n")
-				.map(el => el.trim())
-				.filter(el => el)
-				.join(" ");
-			if (whiteList && mainStore.enableWhiteList) {
-				args.push("--relay-network-whitelist", whiteList);
-			}
-			if (!whiteList && mainStore.enableWhiteList) {
-				args.push("--relay-network-whitelist");
-			}
-			return args;
-		}
+		// if (mainStore.enableCreateServer) {
+		// 	if (config.relayAllPeerrpc) {
+		// 		args.push("--relay-all-peer-rpc");
+		// 	}
+		// 	const whiteList = mainStore.ServerWhiteList.trim()
+		// 		.split("\n")
+		// 		.map(el => el.trim())
+		// 		.filter(el => el)
+		// 		.join(" ");
+		// 	if (whiteList && mainStore.enableWhiteList) {
+		// 		args.push("--relay-network-whitelist", whiteList);
+		// 	}
+		// 	if (!whiteList && mainStore.enableWhiteList) {
+		// 		args.push("--relay-network-whitelist");
+		// 	}
+		// 	return args;
+		// }
 
 		if (config.dhcp) {
 			args.push("-d");
@@ -1205,22 +1194,22 @@
 			importConfigData.visible = true;
 		}
 		if (command === "create_server") {
-			if (data.isStart) {
-				const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
-					action: "`联机/服务`",
-					confirmButtonText: "继续",
-					cancelButtonText: "取消"
-				});
-				if (!error) await reset();
-			}
-			mainStore.enableCreateServer = !mainStore.enableCreateServer;
-			if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
-				const [error] = await ElConfirmPrimary("是否关闭RPC流量转发?", "提示", {
-					confirmButtonText: "关闭",
-					cancelButtonText: "取消"
-				});
-				if (!error) mainStore.config.relayAllPeerrpc = false;
-			}
+			// if (data.isStart) {
+			// 	const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
+			// 		action: "`联机/服务`",
+			// 		confirmButtonText: "继续",
+			// 		cancelButtonText: "取消"
+			// 	});
+			// 	if (!error) await reset();
+			// }
+			// mainStore.enableCreateServer = !mainStore.enableCreateServer;
+			// if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
+			// 	const [error] = await ElConfirmPrimary("是否关闭RPC流量转发?", "提示", {
+			// 		confirmButtonText: "关闭",
+			// 		cancelButtonText: "取消"
+			// 	});
+			// 	if (!error) mainStore.config.relayAllPeerrpc = false;
+			// }
 		}
 	};
 

@@ -31,6 +31,14 @@ export default defineStore("main", {
 				enableNetCardMetric: false, //启用网卡自定义跃点
 				netCardMetricValue: 1 //自定义网卡跃点值
 			},
+			serverConfig: {
+				enableCreateServer: false, // 自建服务器
+				enableWhiteList: true, // 是否启用白名单
+
+				serverWhiteList: "", // 服务器流量转发白名单
+				enableListener: true, // 是否启用监听
+				port: "11010", // 服务器端口
+			},
 			cidrEnable: false,
 			basePeers: ["public.easytier.top:11010"],
 			theme: false, //主题  false light true dark
@@ -39,9 +47,7 @@ export default defineStore("main", {
 			winIpBcAutoStart: true,
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 			githubFastUrl: "https://ghproxy.cc/",
-			enableCreateServer: false, // 自建服务器
-			enableWhiteList: true, // 是否启用白名单
-			ServerWhiteList: "", // 服务器流量转发白名单
+
 
 			winipBcPid: 0,
 			winipBcStart: false
@@ -86,10 +92,6 @@ export default defineStore("main", {
 			"winIpBcAutoStart",
 			"createConfigInEasytier",
 			"githubFastUrl",
-
-			"enableCreateServer",
-			"enableWhiteList",
-			"ServerWhiteList"
 		],
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]

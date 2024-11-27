@@ -79,7 +79,9 @@
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { reactive, onMounted, onBeforeUnmount } from "vue";
-	import { parsePeerInfo } from "@/utils";
+	import { ATJ, parsePeerInfo } from "@/utils";
+	import { ElConfirmDanger } from "~/utils/element";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 	// 	enum NatType {
 	//   // has NAT; but own a single public IP, port is not changed
 	//   Unknown = 0;
@@ -122,8 +124,30 @@
 		["tunnel_proto", "隧道协议"]
 	];
 
+	let timer: NodeJS.Timeout | null = null;
+
 	const listenOutput = async () => {
-		const member = await invoke<string>("get_members_by_cli");
+		const [error, member] = await ATJ(invoke<string>("get_members_by_cli"));
+		// if(!member) return;
+		if (error) {
+			data.member = [];
+			return "";
+		}
+		if (member === "_EasytierGameCliFailedToConnect_") {
+			stopTimer();
+			const [error] = await ElConfirmDanger("连接已断开,是否重新尝试?", "警告", {
+				confirmButtonText: "重试",
+				cancelButtonText: "关闭窗口"
+			});
+			if (!error) {
+				await listenOutput();
+			} else {
+				const appWindow = getCurrentWindow();
+				await appWindow.close();
+			}
+			data.member = [];
+			return;
+		}
 		const peerInfo = parsePeerInfo(member);
 		peerInfo.forEach(value => {
 			if (value.cost === "Local") {
@@ -133,20 +157,29 @@
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
-		// console.error(peerInfo);
 		data.member = peerInfo;
+		if(!timer) {
+			startTimer();
+		}
 	};
 
-	let timer: NodeJS.Timeout | null = null;
+	const startTimer = async () => {
+		await listenOutput();
+		timer = setInterval(async () => {
+			await listenOutput();
+		}, 1000);
+	};
+
+	const stopTimer = () => {
+		timer && clearInterval(timer);
+		timer = null;
+	}
 
 	onMounted(async () => {
-		listenOutput();
-		timer = setInterval(() => {
-			listenOutput();
-		}, 1000 * 10);
+		await startTimer();
 	});
 
 	onBeforeUnmount(() => {
-		timer && clearInterval(timer);
+		stopTimer();
 	});
 </script>

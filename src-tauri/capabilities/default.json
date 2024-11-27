@@ -8,7 +8,8 @@
     "member",
     "cidr",
     "advance",
-    "tool"
+    "tool",
+    "server"
   ],
   "permissions": [
     "core:default",

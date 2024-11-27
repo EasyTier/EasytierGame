@@ -65,6 +65,7 @@ export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefi
 };
 
 export const parsePeerInfo = (content: string) => {
+	if(!content) return [];
 	// 将表格字符串分割成行
 	const lines = content.split("\n");
 

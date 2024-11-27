@@ -179,80 +179,6 @@
 			</ElFormItem>
 		</div>
 	</ElForm>
-	<!-- <ElForm
-		v-else
-		size="small"
-		label-position="top"
-		class="flex-1 overflow-hidden pb-[5px]"
-		:model="config"
-	>
-		<ElFormItem
-			label="白名单"
-			prop="ServerWhiteList"
-			class="full-label full-content overflow-hidden !flex flex-col h-full !mb-[0]"
-		>
-			<template #label>
-				<div class="flex items-center flex-nowrap gap-[0_5px]">
-					<div>白名单</div>
-					<span>-</span>
-					<ElTag
-						effect="dark"
-						:type="data.isStart ? 'success' : 'info'"
-					>
-						{{ data.isSuccessGetIp ? "运行成功" : data.isStart && !data.isSuccessGetIp ? "运行中" : "未启动" }}
-					</ElTag>
-					<ElButton
-						v-if="!data.coreVersion"
-						@click="getCoreVersion(true)"
-					>
-						获取内核版本
-					</ElButton>
-					<div
-						v-else
-						class="flex-1 truncate"
-					>
-						<ElTooltip :content="data.coreVersion">
-							<ElTag type="info">
-								{{ data.coreVersion }}
-							</ElTag>
-						</ElTooltip>
-					</div>
-					<ElButton
-						class="ml-auto"
-						:disabled="data.isStart"
-						@click="handleCoreManagement"
-						:loading="data.update"
-						type="primary"
-						size="small"
-					>
-						内核管理
-					</ElButton>
-				</div>
-			</template>
-			<div class="h-full w-full flex flex-col overflow-hidden">
-				<div class="flex-1 overflow-auto">
-					<ElInput
-						:disabled="!mainStore.enableWhiteList"
-						placeholder="一行一个，支持通配符列表，如（ab*）。当该参数的列表为空时，就不会为所有其他网络提供转发服务。"
-						:maxlength="1000"
-						v-model="mainStore.ServerWhiteList"
-						type="textarea"
-						:autosize="{
-							minRows: 9
-						}"
-						resize="none"
-					></ElInput>
-				</div>
-				<div class="text-center">
-					<ElCheckbox v-model="mainStore.enableWhiteList">启用白名单</ElCheckbox>
-					<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">转发所有对等节点的RPC数据包</ElCheckbox>
-					<ElTooltip content="帮助其他虚拟网建立P2P链接">
-						<ElIcon><QuestionFilled /></ElIcon>
-					</ElTooltip>
-				</div>
-			</div>
-		</ElFormItem>
-	</ElForm> -->
 	<div class="flex items-start mt-auto">
 		<div>
 			<div>
@@ -287,7 +213,7 @@
 								:icon="SetUp"
 								command="create_server"
 							>
-								我要开服(自建)
+								自建服务({{ listenObj.server_thread_id.value ? "运行中" : "未运行" }})
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="Tools"
@@ -552,7 +478,7 @@
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
 	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp } from "@element-plus/icons-vue";
-	import { reactive, onBeforeUnmount, onMounted } from "vue";
+	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
@@ -568,6 +494,7 @@
 	import { sortedUniq, uniq } from "lodash-es";
 	import { bounce, addQQGroup } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
+	import { getServerArgs } from "@/composables/server";
 
 	let is_close = false;
 
@@ -577,6 +504,7 @@
 			is_close = true;
 			await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
 			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
+			await invoke("stop_command", { child_id: listenObj.server_thread_id.value || 0 });
 		},
 		async () => {
 			await handleConnection();
@@ -593,10 +521,12 @@
 		cidrVisible: false,
 		advanceVisible: false,
 		toolVisible: false,
+		serverVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
 		memberVisible: false,
 		log: "",
+		serverLog: "", //服务端日志
 		update: false,
 		releaseList: [],
 		coreVersion: "-",
@@ -672,29 +602,35 @@
 	const listenObj: { [key: string]: any } = {
 		unListenOutPut: null,
 		unListenThreadId: null,
+		unListenServerOutPut: null,
+		unListenServerThreadId: null,
 		unListenConfigStart: null,
+		unListenStartStopServer: null,
 		thread_id: null,
+		server_thread_id: ref(null),
 		async listenOutput() {
 			// const appWindow = getCurrentWindow();
-			const unListen = await listen("command-output", async event => {
+			const unListen = await listen<string>("command-output", async event => {
 				data.isStart = true;
 				// console.error(event.payload);
 				if (event.payload) {
 					data.startLoading = false;
 					let ipv4 = /dhcp ip changed. old: None, new: Some\((\d+\.\d+\.\d+\.\d+).*\)/g.exec(event.payload as string)?.[1];
 					let devName = /tun device ready. dev: (.*)/g.exec(event.payload as string)?.[1];
+					if (event.payload.includes("peer connection removed")) {
+						data.isSuccessGetIp = false;
+					}
+					if (event.payload.includes("new peer connection added") && !data.isSuccessGetIp) {
+						await setTrayRunState(tray, true);
+						data.isSuccessGetIp = true;
+						await setTrayTooltip(tray, `IP: ${config.ipv4}`);
+					}
 					if (config.dhcp || mainStore.configStartEnable) {
 						if (ipv4) {
 							config.ipv4 = ipv4;
 							await setTrayRunState(tray, true);
 							data.isSuccessGetIp = true;
 							await setTrayTooltip(tray, `IP: ${ipv4}`);
-						}
-					} else {
-						if ((event.payload as string).includes("new peer connection added") && !data.isSuccessGetIp) {
-							await setTrayRunState(tray, true);
-							data.isSuccessGetIp = true;
-							await setTrayTooltip(tray, `IP: ${config.ipv4}`);
 						}
 					}
 					if (
@@ -733,6 +669,24 @@
 			});
 			this.unListenThreadId = unListen;
 		},
+		async listenServerOutPut() {
+			const unListen = await listen<string>("server-command-output", async event => {
+				// console.log("server-command-output", event);
+				const logArr = data.serverLog.split("\n");
+				const start = logArr.length > 1000 ? logArr.length - 1000 : 0;
+				data.serverLog = logArr.slice(start).join("\n");
+				data.serverLog += (event.payload || "") + "\n";
+			});
+			this.unListenServerOutPut = unListen;
+		},
+		async listenServerThreadId() {
+			const unListen = await listen("server-thread-id", event => {
+				if (event.payload) {
+					this.server_thread_id.value = event.payload;
+				}
+			});
+			this.unListenServerThreadId = unListen;
+		},
 		async listenConfigStart() {
 			const unListen = await listen("config", event => {
 				// console.error("config", event.payload);
@@ -741,6 +695,23 @@
 				config.ipv4 = ipv4;
 			});
 			this.unListenConfigStart = unListen;
+		},
+		async listenStartStopServer() {
+			const unListen = await listen<{ args: Array<string> }>("startStopServer", async event => {
+				await listenObj?.unListenServerOutPut?.();
+				await invoke("stop_command", { child_id: listenObj.server_thread_id.value || 0 });
+				if (listenObj.server_thread_id.value) {
+					listenObj.server_thread_id.value = null;
+				} else {
+					data.serverLog = "";
+					await listenObj.listenServerOutPut();
+					await invoke("run_command", {
+						args: event.payload.args,
+						is_server: true
+					});
+				}
+			});
+			this.unListenStartStopServer = unListen;
 		}
 	};
 
@@ -953,7 +924,22 @@
 		});
 	};
 
+	const initAutoStartServer = async () => {
+		if (mainStore.serverConfig.autoStart && data.coreVersion) {
+			const args = getServerArgs();
+			await listenObj?.unListenServerOutPut?.();
+			await invoke("stop_command", { child_id: listenObj.server_thread_id.value || 0 });
+			data.serverLog = "";
+			await listenObj.listenServerOutPut();
+			await invoke("run_command", {
+				args,
+				is_server: true
+			});
+		}
+	};
+
 	let logsTimer: NodeJS.Timeout | null = null;
+	let serverLogsTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		// await handleUpdateCore();  //默认不自动更新
@@ -963,8 +949,11 @@
 		await initStartWinIpBroadcast();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
+		await listenObj.listenServerThreadId();
 		await listenObj.listenConfigStart();
+		await listenObj.listenStartStopServer();
 		await initConfigDir();
+		await initAutoStartServer();
 		await initConnectAfterStart();
 		closePrevent();
 	});
@@ -973,7 +962,9 @@
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
 		listenObj.unListenConfigStart && listenObj.unListenConfigStart();
+		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
+		serverLogsTimer && clearInterval(serverLogsTimer);
 	});
 
 	const getArgs = async () => {
@@ -1005,24 +996,6 @@
 				return [];
 			}
 		}
-
-		// if (mainStore.enableCreateServer) {
-		// 	if (config.relayAllPeerrpc) {
-		// 		args.push("--relay-all-peer-rpc");
-		// 	}
-		// 	const whiteList = mainStore.ServerWhiteList.trim()
-		// 		.split("\n")
-		// 		.map(el => el.trim())
-		// 		.filter(el => el)
-		// 		.join(" ");
-		// 	if (whiteList && mainStore.enableWhiteList) {
-		// 		args.push("--relay-network-whitelist", whiteList);
-		// 	}
-		// 	if (!whiteList && mainStore.enableWhiteList) {
-		// 		args.push("--relay-network-whitelist");
-		// 	}
-		// 	return args;
-		// }
 
 		if (config.dhcp) {
 			args.push("-d");
@@ -1194,6 +1167,7 @@
 			importConfigData.visible = true;
 		}
 		if (command === "create_server") {
+			await handleShowServerDialog();
 			// if (data.isStart) {
 			// 	const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
 			// 		action: "`联机/服务`",
@@ -1301,6 +1275,7 @@
 				}, 650);
 			},
 			() => {
+				logsTimer && clearInterval(logsTimer);
 				data.logVisible = false;
 			}
 		);
@@ -1359,6 +1334,32 @@
 			},
 			() => {
 				data.toolVisible = false;
+			}
+		);
+	};
+
+	const handleShowServerDialog = async () => {
+		await etWindows(
+			"server",
+			{
+				title: "自建服务器",
+				minWidth: 550,
+				minHeight: 460,
+				width: 550,
+				height: 460,
+				resizable: true,
+				url: "#/server"
+			},
+			(_, appWindow) => {
+				data.serverVisible = true;
+				serverLogsTimer && clearInterval(serverLogsTimer);
+				serverLogsTimer = setInterval(() => {
+					appWindow.emitTo("server", "server_logs", { log: data.serverLog, threadId: listenObj.server_thread_id.value });
+				}, 650);
+			},
+			() => {
+				serverLogsTimer && clearInterval(serverLogsTimer);
+				data.serverVisible = false;
 			}
 		);
 	};

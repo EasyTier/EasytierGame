@@ -9,10 +9,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
 use std::process::{Command, Stdio};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    mpsc, Arc,
-};
+use std::sync::mpsc;
 use std::{path, thread};
 use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -142,15 +139,32 @@ fn get_members_by_cli() -> String {
         .output()
     {
         Ok(output) => {
-            let output_str = String::from_utf8_lossy(&output.stdout);
-            return output_str.trim().to_string();
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+                return output_str.trim().to_string();
+            }else {
+                let output_str = String::from_utf8_lossy(&output.stderr);
+                log::error!("{}", output_str.trim().to_string());
+                return "_EasytierGameCliFailedToConnect_".to_string();
+            }
         }
-        Err(_e) => return _e.to_string(),
+        Err(_e) => {
+            log::error!("get member list error");
+            return "".to_string();
+        },
     }
 }
 
 #[tauri::command(rename_all = "snake_case")]
 async fn download_easytier_zip(download_url: String, file_name: String) {
+    let cache_dir_path = get_tool_exe_path(String::from("\\easytier\\cache"));
+    let cache_file_name = format!("{}\\{}", cache_dir_path, file_name);
+    let cache_file_name_path = path::Path::new(&cache_file_name);
+    if cache_file_name_path.exists() {
+        unzip(cache_file_name_path);
+        return;
+    }
+
     let target = format!("{}", download_url);
     let response = reqwest::get(target)
         .await
@@ -177,10 +191,19 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
     file.write_all(&content).expect("error to write easytier");
     println!("写入完成");
     unzip(path);
-    match fs::remove_file(path) {
-        Ok(_) => println!("删除zip文件成功"),
-        Err(_) => log::error!("删除zip文件失败"),
+
+    let cache_dir_path = path::Path::new(&cache_dir_path);
+    if !cache_dir_path.exists() {
+        fs::create_dir_all(&cache_dir_path).unwrap();
     }
+    match fs::rename(path, cache_file_name) {
+        Ok(_) => println!("保存zip文件至easytier/cache成功"),
+        Err(_) => log::error!("保存zip文件失败"),
+    }
+    // match fs::remove_file(path) {
+    //     Ok(_) => println!("删除zip文件成功"),
+    //     Err(_) => log::error!("删除zip文件失败"),
+    // }
 }
 
 fn unzip(fname: &path::Path) {
@@ -228,18 +251,22 @@ fn unzip(fname: &path::Path) {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn run_command(
-    app_handle: tauri::AppHandle,
-    args: Vec<String>,
-    stop_signal: tauri::State<Arc<AtomicBool>>,
-) {
+fn run_command(app_handle: tauri::AppHandle, args: Vec<String>, is_server: Option<bool>) {
+    let is_server = is_server.unwrap_or(false);
     let (tx, rx) = mpsc::channel();
-    stop_signal.store(false, Ordering::Relaxed);
+
     let app_handle1 = app_handle.clone();
     let app_handle2 = app_handle.clone();
-    let stop_signal1 = Arc::clone(&stop_signal);
-    let stop_signal2 = Arc::clone(&stop_signal);
+
     let args2 = args.clone();
+    let mut thread_id_str = "thread-id";
+    if is_server {
+        thread_id_str = "server-thread-id";
+    }
+    let mut command_output_str = "command-output";
+    if is_server {
+        command_output_str = "server-command-output";
+    }
     thread::spawn(move || {
         let core_path = get_tool_exe_path(String::from("\\easytier\\easytier-core.exe"));
         // trace, debug, info, warn, error, off
@@ -252,36 +279,36 @@ fn run_command(
 
         println!("child id: {}", child.id());
         app_handle1
-            .emit("thread-id", child.id())
+            .emit(thread_id_str, child.id())
             .expect("failed to emit id event");
         app_handle1
-            .emit("command-output", args2.join(" "))
+            .emit(command_output_str, args2.join(" "))
             .expect("error output args");
         let stdout = child.stdout.take().expect("failed to capture stdout");
         let reader = BufReader::new(stdout);
 
         for line in reader.lines() {
             match line {
-                Ok(line) => {
-                    tx.send(line).expect("failed to send line");
-                }
+                Ok(line) => match tx.send(line) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log::error!("error sending line: {}", e);
+                        break;
+                    }
+                },
                 Err(e) => {
                     log::error!("error reading line: {}", e);
                     break;
                 }
             }
         }
-        stop_signal1.store(true, Ordering::Relaxed);
         println!("end");
     });
 
     thread::spawn(move || {
         while let Ok(line) = rx.recv() {
-            if stop_signal2.load(Ordering::Relaxed) {
-                break;
-            }
             app_handle2
-                .emit("command-output", line)
+                .emit(command_output_str, line)
                 .expect("failed to emit event");
         }
     });
@@ -523,8 +550,6 @@ pub fn run() {
     // 获取命令行参数
     let args: Vec<String> = std::env::args().collect();
 
-    let stop_signal = Arc::new(AtomicBool::new(false)); // 创建一个原子布尔值，用于控制命令的停止
-    let stop_signal_clone = Arc::clone(&stop_signal); // 创建一个原子布尔值的克隆，用于传递给命令
     let context = tauri::generate_context!();
     tauri::Builder::default()
         .plugin(
@@ -592,7 +617,6 @@ pub fn run() {
 
             Ok(())
         })
-        .manage(stop_signal_clone)
         .invoke_handler(tauri::generate_handler![
             run_command,
             stop_command,

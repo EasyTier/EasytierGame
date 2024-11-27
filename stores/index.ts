@@ -32,11 +32,11 @@ export default defineStore("main", {
 				netCardMetricValue: 1 //自定义网卡跃点值
 			},
 			serverConfig: {
-				enableCreateServer: false, // 自建服务器
 				enableWhiteList: true, // 是否启用白名单
-
+				relayAllPeerrpc: false, // 是否启用所有对等RPC
 				serverWhiteList: "", // 服务器流量转发白名单
-				enableListener: true, // 是否启用监听
+				// enableListener: true, // 是否启用监听
+				autoStart: false, //随软件自启
 				port: "11010", // 服务器端口
 			},
 			cidrEnable: false,
@@ -83,6 +83,14 @@ export default defineStore("main", {
 			"config.devNameValue",
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
+
+			"serverConfig.autoStart",
+			// 'serverConfig.enableListener',
+			'serverConfig.enableWhiteList',
+			'serverConfig.relayAllPeerrpc',
+			'serverConfig.serverWhiteList',
+			'serverConfig.port',
+
 
 			"cidrEnable",
 			"basePeers",

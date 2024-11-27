@@ -35,16 +35,18 @@
 							</ElTag>
 						</ElTooltip>
 					</div>
-					<ElButton
-						class="ml-auto"
-						:disabled="data.isStart"
-						@click="handleCoreManagement"
-						:loading="data.update"
-						type="primary"
-						size="small"
-					>
-						内核管理
-					</ElButton>
+					<ElTooltip content="请先停止自建服务和联机后再使用，否则内核被占用的情况下，无法进行内核更换">
+						<ElButton
+							class="ml-auto"
+							:disabled="data.isStart || listenObj.server_thread_id.value"
+							@click="handleCoreManagement"
+							:loading="data.update"
+							type="primary"
+							size="small"
+						>
+							内核管理
+						</ElButton>
+					</ElTooltip>
 				</div>
 			</template>
 			<ElSelect

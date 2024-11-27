@@ -54,7 +54,7 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 ![game-step12](/assets/game-step12.png)
 
 - 1.2.6重写 自建服务器功能，可以自行搭建服务器，但是需要一些网络知识，具体可以查看文档[自建服务器](https://www.easytier.top/guide/network/host-public-server.html),也可查看帮助.txt
-![game-step12](/assets/game-step12.png)
+![game-step13](/assets/game-step13.png)
 
 ## 特性
 

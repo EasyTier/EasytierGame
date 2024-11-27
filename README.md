@@ -29,6 +29,7 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
     ![game-step5](/assets/game-step5.png)
 
 - easytier内核升级后，可以点击内核管理按钮就可以进行内核切换和更新，但是需要出国或者github加速链接，如果无法更新，可以在群里获取
+- 1.2.6内核管理下载的内核 保存于easytier/cache目录，下次切换不用二次下载
     ![game-step6](/assets/game-step6.png)
 
 - 1.1.4更新了 配置分享功能 可以与朋友之间分享配置，方便联机
@@ -50,6 +51,9 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 ![game-step11](/assets/game-step11.png)
 
 - 1.2.5新增 自建服务器功能，可以自行搭建服务器，但是需要一些网络知识，具体可以查看文档[自建服务器](https://www.easytier.top/guide/network/host-public-server.html)
+![game-step12](/assets/game-step12.png)
+
+- 1.2.6重写 自建服务器功能，可以自行搭建服务器，但是需要一些网络知识，具体可以查看文档[自建服务器](https://www.easytier.top/guide/network/host-public-server.html),也可查看帮助.txt
 ![game-step12](/assets/game-step12.png)
 
 ## 特性

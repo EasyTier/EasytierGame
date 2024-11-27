@@ -942,7 +942,6 @@
 	let serverLogsTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
-		// await handleUpdateCore();  //默认不自动更新
 		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();

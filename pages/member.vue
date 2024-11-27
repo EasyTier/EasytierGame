@@ -158,24 +158,23 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 			}
 		});
 		data.member = peerInfo;
-		if(!timer) {
-			startTimer();
-		}
+		startTimer();
 	};
 
 	const startTimer = async () => {
-		await listenOutput();
-		timer = setInterval(async () => {
+		timer && clearTimeout(timer);
+		timer = setTimeout(async () => {
 			await listenOutput();
 		}, 1000);
 	};
 
 	const stopTimer = () => {
-		timer && clearInterval(timer);
+		timer && clearTimeout(timer);
 		timer = null;
 	}
 
 	onMounted(async () => {
+		await listenOutput();
 		await startTimer();
 	});
 

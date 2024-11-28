@@ -40,6 +40,7 @@ planif = { git = "https://github.com/mattrobineau/planif", tag = "1.0.1" }
 whoami = "1.5.2"
 tauri-plugin-fs = "2"
 tauri-plugin-clipboard-manager = "2.0.2"
+tokio = { version = "1.41.1", features = ["process"] }
 # prost = "0.13"
 # prost-types = "0.13"
 

@@ -21,6 +21,8 @@ use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::System::Com::*;
 use windows::Win32::System::TaskScheduler::*;
 
+use tokio::process::Command as tokioCommand;
+
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
 pub struct Release {
@@ -130,13 +132,13 @@ struct MyResponse {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn get_members_by_cli() -> String {
+async fn get_members_by_cli() -> String {
     let cli_path = get_tool_exe_path(String::from("\\easytier\\easytier-cli.exe"));
-    match Command::new(&cli_path)
+    match tokioCommand::new(&cli_path)
         .arg("peer")
         .arg("list")
         .creation_flags(0x08000000)
-        .output()
+        .output().await
     {
         Ok(output) => {
             if output.status.success() {

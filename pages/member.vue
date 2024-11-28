@@ -134,6 +134,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 			return "";
 		}
 		if (member === "_EasytierGameCliFailedToConnect_") {
+			data.member = [];
 			stopTimer();
 			const [error] = await ElConfirmDanger("连接已断开,是否重新尝试?", "警告", {
 				confirmButtonText: "重试",
@@ -145,7 +146,6 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 				const appWindow = getCurrentWindow();
 				await appWindow.close();
 			}
-			data.member = [];
 			return;
 		}
 		const peerInfo = parsePeerInfo(member);
@@ -161,10 +161,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 		startTimer();
 	};
 
-	const startTimer = async () => {
+	const startTimer = () => {
 		timer && clearTimeout(timer);
-		timer = setTimeout(async () => {
-			await listenOutput();
+		timer = setTimeout(() => {
+			listenOutput();
 		}, 1000);
 	};
 
@@ -175,7 +175,6 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 	onMounted(async () => {
 		await listenOutput();
-		await startTimer();
 	});
 
 	onBeforeUnmount(() => {

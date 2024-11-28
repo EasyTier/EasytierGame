@@ -335,6 +335,9 @@
 			>
 				刷新
 			</ElButton>
+			<ElTooltip content="打开内核缓存目录">
+				<ElButton :icon="Folder" size="small" @click="handleOpenCache"></ElButton>
+			</ElTooltip>
 		</div>
 		<ElSelect
 			placeholder="请选择内核版本"
@@ -479,7 +482,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp } from "@element-plus/icons-vue";
+	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp, Folder } from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
@@ -570,6 +573,20 @@
 			});
 		}
 	};
+
+	const handleOpenCache = async () => {
+		const cache_path = import.meta.env.VITE_CACHE_PATH;
+		const resourceDir = await getResourceDir();
+		const configPath = await join(resourceDir, cache_path);
+		const isExists = await exists(cache_path, { baseDir: BaseDirectory.Resource });
+		if (!isExists) {
+			try {
+				await mkdir(cache_path, { baseDir: BaseDirectory.Resource });
+			} catch (err) {}
+		}
+		// console.error(configPath);
+		await Command.create("explorer", [configPath]).execute();
+	}
 
 	const handleDeleteServerUrl = (url: string) => {
 		const newBasePeers = [...mainStore.basePeers];

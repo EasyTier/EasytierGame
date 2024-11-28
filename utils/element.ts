@@ -29,6 +29,8 @@ export const ElConfirmDanger = (
 	}
 	return ATJ(
 		ElMessageBox.confirm(message, title, {
+			closeOnClickModal: false, // 点击遮罩层不关闭弹窗
+			closeOnPressEscape: false, // 按下Esc键不关闭弹窗
 			cancelButtonText,
 			confirmButtonText,
 			confirmButtonClass: "el-button--danger"
@@ -63,6 +65,8 @@ export const ElConfirmSucces = (
 	}
 	return ATJ(
 		ElMessageBox.confirm(message, title, {
+			closeOnClickModal: false, // 点击遮罩层不关闭弹窗
+			closeOnPressEscape: false, // 按下Esc键不关闭弹窗
 			cancelButtonText,
 			confirmButtonText,
 			confirmButtonClass: "el-button--success"
@@ -97,6 +101,8 @@ export const ElConfirmPrimary = (
 	}
 	return ATJ(
 		ElMessageBox.confirm(message, title, {
+			closeOnClickModal: false, // 点击遮罩层不关闭弹窗
+			closeOnPressEscape: false, // 按下Esc键不关闭弹窗
 			cancelButtonText,
 			confirmButtonText,
 			confirmButtonClass: "el-button--primary"

@@ -8,6 +8,8 @@ export default defineNuxtConfig({
 	devServer: {
 		port: 5000
 	},
+	
+	telemetry: false,
 
 	imports: {
 		autoImport: false

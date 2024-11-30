@@ -215,7 +215,7 @@
 								:icon="SetUp"
 								command="create_server"
 							>
-								自建服务({{ listenObj.server_thread_id.value ? "运行中" : "未运行" }})
+								自建服务器<ElTag size="small" class="ml-[5px]" :type="listenObj.server_thread_id.value ? 'success' : 'info'">{{ listenObj.server_thread_id.value ? "运行中" : "未运行" }}</ElTag>
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="Tools"
@@ -642,15 +642,11 @@
 					if (event.payload.includes("new peer connection added") && !data.isSuccessGetIp) {
 						await setTrayRunState(tray, true);
 						data.isSuccessGetIp = true;
-						await setTrayTooltip(tray, `IP: ${config.ipv4}`);
+						await setTrayTooltip(tray, `IP: ${mainStore.config.ipv4}`);
 					}
-					if (config.dhcp || mainStore.configStartEnable) {
-						if (ipv4) {
-							config.ipv4 = ipv4;
-							await setTrayRunState(tray, true);
-							data.isSuccessGetIp = true;
-							await setTrayTooltip(tray, `IP: ${ipv4}`);
-						}
+					if (ipv4) {
+						mainStore.config.ipv4 = ipv4;
+						await setTrayTooltip(tray, `IP: ${ipv4}`);
 					}
 					if (
 						devName &&

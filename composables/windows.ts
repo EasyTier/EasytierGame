@@ -37,7 +37,7 @@ export default async (
 			defaultOpts.y = logicalPosition.y;
 		}
 		dialog = new WebviewWindow(label, { ...defaultOpts, ...options });
-		unlistenLogCreated = await dialog.once("tauri://webview-created", async () => {
+		unlistenLogCreated = await dialog.listen("tauri://webview-created", async () => {
 			if (dialog) {
 				afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 				await dialog.show();

@@ -13,7 +13,11 @@
 					width="140"
 					label="主机名"
 					prop="hostname"
-				></ElTableColumn>
+				>
+					<template #default="{row}">
+						{{ (row.hostname || "").toLowerCase().includes('publicserver') ? (row.hostname || "").replace("PublicServer", "服务器") : (row.hostname || "-") }}
+					</template>
+				</ElTableColumn>
 				<ElTableColumn
 					sortable
 					width="90"
@@ -54,8 +58,8 @@
 				<ElTableColumn
 					sortable
 					width="120"
-					label="nat_type"
-					prop="NAT类型"
+					label="NAT类型"
+					prop="nat_type"
 				>
 					<template #default="{ row }">
 						{{ natMaps[row.nat_type.toLowerCase() as natKyes] || row.nat_type || "-" }}
@@ -71,6 +75,16 @@
 					sortable
 					prop="tunnel_proto"
 					label="隧道协议"
+				></ElTableColumn>
+				<ElTableColumn
+					sortable
+					prop="rx_bytes"
+					label="接收"
+				></ElTableColumn>
+				<ElTableColumn
+					sortable
+					prop="tx_bytes"
+					label="传输"
 				></ElTableColumn>
 			</ElTable>
 		</div>
@@ -109,7 +123,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 	};
 	type natKyes = keyof typeof natMaps;
 
-	const data = reactive<{ member: any[] }>({
+	const data = reactive<{ member: {hostname: string, cost: string, ipv4: string, lat_msg: string, loss_rate: string, nat_type: string}[] }>({
 		member: []
 	});
 
@@ -121,7 +135,9 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 		["loss_rate", "丢包率"],
 		["nat_type", "NAT类型"],
 		["version", "版本"],
-		["tunnel_proto", "隧道协议"]
+		["tunnel_proto", "隧道协议"],
+		['rx_bytes', '接收'],
+		['tx_bytes', '传输']
 	];
 
 	let timer: NodeJS.Timeout | null = null;
@@ -157,6 +173,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 				value.ipv4 = value.ipv4.split("/")[0];
 			}
 		});
+		// console.log(peerInfo)
 		data.member = peerInfo;
 		startTimer();
 	};

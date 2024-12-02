@@ -10,7 +10,7 @@
 			class="full-label"
 		>
 			<template #label>
-				<div class="flex items-center flex-nowrap gap-[0_5px]">
+				<div class="flex flex-nowrap items-center gap-[0_5px]">
 					<div>服务器</div>
 					<span>-</span>
 					<ElTag
@@ -82,11 +82,11 @@
 					:label="item"
 					:value="item"
 				>
-					<div class="flex items-center gap-[20px] overflow-hidden flex-nowrap max-w-[calc(100vw-62px)]">
+					<div class="flex max-w-[calc(100vw-62px)] flex-nowrap items-center gap-[20px] overflow-hidden">
 						<ElTooltip :content="item">
 							<p class="truncate">{{ item }}</p>
 						</ElTooltip>
-						<div class="flex-shrink-0 ml-auto">
+						<div class="ml-auto flex-shrink-0">
 							<ElButton
 								@click.stop="handleDeleteServerUrl(item)"
 								round
@@ -98,7 +98,7 @@
 				</ElOption>
 			</ElSelect>
 		</ElFormItem>
-		<div class="flex flex-wrap gap-[0_10px] items-center">
+		<div class="flex flex-wrap items-center gap-[0_10px]">
 			<div class="flex-1">
 				<ElFormItem label="网络名">
 					<template #label>
@@ -157,7 +157,7 @@
 				label="局域网IP"
 			>
 				<template #label>
-					<div class="flex items-center h-[20px]">
+					<div class="flex h-[20px] items-center">
 						虚拟网IP
 						<ElTooltip content="对应命令行参数 --ipv4">
 							<ElIcon><QuestionFilled /></ElIcon>
@@ -181,7 +181,7 @@
 			</ElFormItem>
 		</div>
 	</ElForm>
-	<div class="flex items-start mt-auto">
+	<div class="mt-auto flex items-start">
 		<div>
 			<div>
 				<ElDropdown
@@ -209,13 +209,20 @@
 								分享联机相关配置
 							</ElDropdownItem>
 							<ElDropdownItem disabled>
-								<ElDivider class="!h-[2px] !m-0" />
+								<ElDivider class="!m-0 !h-[2px]" />
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="SetUp"
 								command="create_server"
 							>
-								自建服务器<ElTag size="small" class="ml-[5px]" :type="listenObj.server_thread_id.value ? 'success' : 'info'">{{ listenObj.server_thread_id.value ? "运行中" : "未运行" }}</ElTag>
+								自建服务器
+								<ElTag
+									size="small"
+									class="ml-[5px]"
+									:type="listenObj.server_thread_id.value ? 'success' : 'info'"
+								>
+									{{ listenObj.server_thread_id.value ? "运行中" : "未运行" }}
+								</ElTag>
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="Tools"
@@ -303,7 +310,7 @@
 					</ElButton>
 				</div>
 				<ElLink
-					class="!text-[9px] pb-[2px] ml-[8px] truncate"
+					class="ml-[8px] truncate pb-[2px] !text-[9px]"
 					type="info"
 					:underline="false"
 					@click="open('https://github.com/EasyTier/EasytierGame')"
@@ -336,7 +343,11 @@
 				刷新
 			</ElButton>
 			<ElTooltip content="打开内核缓存目录">
-				<ElButton :icon="Folder" size="small" @click="handleOpenCache"></ElButton>
+				<ElButton
+					:icon="Folder"
+					size="small"
+					@click="handleOpenCache"
+				></ElButton>
 			</ElTooltip>
 		</div>
 		<ElSelect
@@ -354,7 +365,7 @@
 				{{ release ? release[0] : "" }}
 			</ElOption>
 		</ElSelect>
-		<div class="pb-[5px] mt-[10px]">
+		<div class="mt-[10px] pb-[5px]">
 			<ElTooltip content="不使用出国软件也能告诉下载github Release包的地址，可自行搜索替换使用">
 				<ElText>github下载加速地址</ElText>
 			</ElTooltip>
@@ -456,6 +467,7 @@
 				v-model="mainStore.configPath"
 				no-data-text="目录没有配置文件"
 				placeholder="选择配置文件"
+				filterable
 			>
 				<ElOption
 					v-for="item in configStart.list"
@@ -482,7 +494,20 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp, Folder } from "@element-plus/icons-vue";
+	import {
+		QuestionFilled,
+		Delete,
+		List,
+		UserFilled,
+		Setting,
+		Share,
+		RefreshRight,
+		Link,
+		Tools,
+		MagicStick,
+		SetUp,
+		Folder
+	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
@@ -586,7 +611,7 @@
 		}
 		// console.error(configPath);
 		await Command.create("explorer", [configPath]).execute();
-	}
+	};
 
 	const handleDeleteServerUrl = (url: string) => {
 		const newBasePeers = [...mainStore.basePeers];
@@ -636,6 +661,12 @@
 					data.startLoading = false;
 					let ipv4 = /dhcp ip changed. old: None, new: Some\((\d+\.\d+\.\d+\.\d+).*\)/g.exec(event.payload as string)?.[1];
 					let devName = /tun device ready. dev: (.*)/g.exec(event.payload as string)?.[1];
+					if (mainStore.configStartEnable || mainStore.config.dhcp) {
+						let configIpv4 = /ipv4\s.*=\s.*[\'\"](\d+\.\d+\.\d+\.\d+).*[\'\"]/g.exec(event.payload as string)?.[1];
+						if (configIpv4) {
+							mainStore.config.ipv4 = configIpv4;
+						}
+					}
 					if (event.payload.includes("peer connection removed")) {
 						data.isSuccessGetIp = false;
 					}

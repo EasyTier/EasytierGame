@@ -73,8 +73,6 @@ export const dataSubscribe = async (cb?: (...args: any) => any) => {
 		await currentWindow.emitTo({ kind: "Window", label: "main" }, "config", emitData);
 	});
 	const unlisten = currentWindow.listen<any>("global-main-store", event => {
-		console.log('global-main-store')
-		console.log(event);
 		removeSubscribe && removeSubscribe();
 		mainStore.$patch({ ...event.payload.store }); // 更新全局状态
 		removeSubscribe = mainStore.$subscribe(async (...args) => {

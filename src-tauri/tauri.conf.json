@@ -34,7 +34,17 @@
 			"csp": null
 		}
 	},
-	"plugins": {},
+	"plugins": {
+		"cli": {
+			"description": "easytier game CLI Plugin",
+			"args": [
+				{
+					"name": "task-auto-start",
+					"description": "easytier game autostart"
+				}
+			]
+		}
+	},
 	"bundle": {
 		"active": false,
 		"targets": "all",

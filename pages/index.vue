@@ -510,13 +510,13 @@
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
+	import { getMatches } from '@tauri-apps/plugin-cli';
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox } from "element-plus";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
-	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
@@ -844,42 +844,6 @@
 		// console.log(data.releaseList);
 	};
 
-	const handleAutoStart = async () => {
-		let is_enable = await tauriAutoStart.isEnabled();
-		if (!config.autoStart && !is_enable) {
-			try {
-				await tauriAutoStart.enable();
-			} catch (err) {
-				ElMessage.error(`开机自启失败`);
-			}
-		} else {
-			try {
-				await tauriAutoStart.disable();
-			} catch (err) {
-				// ElMessage.error(`取消自启失败`);
-			}
-		}
-		is_enable = await tauriAutoStart.isEnabled();
-		if (!is_enable) {
-			config.autoStart = false;
-		} else {
-			config.autoStart = true;
-		}
-	};
-
-	const initAutoStart = async () => {
-		try {
-			const is_enable = await tauriAutoStart.isEnabled();
-			if (!is_enable) {
-				config.autoStart = false;
-			} else {
-				config.autoStart = true;
-			}
-		} catch (err) {
-			config.autoStart = false;
-		}
-	};
-
 	const handleAutoStartByTask = async () => {
 		await invoke("spawn_autostart", { enabled: !config.autoStart });
 		const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
@@ -888,11 +852,6 @@
 
 	const compatibleInitAutoStart = async () => {
 		try {
-			const is_enable = await tauriAutoStart.isEnabled();
-			if (is_enable) {
-				await invoke("spawn_autostart", { enabled: true });
-				await tauriAutoStart.disable();
-			}
 			let is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 			if (is_enable_by_task) {
 				// 每次打开Exe重新加载一次开机自启，因为可能路径变了
@@ -984,6 +943,15 @@
 		}
 	};
 
+	const mountedShow = async () => {
+		const args = await getMatches();
+		if(!args.args?.['task-auto-start']?.value) {
+			const appWindow = getCurrentWindow();
+			await appWindow.show();
+			await appWindow.setFocus();
+		}
+	}
+
 	let logsTimer: NodeJS.Timeout | null = null;
 	let serverLogsTimer: NodeJS.Timeout | null = null;
 
@@ -1000,6 +968,7 @@
 		await initConfigDir();
 		await initAutoStartServer();
 		await initConnectAfterStart();
+		mountedShow(); // 不需要await
 		closePrevent();
 	});
 

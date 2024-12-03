@@ -10,7 +10,7 @@
 			class="full-label"
 		>
 			<template #label>
-				<div class="flex items-center flex-nowrap gap-[0_5px]">
+				<div class="flex flex-nowrap items-center gap-[0_5px]">
 					<div>服务器</div>
 					<span>-</span>
 					<ElTag
@@ -82,11 +82,12 @@
 					:label="item"
 					:value="item"
 				>
-					<div class="flex items-center gap-[20px] overflow-hidden flex-nowrap max-w-[calc(100vw-62px)]">
-						<ElTooltip :content="item">
+					<div class="flex max-w-[calc(100vw-62px)] flex-nowrap items-center gap-[20px] overflow-hidden">
+						<ElTooltip v-if="item && item.length > 30" placement="top" :content="item || '-'">
 							<p class="truncate">{{ item }}</p>
 						</ElTooltip>
-						<div class="flex-shrink-0 ml-auto">
+						<p v-else class="truncate">{{ item }}</p>
+						<div class="ml-auto flex-shrink-0">
 							<ElButton
 								@click.stop="handleDeleteServerUrl(item)"
 								round
@@ -98,7 +99,7 @@
 				</ElOption>
 			</ElSelect>
 		</ElFormItem>
-		<div class="flex flex-wrap gap-[0_10px] items-center">
+		<div class="flex flex-wrap items-center gap-[0_10px]">
 			<div class="flex-1">
 				<ElFormItem label="网络名">
 					<template #label>
@@ -157,7 +158,7 @@
 				label="局域网IP"
 			>
 				<template #label>
-					<div class="flex items-center h-[20px]">
+					<div class="flex h-[20px] items-center">
 						虚拟网IP
 						<ElTooltip content="对应命令行参数 --ipv4">
 							<ElIcon><QuestionFilled /></ElIcon>
@@ -181,7 +182,7 @@
 			</ElFormItem>
 		</div>
 	</ElForm>
-	<div class="flex items-start mt-auto">
+	<div class="mt-auto flex items-start">
 		<div>
 			<div>
 				<ElDropdown
@@ -209,13 +210,20 @@
 								分享联机相关配置
 							</ElDropdownItem>
 							<ElDropdownItem disabled>
-								<ElDivider class="!h-[2px] !m-0" />
+								<ElDivider class="!m-0 !h-[2px]" />
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="SetUp"
 								command="create_server"
 							>
-								自建服务器<ElTag size="small" class="ml-[5px]" :type="listenObj.server_thread_id.value ? 'success' : 'info'">{{ listenObj.server_thread_id.value ? "运行中" : "未运行" }}</ElTag>
+								自建服务器
+								<ElTag
+									size="small"
+									class="ml-[5px]"
+									:type="listenObj.server_thread_id.value ? 'success' : 'info'"
+								>
+									{{ listenObj.server_thread_id.value ? "运行中" : "未运行" }}
+								</ElTag>
 							</ElDropdownItem>
 							<ElDropdownItem
 								:icon="Tools"
@@ -303,7 +311,7 @@
 					</ElButton>
 				</div>
 				<ElLink
-					class="!text-[9px] pb-[2px] ml-[8px] truncate"
+					class="ml-[8px] truncate pb-[2px] !text-[9px]"
 					type="info"
 					:underline="false"
 					@click="open('https://github.com/EasyTier/EasytierGame')"
@@ -336,7 +344,11 @@
 				刷新
 			</ElButton>
 			<ElTooltip content="打开内核缓存目录">
-				<ElButton :icon="Folder" size="small" @click="handleOpenCache"></ElButton>
+				<ElButton
+					:icon="Folder"
+					size="small"
+					@click="handleOpenCache"
+				></ElButton>
 			</ElTooltip>
 		</div>
 		<ElSelect
@@ -354,7 +366,7 @@
 				{{ release ? release[0] : "" }}
 			</ElOption>
 		</ElSelect>
-		<div class="pb-[5px] mt-[10px]">
+		<div class="mt-[10px] pb-[5px]">
 			<ElTooltip content="不使用出国软件也能告诉下载github Release包的地址，可自行搜索替换使用">
 				<ElText>github下载加速地址</ElText>
 			</ElTooltip>
@@ -456,6 +468,7 @@
 				v-model="mainStore.configPath"
 				no-data-text="目录没有配置文件"
 				placeholder="选择配置文件"
+				filterable
 			>
 				<ElOption
 					v-for="item in configStart.list"
@@ -482,22 +495,35 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
-	import { QuestionFilled, Delete, List, UserFilled, Setting, Share, RefreshRight, Link, Tools, MagicStick, SetUp, Folder } from "@element-plus/icons-vue";
+	import {
+		QuestionFilled,
+		Delete,
+		List,
+		UserFilled,
+		Setting,
+		Share,
+		RefreshRight,
+		Link,
+		Tools,
+		MagicStick,
+		SetUp,
+		Folder
+	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
+	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox } from "element-plus";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
-	import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -520,7 +546,7 @@
 	const mainStore = useMainStore();
 	const config = mainStore.config;
 	// console.error(config);
-	const protocols = ["tcp", "udp", "ws", "wss", "quic"];
+	const protocols = supportProtocols();
 	const data = reactive<{ [key: string]: any; releaseList: Array<Array<string>> }>({
 		logVisible: false,
 		cidrVisible: false,
@@ -586,7 +612,7 @@
 		}
 		// console.error(configPath);
 		await Command.create("explorer", [configPath]).execute();
-	}
+	};
 
 	const handleDeleteServerUrl = (url: string) => {
 		const newBasePeers = [...mainStore.basePeers];
@@ -636,6 +662,12 @@
 					data.startLoading = false;
 					let ipv4 = /dhcp ip changed. old: None, new: Some\((\d+\.\d+\.\d+\.\d+).*\)/g.exec(event.payload as string)?.[1];
 					let devName = /tun device ready. dev: (.*)/g.exec(event.payload as string)?.[1];
+					if (mainStore.configStartEnable || mainStore.config.dhcp) {
+						let configIpv4 = /ipv4\s.*=\s.*[\'\"](\d+\.\d+\.\d+\.\d+).*[\'\"]/g.exec(event.payload as string)?.[1];
+						if (configIpv4) {
+							mainStore.config.ipv4 = configIpv4;
+						}
+					}
 					if (event.payload.includes("peer connection removed")) {
 						data.isSuccessGetIp = false;
 					}
@@ -703,13 +735,18 @@
 			this.unListenServerThreadId = unListen;
 		},
 		async listenConfigStart() {
+			const appWindow = getCurrentWindow();
 			const unListen = await listen("config", event => {
 				// console.error("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
+				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
 			});
-			this.unListenConfigStart = unListen;
+			const unListen2 = mainStore.$subscribe(() => {
+				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
+			})
+			this.unListenConfigStart = [unListen, unListen2];
 		},
 		async listenStartStopServer() {
 			const unListen = await listen<{ args: Array<string> }>("startStopServer", async event => {
@@ -813,42 +850,6 @@
 		// console.log(data.releaseList);
 	};
 
-	const handleAutoStart = async () => {
-		let is_enable = await tauriAutoStart.isEnabled();
-		if (!config.autoStart && !is_enable) {
-			try {
-				await tauriAutoStart.enable();
-			} catch (err) {
-				ElMessage.error(`开机自启失败`);
-			}
-		} else {
-			try {
-				await tauriAutoStart.disable();
-			} catch (err) {
-				// ElMessage.error(`取消自启失败`);
-			}
-		}
-		is_enable = await tauriAutoStart.isEnabled();
-		if (!is_enable) {
-			config.autoStart = false;
-		} else {
-			config.autoStart = true;
-		}
-	};
-
-	const initAutoStart = async () => {
-		try {
-			const is_enable = await tauriAutoStart.isEnabled();
-			if (!is_enable) {
-				config.autoStart = false;
-			} else {
-				config.autoStart = true;
-			}
-		} catch (err) {
-			config.autoStart = false;
-		}
-	};
-
 	const handleAutoStartByTask = async () => {
 		await invoke("spawn_autostart", { enabled: !config.autoStart });
 		const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
@@ -857,11 +858,6 @@
 
 	const compatibleInitAutoStart = async () => {
 		try {
-			const is_enable = await tauriAutoStart.isEnabled();
-			if (is_enable) {
-				await invoke("spawn_autostart", { enabled: true });
-				await tauriAutoStart.disable();
-			}
 			let is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 			if (is_enable_by_task) {
 				// 每次打开Exe重新加载一次开机自启，因为可能路径变了
@@ -953,6 +949,15 @@
 		}
 	};
 
+	const mountedShow = async () => {
+		const args = await getMatches();
+		if (!args.args?.["task-auto-start"]?.value) {
+			const appWindow = getCurrentWindow();
+			await appWindow.show();
+			await appWindow.setFocus();
+		}
+	};
+
 	let logsTimer: NodeJS.Timeout | null = null;
 	let serverLogsTimer: NodeJS.Timeout | null = null;
 
@@ -969,13 +974,15 @@
 		await initConfigDir();
 		await initAutoStartServer();
 		await initConnectAfterStart();
+		mountedShow(); // 不需要await
 		closePrevent();
 	});
 
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
-		listenObj.unListenConfigStart && listenObj.unListenConfigStart();
+		listenObj.unListenConfigStart && listenObj.unListenConfigStart[0]();
+		listenObj.unListenConfigStart && listenObj.unListenConfigStart[1]();
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);
@@ -1030,6 +1037,12 @@
 			const formatUrl = config.serverUrl.replace(/\\/g, "/");
 			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
 		}
+		if (config.enableCustonProtocol) {
+			const includes = config.protocol.includes(config.customProtocol);
+			if (includes) {
+				args.push("--default-protocol", config.customProtocol);
+			}
+		}
 		if (config.disbleP2p) {
 			args.push("--disable-p2p");
 		}
@@ -1038,6 +1051,19 @@
 		}
 		if (config.disbleListenner) {
 			args.push("--no-listener");
+		}
+		if (!config.disbleListenner && config.enableCustomListener && config.customListenerData) {
+			const customListener = config.customListenerData
+				.trim()
+				.split("\n")
+				.map(el => el.trim())
+				.filter(el => el);
+			if (customListener.length > 0) {
+				args.push("-l", ...customListener);
+			}
+		}
+		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
+			args.push("-l", config.port);
 		}
 		if (mainStore.cidrEnable && config.proxyNetworks) {
 			// console.error(config.proxyNetworks);
@@ -1182,22 +1208,6 @@
 		}
 		if (command === "create_server") {
 			await handleShowServerDialog();
-			// if (data.isStart) {
-			// 	const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
-			// 		action: "`联机/服务`",
-			// 		confirmButtonText: "继续",
-			// 		cancelButtonText: "取消"
-			// 	});
-			// 	if (!error) await reset();
-			// }
-			// mainStore.enableCreateServer = !mainStore.enableCreateServer;
-			// if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
-			// 	const [error] = await ElConfirmPrimary("是否关闭RPC流量转发?", "提示", {
-			// 		confirmButtonText: "关闭",
-			// 		cancelButtonText: "取消"
-			// 	});
-			// 	if (!error) mainStore.config.relayAllPeerrpc = false;
-			// }
 		}
 	};
 
@@ -1285,7 +1295,7 @@
 				data.logVisible = true;
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
-					appWindow.emitTo("log", "logs", data.log);
+					appWindow.emitTo({ kind: "WebviewWindow", label: "log" }, "logs", data.log);
 				}, 650);
 			},
 			() => {
@@ -1368,7 +1378,10 @@
 				data.serverVisible = true;
 				serverLogsTimer && clearInterval(serverLogsTimer);
 				serverLogsTimer = setInterval(() => {
-					appWindow.emitTo("server", "server_logs", { log: data.serverLog, threadId: listenObj.server_thread_id.value });
+					appWindow.emitTo({ kind: "WebviewWindow", label: "server" }, "server_logs", {
+						log: data.serverLog,
+						threadId: listenObj.server_thread_id.value
+					});
 				}, 650);
 			},
 			() => {

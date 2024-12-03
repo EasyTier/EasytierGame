@@ -15,7 +15,6 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
-use tauri_plugin_autostart::MacosLauncher;
 use windows::core::{BSTR, VARIANT};
 use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::System::Com::*;
@@ -138,13 +137,14 @@ async fn get_members_by_cli() -> String {
         .arg("peer")
         .arg("list")
         .creation_flags(0x08000000)
-        .output().await
+        .output()
+        .await
     {
         Ok(output) => {
             if output.status.success() {
                 let output_str = String::from_utf8_lossy(&output.stdout);
                 return output_str.trim().to_string();
-            }else {
+            } else {
                 let output_str = String::from_utf8_lossy(&output.stderr);
                 log::error!("{}", output_str.trim().to_string());
                 return "_EasytierGameCliFailedToConnect_".to_string();
@@ -153,7 +153,7 @@ async fn get_members_by_cli() -> String {
         Err(_e) => {
             log::error!("get member list error");
             return "".to_string();
-        },
+        }
     }
 }
 
@@ -482,7 +482,7 @@ fn autostart_is_enabled() -> bool {
     }
 }
 
-pub const AUTOSTART_ARG: &str = "--autostart";
+// pub const AUTOSTART_ARG: &str = "--autostart";
 pub const TASKAUTOSTART_ARG: &str = "--task-auto-start";
 fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error>> {
     if !enabled {
@@ -550,10 +550,11 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 获取命令行参数
-    let args: Vec<String> = std::env::args().collect();
+    let _args: Vec<String> = std::env::args().collect();
 
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_cli::init())
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::SIZE)
@@ -561,10 +562,6 @@ pub fn run() {
         )
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_autostart::init(
-            MacosLauncher::LaunchAgent,
-            Some(vec![AUTOSTART_ARG]),
-        ))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
@@ -574,7 +571,7 @@ pub fn run() {
                 .expect("failed to set focus");
         }))
         .setup(move |app| {
-            let args = args.clone();
+            // let args = args.clone();
             // if cfg!(debug_assertions) {
             let log_path = get_tool_exe_path(String::from("\\easytier\\guiLogs"));
             app.handle().plugin(
@@ -611,11 +608,11 @@ pub fn run() {
                 .build(app)?;
 
             // 开机自启隐藏到托盘或者显示主窗口
-            if !args.contains(&String::from(TASKAUTOSTART_ARG)) {
-                let main_window = app.get_webview_window("main").unwrap();
-                main_window.show().expect("failed to show window");
-                main_window.set_focus().expect("failed to set focus");
-            }
+            // if !args.contains(&String::from(TASKAUTOSTART_ARG)) {
+            //     let main_window = app.get_webview_window("main").unwrap();
+            //     main_window.show().expect("failed to show window");
+            //     main_window.set_focus().expect("failed to set focus");
+            // }
 
             Ok(())
         })

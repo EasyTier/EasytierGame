@@ -181,8 +181,8 @@
 	import { onMounted, reactive } from "vue";
 	import useMainStore from "@/stores/index";
 	import { handleWinipBcStart, initStartWinIpBroadcast } from "@/composables/netcard";
-	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { isValidIP } from "~/utils";
+	import { dataSubscribe } from "~/composables/windows";
 
 	const mainStore = useMainStore();
 	const data = reactive({
@@ -253,18 +253,18 @@
 					if (output.stderr) {
 						data.pingLog += `${i + 1}error - ${output.stderr}`;
 					}
-					if(i != data.pingNum - 1) {
+					if (i != data.pingNum - 1) {
 						await awaitTime(1000);
 					}
 				}
-				data.pingLog += '完毕'
+				data.pingLog += "完毕";
 			} catch (err) {
 				ElMessage.error("Ping发生错误");
 				console.error(err);
 			} finally {
 				data.isPing = false;
 			}
-		}else {
+		} else {
 			ElMessage.error("请输入正确的IP");
 		}
 	};
@@ -328,10 +328,13 @@
 		}
 	};
 
-	const appWindow = getCurrentWindow();
-	mainStore.$subscribe((...a) => {
-		// console.error("subscribe", a);
-		appWindow.emitTo("main", "config", { winIpBcAutoStart: mainStore.winIpBcAutoStart, config: { ...mainStore.config } });
+	dataSubscribe(async (...a) => {
+		return {
+			winIpBcAutoStart: mainStore.winIpBcAutoStart,
+			winipBcStart: mainStore.winipBcStart,
+			winipBcPid: mainStore.winipBcPid,
+			config: { ...mainStore.config }
+		};
 	});
 
 	onMounted(() => {

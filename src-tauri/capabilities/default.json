@@ -30,10 +30,6 @@
     "core:webview:allow-webview-show",
     "core:webview:allow-webview-hide",
     "core:webview:allow-webview-close",
-    "autostart:default",
-    "autostart:allow-enable",
-    "autostart:allow-disable",
-    "autostart:allow-is-enabled",
     "core:tray:allow-get-by-id",
     "core:tray:allow-set-icon",
     "core:tray:allow-new",
@@ -96,6 +92,10 @@
     "window-state:default",
     "window-state:allow-save-window-state",
     "window-state:allow-restore-state",
+
+    
+    "cli:default",
+    "cli:allow-cli-matches",
 
     "log:default",
     "log:allow-log"

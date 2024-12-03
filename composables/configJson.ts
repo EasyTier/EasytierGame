@@ -22,6 +22,9 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 			saveErrorLog,
 			logLevel,
 			serverUrl,
+			port,
+			enableCustomListener,
+			customListenerData,
 			...otherConfig
 		} = mainStore.config;
 		let writeServerUrl: Array<string> | string = serverUrl;

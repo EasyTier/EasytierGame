@@ -64,6 +64,12 @@ export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefi
 		});
 };
 
+const _supportProtocols = ["tcp", "udp", "ws", "wss", "quic"];
+
+export const supportProtocols = () => {
+	return _supportProtocols.slice();
+}
+
 export const parsePeerInfo = (content: string) => {
 	if(!content) return [];
 	// 将表格字符串分割成行

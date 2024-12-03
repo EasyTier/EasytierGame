@@ -14,9 +14,8 @@ export const getServerArgs = () => {
 		.split("\n")
 		.map(el => el.trim())
 		.filter(el => el)
-		.join(" ");
 	if (whiteList && mainStore.serverConfig.enableWhiteList) {
-		args.push("--relay-network-whitelist", whiteList);
+		args.push("--relay-network-whitelist", ...whiteList);
 	}
 	if (!whiteList && mainStore.serverConfig.enableWhiteList) {
 		args.push("--relay-network-whitelist");

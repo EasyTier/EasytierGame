@@ -181,8 +181,8 @@
 	import { onMounted, reactive } from "vue";
 	import useMainStore from "@/stores/index";
 	import { handleWinipBcStart, initStartWinIpBroadcast } from "@/composables/netcard";
-	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { isValidIP } from "~/utils";
+	import { dataSubscribe } from "~/composables/windows";
 
 	const mainStore = useMainStore();
 	const data = reactive({
@@ -328,10 +328,9 @@
 		}
 	};
 
-	const appWindow = getCurrentWindow();
-	mainStore.$subscribe((...a) => {
-		// console.error("subscribe", a);
-		appWindow.emitTo("main", "config", { winIpBcAutoStart: mainStore.winIpBcAutoStart, config: { ...mainStore.config } });
+
+	dataSubscribe(async (...a) => {
+		return { winIpBcAutoStart: mainStore.winIpBcAutoStart, config: { ...mainStore.config } };
 	});
 
 	onMounted(() => {

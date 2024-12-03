@@ -2,6 +2,8 @@ import { type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow, PhysicalPosition, type WindowOptions, Window, currentMonitor } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type { WebviewLabel, WebviewOptions } from "@tauri-apps/api/webview";
+import useMainStore from "@/stores/index";
+import { onBeforeUnmount } from "vue";
 
 const _listenersMaps: { [key: string]: [UnlistenFn | null, UnlistenFn | null] } = {};
 
@@ -60,4 +62,28 @@ export default async (
 			unlistenLogCreated && (await (unlistenLogCreated as Function)());
 		}
 	}
+};
+
+export const dataSubscribe = async (cb?: (...args: any) => any) => {
+	if (!cb) return;
+	const mainStore = useMainStore();
+	const currentWindow = getCurrentWindow();
+	let removeSubscribe = mainStore.$subscribe(async (...args) => {
+		const emitData = await cb(args);
+		await currentWindow.emitTo({ kind: "Window", label: "main" }, "config", emitData);
+	});
+	const unlisten = currentWindow.listen<any>("global-main-store", event => {
+		console.log('global-main-store')
+		console.log(event);
+		removeSubscribe && removeSubscribe();
+		mainStore.$patch({ ...event.payload.store }); // 更新全局状态
+		removeSubscribe = mainStore.$subscribe(async (...args) => {
+			const emitData = await cb(args);
+			await currentWindow.emitTo({ kind: "Window", label: "main" }, "config", emitData);
+		});
+	});
+	onBeforeUnmount(async () => {
+		unlisten && (await unlisten)();
+		removeSubscribe && removeSubscribe();
+	});
 };

@@ -15,7 +15,6 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
-use tauri_plugin_autostart::MacosLauncher;
 use windows::core::{BSTR, VARIANT};
 use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::System::Com::*;

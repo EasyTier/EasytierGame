@@ -83,9 +83,10 @@
 					:value="item"
 				>
 					<div class="flex max-w-[calc(100vw-62px)] flex-nowrap items-center gap-[20px] overflow-hidden">
-						<ElTooltip :content="item">
+						<ElTooltip v-if="item && item.length > 30" placement="top" :content="item || '-'">
 							<p class="truncate">{{ item }}</p>
 						</ElTooltip>
+						<p v-else class="truncate">{{ item }}</p>
 						<div class="ml-auto flex-shrink-0">
 							<ElButton
 								@click.stop="handleDeleteServerUrl(item)"
@@ -510,7 +511,7 @@
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
-	import { getMatches } from '@tauri-apps/plugin-cli';
+	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox } from "element-plus";
@@ -522,7 +523,7 @@
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -545,7 +546,7 @@
 	const mainStore = useMainStore();
 	const config = mainStore.config;
 	// console.error(config);
-	const protocols = ["tcp", "udp", "ws", "wss", "quic"];
+	const protocols = supportProtocols();
 	const data = reactive<{ [key: string]: any; releaseList: Array<Array<string>> }>({
 		logVisible: false,
 		cidrVisible: false,
@@ -734,13 +735,18 @@
 			this.unListenServerThreadId = unListen;
 		},
 		async listenConfigStart() {
+			const appWindow = getCurrentWindow();
 			const unListen = await listen("config", event => {
 				// console.error("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
+				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
 			});
-			this.unListenConfigStart = unListen;
+			const unListen2 = mainStore.$subscribe(() => {
+				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
+			})
+			this.unListenConfigStart = [unListen, unListen2];
 		},
 		async listenStartStopServer() {
 			const unListen = await listen<{ args: Array<string> }>("startStopServer", async event => {
@@ -945,12 +951,12 @@
 
 	const mountedShow = async () => {
 		const args = await getMatches();
-		if(!args.args?.['task-auto-start']?.value) {
+		if (!args.args?.["task-auto-start"]?.value) {
 			const appWindow = getCurrentWindow();
 			await appWindow.show();
 			await appWindow.setFocus();
 		}
-	}
+	};
 
 	let logsTimer: NodeJS.Timeout | null = null;
 	let serverLogsTimer: NodeJS.Timeout | null = null;
@@ -975,7 +981,8 @@
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
-		listenObj.unListenConfigStart && listenObj.unListenConfigStart();
+		listenObj.unListenConfigStart && listenObj.unListenConfigStart[0]();
+		listenObj.unListenConfigStart && listenObj.unListenConfigStart[1]();
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);
@@ -1030,6 +1037,12 @@
 			const formatUrl = config.serverUrl.replace(/\\/g, "/");
 			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
 		}
+		if (config.enableCustonProtocol) {
+			const includes = config.protocol.includes(config.customProtocol);
+			if (includes) {
+				args.push("--default-protocol", config.customProtocol);
+			}
+		}
 		if (config.disbleP2p) {
 			args.push("--disable-p2p");
 		}
@@ -1038,6 +1051,19 @@
 		}
 		if (config.disbleListenner) {
 			args.push("--no-listener");
+		}
+		if (!config.disbleListenner && config.enableCustomListener && config.customListenerData) {
+			const customListener = config.customListenerData
+				.trim()
+				.split("\n")
+				.map(el => el.trim())
+				.filter(el => el);
+			if (customListener.length > 0) {
+				args.push("-l", ...customListener);
+			}
+		}
+		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
+			args.push("-l", config.port);
 		}
 		if (mainStore.cidrEnable && config.proxyNetworks) {
 			// console.error(config.proxyNetworks);
@@ -1182,22 +1208,6 @@
 		}
 		if (command === "create_server") {
 			await handleShowServerDialog();
-			// if (data.isStart) {
-			// 	const [error] = await ElConfirmDanger("切换会停止{action}，是否继续?", "提示", {
-			// 		action: "`联机/服务`",
-			// 		confirmButtonText: "继续",
-			// 		cancelButtonText: "取消"
-			// 	});
-			// 	if (!error) await reset();
-			// }
-			// mainStore.enableCreateServer = !mainStore.enableCreateServer;
-			// if (mainStore.config.relayAllPeerrpc && !mainStore.enableCreateServer) {
-			// 	const [error] = await ElConfirmPrimary("是否关闭RPC流量转发?", "提示", {
-			// 		confirmButtonText: "关闭",
-			// 		cancelButtonText: "取消"
-			// 	});
-			// 	if (!error) mainStore.config.relayAllPeerrpc = false;
-			// }
 		}
 	};
 
@@ -1285,7 +1295,7 @@
 				data.logVisible = true;
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
-					appWindow.emitTo("log", "logs", data.log);
+					appWindow.emitTo({ kind: "WebviewWindow", label: "log" }, "logs", data.log);
 				}, 650);
 			},
 			() => {
@@ -1368,7 +1378,10 @@
 				data.serverVisible = true;
 				serverLogsTimer && clearInterval(serverLogsTimer);
 				serverLogsTimer = setInterval(() => {
-					appWindow.emitTo("server", "server_logs", { log: data.serverLog, threadId: listenObj.server_thread_id.value });
+					appWindow.emitTo({ kind: "WebviewWindow", label: "server" }, "server_logs", {
+						log: data.serverLog,
+						threadId: listenObj.server_thread_id.value
+					});
 				}, 650);
 			},
 			() => {

@@ -85,6 +85,7 @@
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 	import { getServerArgs } from "@/composables/server";
+	import { dataSubscribe } from "@/composables/windows";
 
     const appWindow = getCurrentWindow();
 	const mainStore = useMainStore();
@@ -122,7 +123,8 @@
 		await appWindow.emitTo("main", "startStopServer", { args });
 	};
 
-    mainStore.$subscribe(async (...a) => {
-		await appWindow.emitTo("main", "config", { serverConfig: { ...mainStore.serverConfig }});
+	dataSubscribe(async (...a) => {
+		return { serverConfig: { ...mainStore.serverConfig }};
 	});
+
 </script>

@@ -13,6 +13,9 @@ export default defineStore("main", {
 				autoStart: false, // 是否自动启动
 				connectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
+				port: "11010", // 监听端口号
+				enableCustomListener: false, // 是否自定义监听
+				customListenerData: "", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: true, // 是否禁用加密
 				multiThread: false, //使用多线程
@@ -28,6 +31,8 @@ export default defineStore("main", {
 				logLevel: "error", //日志等级
 				devName: false, //自定义网卡名
 				devNameValue: "", //自定义网卡名
+				enableCustonProtocol: false, //自定义默认协议
+				customProtocol: "tcp", //自定义默认协议
 				enableNetCardMetric: false, //启用网卡自定义跃点
 				netCardMetricValue: 1 //自定义网卡跃点值
 			},
@@ -37,7 +42,7 @@ export default defineStore("main", {
 				serverWhiteList: "", // 服务器流量转发白名单
 				// enableListener: true, // 是否启用监听
 				autoStart: false, //随软件自启
-				port: "11010", // 服务器端口
+				port: "11010" // 服务器端口
 			},
 			cidrEnable: false,
 			basePeers: ["public.easytier.top:11010"],
@@ -47,7 +52,6 @@ export default defineStore("main", {
 			winIpBcAutoStart: true,
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 			githubFastUrl: "https://ghproxy.cc/",
-
 
 			winipBcPid: 0,
 			winipBcStart: false
@@ -83,14 +87,18 @@ export default defineStore("main", {
 			"config.devNameValue",
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
+			"config.port",
+			"config.enableCustomListener",
+			"config.customListenerData",
+			"config.enableCustonProtocol",
+			"config.customProtocol",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',
-			'serverConfig.enableWhiteList',
-			'serverConfig.relayAllPeerrpc',
-			'serverConfig.serverWhiteList',
-			'serverConfig.port',
-
+			"serverConfig.enableWhiteList",
+			"serverConfig.relayAllPeerrpc",
+			"serverConfig.serverWhiteList",
+			"serverConfig.port",
 
 			"cidrEnable",
 			"basePeers",
@@ -99,8 +107,8 @@ export default defineStore("main", {
 			"configPath",
 			"winIpBcAutoStart",
 			"createConfigInEasytier",
-			"githubFastUrl",
-		],
+			"githubFastUrl"
+		]
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]
 	}

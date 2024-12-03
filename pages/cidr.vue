@@ -10,16 +10,16 @@
 				v-model="mainStore.config.proxyNetworks"
 				type="textarea"
 				:rows="30"
-				resize="none"></ElInput>
+				resize="none"
+			></ElInput>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 	import useMainStore from "@/stores/index";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
+	import { dataSubscribe } from "@/composables/windows";
 	const mainStore = useMainStore();
-	const appWindow = getCurrentWindow();
-	mainStore.$subscribe((...a) => {
-		appWindow.emitTo("main", "config", { cidrEnable: mainStore.cidrEnable, config: { ...mainStore.config } });
+	dataSubscribe(async (...a) => {
+		return { cidrEnable: mainStore.cidrEnable, config: { ...mainStore.config } };
 	});
 </script>

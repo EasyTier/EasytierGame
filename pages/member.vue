@@ -1,7 +1,7 @@
 <template>
 	<div class="overflow-auto h-full">
 		<div class="w-[1200px]">
-			<span v-if="!data.member || data.member.length <= 0">{{ "等待成员信息中..." }}</span>
+			<ElText size="small" v-if="!data.member || data.member.length <= 0">{{ "等待成员信息中..." }}</ElText>
 			<ElTable
 				stripe
 				border
@@ -22,10 +22,11 @@
 					sortable
 					width="90"
 					prop="cost"
-					label="路由"
+					label="方式"
 				>
 					<template #default="{ row }">
 						<ElTag
+							size="small"
 							effect="dark"
 							:type="row.cost == 'p2p' ? 'success' : 'info'"
 						>
@@ -42,12 +43,12 @@
 				<ElTableColumn
 					sortable
 					prop="lat_ms"
-					width="130"
+					width="100"
 					label="延迟/ms"
 				></ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="120"
+					width="100"
 					prop="loss_rate"
 					label="丢包率"
 				>
@@ -57,7 +58,7 @@
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="120"
+					width="110"
 					label="NAT类型"
 					prop="nat_type"
 				>
@@ -67,17 +68,19 @@
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="120"
+					width="122"
 					prop="version"
 					label="版本"
 				></ElTableColumn>
 				<ElTableColumn
 					sortable
+					width="100"
 					prop="tunnel_proto"
 					label="隧道协议"
 				></ElTableColumn>
 				<ElTableColumn
 					sortable
+					width="90"
 					prop="rx_bytes"
 					label="接收"
 				></ElTableColumn>

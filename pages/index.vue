@@ -523,7 +523,7 @@
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup, supportProtocols } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -668,9 +668,9 @@
 							mainStore.config.ipv4 = configIpv4;
 						}
 					}
-					if (event.payload.includes("peer connection removed")) {
-						data.isSuccessGetIp = false;
-					}
+					// if (event.payload.includes("peer connection removed")) {
+					// 	data.isSuccessGetIp = false;
+					// }
 					if (event.payload.includes("new peer connection added") && !data.isSuccessGetIp) {
 						await setTrayRunState(tray, true);
 						data.isSuccessGetIp = true;
@@ -737,10 +737,14 @@
 		async listenConfigStart() {
 			const appWindow = getCurrentWindow();
 			const unListen = await listen("config", event => {
-				// console.error("config", event.payload);
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
+				if(mainStore.config.enablePreventSleep) {
+					preventSleep();
+				}else {
+					stopPreventSleep();
+				}
 				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
 			});
 			const unListen2 = mainStore.$subscribe(() => {
@@ -949,6 +953,12 @@
 		}
 	};
 
+	const initPreventSleep = async () => {
+		if (mainStore.config.enablePreventSleep) {
+		    preventSleep();
+		}
+	}
+
 	const mountedShow = async () => {
 		const args = await getMatches();
 		if (!args.args?.["task-auto-start"]?.value) {
@@ -974,6 +984,7 @@
 		await initConfigDir();
 		await initAutoStartServer();
 		await initConnectAfterStart();
+		initPreventSleep();
 		mountedShow(); // 不需要await
 		closePrevent();
 	});
@@ -986,6 +997,7 @@
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);
+		stopPreventSleep();
 	});
 
 	const getArgs = async () => {

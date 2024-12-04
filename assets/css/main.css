@@ -47,3 +47,7 @@ html.dark body {
 	overflow: auto;
 	flex: 1;
 }
+
+.el-table {
+	font-size: 12px!important;
+}

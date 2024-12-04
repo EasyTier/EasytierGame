@@ -44,7 +44,7 @@ export const handleWinipBcStart = async () => {
 		await getWinIpBroadcastPid();
 		if (mainStore.winipBcPid <= 0) {
 			mainStore.$patch({
-				winIpBcAutoStart: true
+				winIpBcAutoStart: false
 			});
 		}
 	}

@@ -24,6 +24,7 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 			serverUrl,
 			port,
 			enableCustomListener,
+			enablePreventSleep,
 			customListenerData,
 			...otherConfig
 		} = mainStore.config;

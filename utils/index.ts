@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-shell";
 export const ENV = import.meta.env;
 
@@ -68,6 +69,21 @@ const _supportProtocols = ["tcp", "udp", "ws", "wss", "quic"];
 
 export const supportProtocols = () => {
 	return _supportProtocols.slice();
+}
+
+let _prevent_timer: NodeJS.Timeout| null = null;
+let _prevent_timer_count = 30; // 秒
+export const preventSleep = () => {
+	_prevent_timer && clearInterval(_prevent_timer);
+	_prevent_timer = setInterval(async () => {
+	    const result = await invoke('prevent_sleep');
+		// console.log(`trigger prevent sleep ${result}`);
+	}, _prevent_timer_count * 1000);
+}
+
+export const stopPreventSleep = () => {
+	_prevent_timer && clearInterval(_prevent_timer);
+	_prevent_timer = null;
 }
 
 export const parsePeerInfo = (content: string) => {

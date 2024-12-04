@@ -34,7 +34,8 @@ export default defineStore("main", {
 				enableCustonProtocol: false, //自定义默认协议
 				customProtocol: "tcp", //自定义默认协议
 				enableNetCardMetric: false, //启用网卡自定义跃点
-				netCardMetricValue: 1 //自定义网卡跃点值
+				netCardMetricValue: 1, //自定义网卡跃点值
+				enablePreventSleep: false, //组织系统休眠
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单

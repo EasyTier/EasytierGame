@@ -58,6 +58,7 @@
 				打开config.json目录
 			</ElButton>
 		</div>
+		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止休眠</ElCheckbox></div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>
@@ -184,6 +185,7 @@
 	import { reactive } from "vue";
 	import { dataSubscribe } from "@/composables/windows";
 	import { supportProtocols } from "~/utils";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 	const protocols = supportProtocols();
 	const listenerDialogData = reactive<{ [key: string]: any }>({

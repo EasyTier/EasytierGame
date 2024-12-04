@@ -20,7 +20,30 @@ use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::System::Com::*;
 use windows::Win32::System::TaskScheduler::*;
 
+use windows::Win32::System::Power::SetThreadExecutionState;
+use windows::Win32::System::Power::ES_CONTINUOUS;
+use windows::Win32::System::Power::ES_SYSTEM_REQUIRED;
+use windows::Win32::System::Power::EXECUTION_STATE;
+
 use tokio::process::Command as tokioCommand;
+
+
+#[tauri::command(rename_all = "snake_case")]
+fn prevent_sleep() -> bool {
+    unsafe {
+        let result = SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+        result != EXECUTION_STATE(0)
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn allow_sleep() -> bool {
+    unsafe {
+        let result = SetThreadExecutionState(ES_CONTINUOUS);
+        result != EXECUTION_STATE(0)
+    }
+}
+
 
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
@@ -626,7 +649,9 @@ pub fn run() {
             search_pid_by_pname,
             get_exe_directory,
             spawn_autostart,
-            autostart_is_enabled
+            autostart_is_enabled,
+            prevent_sleep,
+            allow_sleep
         ])
         .run(context)
         .expect("error while running tauri application");

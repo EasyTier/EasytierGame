@@ -310,14 +310,17 @@
 						增强工具
 					</ElButton>
 				</div>
-				<ElLink
-					class="ml-[8px] truncate pb-[2px] !text-[9px]"
-					type="info"
-					:underline="false"
-					@click="open('https://github.com/EasyTier/EasytierGame')"
-				>
-					EasytierGame主页
-				</ElLink>
+				
+				<ElBadge badge-class="!text-[9px] cursor-pointer" :hidden="!data.hasNewVersion" :offset="[6, 7]"  value="N">
+					<ElTooltip :disabled="!data.hasNewVersion" content="有新版发布了!">
+						<ElLink
+							class="ml-[8px] truncate pb-[2px] !text-[9px]"
+							type="info"
+							:underline="false"
+							@click="open('https://github.com/EasyTier/EasytierGame')"
+						>EasytierGame主页</ElLink>
+					</ElTooltip>
+  				</ElBadge>
 			</div>
 		</div>
 	</div>
@@ -510,7 +513,7 @@
 		Folder
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
-	import { useTray, setTrayRunState, setTrayTooltip } from "~/composables/tray";
+	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
 	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
@@ -548,6 +551,7 @@
 	// console.error(config);
 	const protocols = supportProtocols();
 	const data = reactive<{ [key: string]: any; releaseList: Array<Array<string>> }>({
+		hasNewVersion: false, //easytierGame有没有新版
 		logVisible: false,
 		cidrVisible: false,
 		advanceVisible: false,
@@ -988,6 +992,7 @@
 		initPreventSleep();
 		mountedShow(); // 不需要await
 		closePrevent();
+		data.hasNewVersion = await checkNewVersion();
 	});
 
 	onBeforeUnmount(() => {

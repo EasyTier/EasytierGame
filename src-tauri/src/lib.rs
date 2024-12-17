@@ -79,6 +79,47 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
 }
 
 #[tauri::command(rename_all = "snake_case")]
+async fn fetch_game_releases() -> [String; 2] {
+    // 创建HTTP客户端
+    let client = Client::new();
+    // 构建请求的URL
+    let url = format!("https://api.github.com/repos/Easytier/EasytierGame/releases",);
+
+    // 发送HTTP GET请求
+    if let Ok(response) = client
+        .get(&url)
+        .header("User-Agent", "Tauri-fetch")
+        .send()
+        .await
+    {
+        // 反序列化响应体为Release列表
+        match response.json::<Vec<Release>>().await {
+            Ok(releases) => {
+                if releases.len() <= 0 {
+                    return [String::from(""), String::from("")];
+                }
+                let release = releases.first().unwrap();
+                let tag_name = release.tag_name.as_str();
+                let browser_download_url = release
+                    .assets
+                    .first()
+                    .unwrap()
+                    .browser_download_url
+                    .as_str();
+                [String::from(tag_name), String::from(browser_download_url)]
+            }
+            Err(_e) => {
+                log::error!("game release {}", _e.to_string());
+                [String::from(""), String::from("")]
+            }
+        }
+    } else {
+        log::error!("failed to get game release");
+        [String::from(""), String::from("")]
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
 fn get_core_version() -> String {
     let core_path = get_tool_exe_path("\\easytier\\easytier-core.exe");
     match Command::new(&core_path)
@@ -641,6 +682,7 @@ pub fn run() {
             stop_command,
             get_core_version,
             fetch_easytier_list,
+            fetch_game_releases,
             download_easytier_zip,
             get_members_by_cli,
             search_pid_by_pname,

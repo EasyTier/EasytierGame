@@ -5,6 +5,9 @@ import pkg from "@/package.json";
 import { setTheme } from "~/composables/theme";
 import useMainStore from "@/stores/index";
 import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
+import { invoke } from "@tauri-apps/api/core";
+// import { ElConfirmPrimary } from "~/utils/element";
+// import { open } from "@tauri-apps/plugin-shell";
 
 const DEFAULT_TRAY_NAME = "main";
 
@@ -140,4 +143,20 @@ export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | n
 	} else {
 		await tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 	}
+}
+
+
+export const checkNewVersion = async () => {
+	let [tagName, downloadUrl] = await invoke<string[]>("fetch_game_releases");
+	if(tagName && pkg.version !== tagName) {
+		return true; //有新版
+		// const [err] = await ElConfirmPrimary("有新版本是否下载?", "发现新版本", {
+		// 	confirmButtonText: "下载",
+		// 	cancelButtonText: "取消",
+		// })
+		// if(!err) {
+		// 	open(downloadUrl);
+		// }
+	}
+	return false; //没有新版
 }

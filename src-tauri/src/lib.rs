@@ -21,17 +21,17 @@ use windows::Win32::System::Com::*;
 use windows::Win32::System::TaskScheduler::*;
 
 use windows::Win32::System::Power::SetThreadExecutionState;
-use windows::Win32::System::Power::ES_CONTINUOUS;
-use windows::Win32::System::Power::ES_SYSTEM_REQUIRED;
-use windows::Win32::System::Power::EXECUTION_STATE;
+use windows::Win32::System::Power::{
+    ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED, EXECUTION_STATE,
+};
 
 use tokio::process::Command as tokioCommand;
-
 
 #[tauri::command(rename_all = "snake_case")]
 fn prevent_sleep() -> bool {
     unsafe {
-        let result = SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+        let result =
+            SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_CONTINUOUS);
         result != EXECUTION_STATE(0)
     }
 }
@@ -43,7 +43,6 @@ fn allow_sleep() -> bool {
         result != EXECUTION_STATE(0)
     }
 }
-
 
 // 定义GitHub Release的结构体
 #[derive(Debug, Deserialize)]
@@ -81,7 +80,7 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_core_version() -> String {
-    let core_path = get_tool_exe_path(String::from("\\easytier\\easytier-core.exe"));
+    let core_path = get_tool_exe_path("\\easytier\\easytier-core.exe");
     match Command::new(&core_path)
         .arg("--version")
         .creation_flags(0x08000000)
@@ -101,7 +100,7 @@ fn get_core_version() -> String {
 // #[tauri::command(rename_all = "snake_case")]
 // #[warn(dead_code)]
 // fn get_cli_version() -> String {
-//     let cli_path = get_tool_exe_path(String::from("\\easytier\\easytier-cli.exe"));
+//     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
 //     match Command::new(&cli_path)
 //         .arg("--version")
 //         .creation_flags(0x08000000)
@@ -115,9 +114,10 @@ fn get_core_version() -> String {
 //     }
 // }
 
-fn get_tool_exe_path(path: String) -> String {
+fn get_tool_exe_path(path: &str) -> String {
     let cur_vec = get_exe_directory();
-    let tool_path = cur_vec[1].to_string() + &path.to_string();
+    let tool_path = format!("{}{}", cur_vec[1].as_str(), path);
+    // log::error!("tool path: {}", tool_path);
     return tool_path;
 }
 
@@ -155,7 +155,7 @@ struct MyResponse {
 
 #[tauri::command(rename_all = "snake_case")]
 async fn get_members_by_cli() -> String {
-    let cli_path = get_tool_exe_path(String::from("\\easytier\\easytier-cli.exe"));
+    let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
     match tokioCommand::new(&cli_path)
         .arg("peer")
         .arg("list")
@@ -182,7 +182,7 @@ async fn get_members_by_cli() -> String {
 
 #[tauri::command(rename_all = "snake_case")]
 async fn download_easytier_zip(download_url: String, file_name: String) {
-    let cache_dir_path = get_tool_exe_path(String::from("\\easytier\\cache"));
+    let cache_dir_path = get_tool_exe_path("\\easytier\\cache");
     let cache_file_name = format!("{}\\{}", cache_dir_path, file_name);
     let cache_file_name_path = path::Path::new(&cache_file_name);
     if cache_file_name_path.exists() {
@@ -194,7 +194,7 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
     let response = reqwest::get(target)
         .await
         .expect("error to download easytier url");
-    let easytier_path = get_tool_exe_path(String::from("\\easytier"));
+    let easytier_path = get_tool_exe_path("\\easytier");
     let file_path = format!("{}\\{}", easytier_path, file_name);
     println!("download easytier to {}", file_path);
 
@@ -261,7 +261,7 @@ fn unzip(fname: &path::Path) {
         //         fs::create_dir_all(p).unwrap();
         //     }
         // }
-        let easytier_path = get_tool_exe_path(String::from("\\easytier"));
+        let easytier_path = get_tool_exe_path("\\easytier");
         let easytier_dir = path::Path::new(&easytier_path);
         // if !easytier_dir.exists() {
         //     fs::create_dir_all(&easytier_dir).unwrap();
@@ -293,7 +293,7 @@ fn run_command(app_handle: tauri::AppHandle, args: Vec<String>, is_server: Optio
         command_output_str = "server-command-output";
     }
     thread::spawn(move || {
-        let core_path = get_tool_exe_path(String::from("\\easytier\\easytier-core.exe"));
+        let core_path = get_tool_exe_path("\\easytier\\easytier-core.exe");
         // trace, debug, info, warn, error, off
         let mut child = Command::new(&core_path)
             .args(args)
@@ -379,20 +379,17 @@ async fn fetch_easytier_list() -> Vec<Vec<[String; 3]>> {
             }
             release_list.push(assets_list);
         }
-        return release_list;
+        release_list
     } else {
-        return Vec::new();
+        Vec::new()
     }
 }
 
 fn toggle_window_visibility<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
-        if window.is_visible().unwrap_or_default() {
-            let _ = window.hide();
-        } else {
-            let _ = window.show();
-            let _ = window.set_focus();
-        }
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
     }
 }
 
@@ -596,7 +593,7 @@ pub fn run() {
         .setup(move |app| {
             // let args = args.clone();
             // if cfg!(debug_assertions) {
-            let log_path = get_tool_exe_path(String::from("\\easytier\\guiLogs"));
+            let log_path = get_tool_exe_path("\\easytier\\guiLogs");
             app.handle().plugin(
                 tauri_plugin_log::Builder::default()
                     .target(tauri_plugin_log::Target::new(

@@ -592,7 +592,7 @@
 			appWindow.onCloseRequested(async event => {
 				// console.error(appWindow.label);
 				if (!is_close) {
-					// console.error(1);
+					// console.error(1);s
 					event.preventDefault();
 					appWindow.hide();
 				}
@@ -738,6 +738,7 @@
 			const appWindow = getCurrentWindow();
 			const unListen = await listen("config", event => {
 				const ipv4 = config.ipv4;
+				console.log(event.payload)
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
 				if(mainStore.config.enablePreventSleep) {
@@ -799,7 +800,7 @@
 			const currentVersion = /(\d+\.\d+\.\d+)/g.exec(data.coreVersion || "")?.[1];
 			if (version && currentVersion != version) {
 				// console.error({ currentVersion, latestVersion });
-				ElMessage.success(`更新 -> ${version}`);
+				ElMessage.success(`变更为 -> ${version}`);
 				return [true, downloadUrl, versionFileName];
 			} else if (currentVersion === version) {
 				ElMessage.success(`当前版本无需安装`);

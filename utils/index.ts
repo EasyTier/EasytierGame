@@ -72,7 +72,7 @@ export const supportProtocols = () => {
 }
 
 let _prevent_timer: NodeJS.Timeout| null = null;
-let _prevent_timer_count = 30; // 秒
+let _prevent_timer_count = 15; // 秒
 export const preventSleep = () => {
 	_prevent_timer && clearInterval(_prevent_timer);
 	_prevent_timer = setInterval(async () => {

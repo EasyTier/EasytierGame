@@ -185,7 +185,6 @@
 	import { reactive } from "vue";
 	import { dataSubscribe } from "@/composables/windows";
 	import { supportProtocols } from "~/utils";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 	const protocols = supportProtocols();
 	const listenerDialogData = reactive<{ [key: string]: any }>({

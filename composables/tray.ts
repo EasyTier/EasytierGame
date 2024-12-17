@@ -13,6 +13,7 @@ async function toggleVisibility() {
 		await getCurrentWindow().hide();
 	} else {
 		await getCurrentWindow().show();
+		await getCurrentWindow().unminimize();
 		await getCurrentWindow().setFocus();
 	}
 }

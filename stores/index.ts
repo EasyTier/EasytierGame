@@ -93,6 +93,7 @@ export default defineStore("main", {
 			"config.customListenerData",
 			"config.enableCustonProtocol",
 			"config.customProtocol",
+			"config.enablePreventSleep",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',

@@ -312,14 +312,14 @@
 				</div>
 				
 				<ElBadge badge-class="!text-[9px] cursor-pointer" :hidden="!data.hasNewVersion" :offset="[6, 7]"  value="N">
-					<ElTooltip :disabled="!data.hasNewVersion" content="有新版发布了!">
+					<!-- <ElTooltip :disabled="!data.hasNewVersion" content="有新版发布了!"> -->
 						<ElLink
 							class="ml-[8px] truncate pb-[2px] !text-[9px]"
 							type="info"
 							:underline="false"
 							@click="open('https://github.com/EasyTier/EasytierGame')"
 						>EasytierGame主页</ElLink>
-					</ElTooltip>
+					<!-- </ElTooltip> -->
   				</ElBadge>
 			</div>
 		</div>
@@ -346,7 +346,7 @@
 			>
 				刷新
 			</ElButton>
-			<ElTooltip content="打开内核缓存目录">
+			<ElTooltip placement="top" content="打开内核缓存目录">
 				<ElButton
 					:icon="Folder"
 					size="small"

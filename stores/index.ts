@@ -1,5 +1,5 @@
-import { defineStore } from "pinia";
-export default defineStore("main", {
+import { acceptHMRUpdate, defineStore } from "pinia";
+const store = defineStore("main", {
 	state() {
 		return {
 			config: {
@@ -35,7 +35,7 @@ export default defineStore("main", {
 				customProtocol: "tcp", //自定义默认协议
 				enableNetCardMetric: false, //启用网卡自定义跃点
 				netCardMetricValue: 1, //自定义网卡跃点值
-				enablePreventSleep: false, //组织系统休眠
+				enablePreventSleep: false //组织系统休眠
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -115,3 +115,5 @@ export default defineStore("main", {
 		// omit: ["winipBcPid", "winipBcStart"]
 	}
 });
+if (import.meta.hot) import.meta.hot.accept(acceptHMRUpdate(store, import.meta.hot));
+export default store;

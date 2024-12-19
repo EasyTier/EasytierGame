@@ -1,7 +1,12 @@
 <template>
-	<div class="overflow-auto h-full">
+	<div class="h-full overflow-auto">
 		<div class="w-[1200px]">
-			<ElText size="small" v-if="!data.member || data.member.length <= 0">{{ "等待成员信息中..." }}</ElText>
+			<ElText
+				size="small"
+				v-if="!data.member || data.member.length <= 0"
+			>
+				{{ "等待成员信息中..." }}
+			</ElText>
 			<ElTable
 				stripe
 				border
@@ -14,8 +19,12 @@
 					label="主机名"
 					prop="hostname"
 				>
-					<template #default="{row}">
-						{{ (row.hostname || "").toLowerCase().includes('publicserver') ? (row.hostname || "").replace("PublicServer", "服务器") : (row.hostname || "-") }}
+					<template #default="{ row }">
+						{{
+							(row.hostname || "").toLowerCase().includes("publicserver")
+								? (row.hostname || "").replace("PublicServer", "服务器")
+								: row.hostname || "-"
+						}}
 					</template>
 				</ElTableColumn>
 				<ElTableColumn
@@ -96,9 +105,9 @@
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { reactive, onMounted, onBeforeUnmount } from "vue";
-	import { ATJ, parsePeerInfo } from "@/utils";
+	import { ATJ, parseCliInfo } from "@/utils";
 	import { ElConfirmDanger } from "~/utils/element";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+	import { getCurrentWindow } from "@tauri-apps/api/window";
 	// 	enum NatType {
 	//   // has NAT; but own a single public IP, port is not changed
 	//   Unknown = 0;
@@ -126,7 +135,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 	};
 	type natKyes = keyof typeof natMaps;
 
-	const data = reactive<{ member: {hostname: string, cost: string, ipv4: string, lat_msg: string, loss_rate: string, nat_type: string}[] }>({
+	const data = reactive<{ member: { hostname: string; cost: string; ipv4: string; lat_msg: string; loss_rate: string; nat_type: string }[] }>({
 		member: []
 	});
 
@@ -139,8 +148,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 		["nat_type", "NAT类型"],
 		["version", "版本"],
 		["tunnel_proto", "隧道协议"],
-		['rx_bytes', '接收'],
-		['tx_bytes', '传输']
+		["rx_bytes", "接收"],
+		["tx_bytes", "传输"]
 	];
 
 	let timer: NodeJS.Timeout | null = null;
@@ -167,7 +176,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 			}
 			return;
 		}
-		const peerInfo = parsePeerInfo(member);
+		const peerInfo = parseCliInfo(member);
 		peerInfo.forEach(value => {
 			if (value.cost === "Local") {
 				value.cost = "本机";
@@ -191,7 +200,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 	const stopTimer = () => {
 		timer && clearTimeout(timer);
 		timer = null;
-	}
+	};
 
 	onMounted(async () => {
 		await listenOutput();

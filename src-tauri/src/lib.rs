@@ -222,6 +222,32 @@ async fn get_members_by_cli() -> String {
 }
 
 #[tauri::command(rename_all = "snake_case")]
+async fn get_route_by_cli() -> String {
+    let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
+    match tokioCommand::new(&cli_path)
+        .arg("route")
+        .creation_flags(0x08000000)
+        .output()
+        .await
+    {
+        Ok(output) => {
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+                return output_str.trim().to_string();
+            } else {
+                let output_str = String::from_utf8_lossy(&output.stderr);
+                log::error!("{}", output_str.trim().to_string());
+                return "_EasytierGameCliFailedToConnect_".to_string();
+            }
+        }
+        Err(_e) => {
+            log::error!("get route list error");
+            return "".to_string();
+        }
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
 async fn download_easytier_zip(download_url: String, file_name: String) {
     let cache_dir_path = get_tool_exe_path("\\easytier\\cache");
     let cache_file_name = format!("{}\\{}", cache_dir_path, file_name);
@@ -685,6 +711,7 @@ pub fn run() {
             fetch_game_releases,
             download_easytier_zip,
             get_members_by_cli,
+            get_route_by_cli,
             search_pid_by_pname,
             get_exe_directory,
             spawn_autostart,

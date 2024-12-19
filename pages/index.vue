@@ -518,11 +518,11 @@
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox } from "element-plus";
-	import { getCurrentWindow } from "@tauri-apps/api/window";
-	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
+	import { getCurrentWindow, type Window } from "@tauri-apps/api/window";
+	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
+	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
@@ -647,6 +647,18 @@
 		}
 		mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers]);
 	};
+	
+	// 手动触发持久化数据
+	const persist = async (appWindow: Window) => {
+		try {
+			appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
+			mainStore.$persist();
+		}catch(err) {
+			console.error(err);
+			ElMessage.error("手动持久数据失败");
+		}
+		
+	}
 
 	const listenObj: { [key: string]: any } = {
 		unListenOutPut: null,
@@ -742,7 +754,6 @@
 			const appWindow = getCurrentWindow();
 			const unListen = await listen("config", event => {
 				const ipv4 = config.ipv4;
-				console.log(event.payload)
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
 				if(mainStore.config.enablePreventSleep) {
@@ -750,10 +761,10 @@
 				}else {
 					stopPreventSleep();
 				}
-				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
+				persist(appWindow);
 			});
 			const unListen2 = mainStore.$subscribe(() => {
-				appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
+				persist(appWindow);
 			})
 			this.unListenConfigStart = [unListen, unListen2];
 		},
@@ -894,9 +905,11 @@
 		const path = import.meta.env.VITE_CONFIG_FILE_NAME;
 		const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
 		if (isExists) {
-			const guiJsonStr = await readTextFile(path, { baseDir: BaseDirectory.Resource });
-			if (guiJsonStr) {
+			const guiJsonStrUint8 = await readFile(path, { baseDir: BaseDirectory.Resource });
+			if (guiJsonStrUint8) {
 				try {
+					const decoder = new TextDecoder('utf-8');
+					const guiJsonStr = decoder.decode(guiJsonStrUint8);
 					const regex = /^(\s*\/\/.*)/gm;
 					const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
 					const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
@@ -926,7 +939,7 @@
 					}
 				} catch (err) {
 					console.error(err);
-					ElMessage.error(`config.json格式错误`);
+					ElMessage.error(`config.json格式或编码错误`);
 				} finally {
 					mainStore.$patch({
 						createConfigInEasytier: true // 发现本地存在config.json 默认启用该功能
@@ -975,6 +988,7 @@
 
 	let logsTimer: NodeJS.Timeout | null = null;
 	let serverLogsTimer: NodeJS.Timeout | null = null;
+	let cidrTimer : NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		await initGuiJson();
@@ -1003,6 +1017,7 @@
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);
+		cidrTimer && clearInterval(cidrTimer);
 		stopPreventSleep();
 	});
 
@@ -1084,13 +1099,13 @@
 			args.push("-l", config.port);
 		}
 		if (mainStore.cidrEnable && config.proxyNetworks) {
-			// console.error(config.proxyNetworks);
-			const reg = /\d+\.\d+\.\d+\.\d+\/\d+/g;
-			const formatProxyNetworks = config.proxyNetworks
-				.split("\n")
-				.map(item => item.trim())
-				.filter(item => item && reg.test(item));
-			args.push("--proxy-networks", ...formatProxyNetworks);
+			let formatProxyNetworks = config.proxyNetworks.split("\n");
+			const newformatProxyNetworks = formatProxyNetworks
+				.map(el => el.trim())
+				.filter(cidr => {
+					return /^\d+\.\d+\.\d+\.\d+\/\d+$/g.test(cidr);
+				});
+			args.push("--proxy-networks", ...newformatProxyNetworks);
 			config.proxyNetworks = formatProxyNetworks.join("\n");
 		}
 		if (config.disableEncryption) {
@@ -1168,10 +1183,10 @@
 			data.startLoading = true;
 			await unListenAll();
 			await listenObj.listenOutput();
-
 			await invoke("run_command", {
 				args
 			});
+			
 		}
 	};
 
@@ -1335,8 +1350,13 @@
 			},
 			(_, appWindow) => {
 				data.cidrVisible = true;
+				cidrTimer && clearInterval(cidrTimer);
+				cidrTimer = setInterval(() => {
+					appWindow.emitTo({ kind: "WebviewWindow", label: "cidr" }, "route", data.isStart);
+				}, 1000);
 			},
 			() => {
+				cidrTimer && clearInterval(cidrTimer);
 				data.cidrVisible = false;
 			}
 		);

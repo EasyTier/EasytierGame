@@ -86,7 +86,7 @@ export const stopPreventSleep = () => {
 	_prevent_timer = null;
 }
 
-export const parsePeerInfo = (content: string) => {
+export const parseCliInfo = (content: string) => {
 	if(!content) return [];
 	// 将表格字符串分割成行
 	const lines = content.split("\n");

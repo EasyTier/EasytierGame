@@ -16,8 +16,8 @@
 	});
 
 	const listenStart = async () => {
-		const unListen = await listen("logs", event => {
-			data.log = (event.payload as string) || "";
+		const unListen = await listen<string>("logs", event => {
+			data.log = event.payload || "";
 		});
 		return unListen;
 	};

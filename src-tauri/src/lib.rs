@@ -26,6 +26,29 @@ use windows::Win32::System::Power::{
 };
 
 use tokio::process::Command as tokioCommand;
+use rand::Rng;
+
+fn generate_random_user_agent() -> String {
+    let user_agents = vec![
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Safari/605.1.15",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Mobile Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:{version}) Gecko/20100101 Firefox/{version}",
+    ];
+
+    let mut rng = rand::thread_rng();
+    let template = user_agents[rng.gen_range(0..user_agents.len())];
+
+    // 生成随机版本号
+    let version_major: u8 = rng.gen_range(70..90);
+    let version_minor: u8 = rng.gen_range(0..10);
+    let version_patch: u8 = rng.gen_range(0..10);
+    let version = format!("{}.{}.{}", version_major, version_minor, version_patch);
+
+    // 替换模板中的版本号占位符
+    template.replace("{version}", &version)
+}
 
 #[tauri::command(rename_all = "snake_case")]
 fn prevent_sleep() -> bool {
@@ -67,11 +90,11 @@ pub async fn fetch_releases() -> Result<Vec<Release>, Error> {
     let client = Client::new();
     // 构建请求的URL
     let url = format!("https://api.github.com/repos/easytier/easytier/releases",);
-
+    let user_agent = generate_random_user_agent();
     // 发送HTTP GET请求
     let response = client
         .get(&url)
-        .header("User-Agent", "Tauri-fetch")
+        .header("User-Agent", user_agent)
         .send()
         .await?;
     // 反序列化响应体为Release列表
@@ -84,11 +107,11 @@ async fn fetch_game_releases() -> [String; 2] {
     let client = Client::new();
     // 构建请求的URL
     let url = format!("https://api.github.com/repos/Easytier/EasytierGame/releases",);
-
+    let user_agent = generate_random_user_agent();
     // 发送HTTP GET请求
     if let Ok(response) = client
         .get(&url)
-        .header("User-Agent", "Tauri-fetch")
+        .header("User-Agent", user_agent)
         .send()
         .await
     {

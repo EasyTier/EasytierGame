@@ -1099,13 +1099,15 @@
 			args.push("-l", config.port);
 		}
 		if (mainStore.cidrEnable && config.proxyNetworks) {
-			let formatProxyNetworks = config.proxyNetworks.split("\n");
+			let formatProxyNetworks = config.proxyNetworks.trim().split("\n");
 			const newformatProxyNetworks = formatProxyNetworks
 				.map(el => el.trim())
 				.filter(cidr => {
 					return /^\d+\.\d+\.\d+\.\d+\/\d+$/g.test(cidr);
 				});
-			args.push("--proxy-networks", ...newformatProxyNetworks);
+			if(newformatProxyNetworks.length > 0) {
+				args.push("--proxy-networks", ...newformatProxyNetworks);
+			}
 			config.proxyNetworks = formatProxyNetworks.join("\n");
 		}
 		if (config.disableEncryption) {

@@ -86,7 +86,7 @@
 				:disabled="mainStore.config.disbleListenner"
 				v-model="mainStore.config.enableCustomListener"
 			>
-				自定义IPV4监听地址
+				自定义监听地址
 			</ElCheckbox>
 			<ElButton
 				size="small"
@@ -188,7 +188,7 @@
 		<div><ElCheckbox v-model="mainStore.config.multiThread">启用多线程运行</ElCheckbox></div>
 		<div class="flex items-center gap-[10px]">
 			<ElText>压缩算法</ElText>
-			<div class="w-[90px]">
+			<div class="w-[160px]">
 				<ElSelect
 					size="small"
 					v-model="mainStore.config.compression"
@@ -196,7 +196,7 @@
 				>
 					<ElOption
 						v-for="item in [
-							['none', '默认'],
+							['none', '不压缩(游戏联机推荐)'],
 							['zstd', 'zstd算法']
 						]"
 						:key="item[0]"

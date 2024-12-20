@@ -1183,6 +1183,9 @@
 		if (config.devName && config.devNameValue) {
 			args.push("--dev-name", config.devNameValue);
 		}
+		if(config.compression && config.compression != 'none') {
+			args.push("--compression", config.compression);
+		}
 		return args;
 	};
 

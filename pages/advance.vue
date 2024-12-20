@@ -1,9 +1,9 @@
 <template>
-	<div class="h-full overflow-auto flex flex-col items-start px-[25px]">
+	<div class="flex h-full flex-col items-start overflow-auto px-[25px]">
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
-		<div class="flex items-center gap-[15px] flex-nowrap">
-			<div class="flex items-center gap-[5px] flex-nowrap">
-				<ElCheckbox v-model="mainStore.config.enableCustonProtocol">自定义联机时使用的默认协议</ElCheckbox>
+		<div class="flex flex-nowrap items-center gap-[15px]">
+			<div class="flex flex-nowrap items-center gap-[5px]">
+				<ElCheckbox v-model="mainStore.config.enableCustomProtocol">自定义联机时使用的默认协议</ElCheckbox>
 				<ElTooltip content="如果没有支持该协议的节点地址，程序会自动处理，请放心使用">
 					<ElIcon><QuestionFilled /></ElIcon>
 				</ElTooltip>
@@ -24,7 +24,7 @@
 				</ElSelect>
 			</div>
 		</div>
-		<div class="flex items-center gap-[15px] flex-nowrap">
+		<div class="flex flex-nowrap items-center gap-[15px]">
 			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
 			<div class="w-[140px]">
 				<ElSelect
@@ -49,7 +49,7 @@
 			</ElButton>
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.connectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
-		<div class="flex items-center gap-[15px] flex-nowrap">
+		<div class="flex flex-nowrap items-center gap-[15px]">
 			<ElCheckbox v-model="mainStore.createConfigInEasytier">自动生成界面配置文件easytier/config.json</ElCheckbox>
 			<ElButton
 				@click="openConfigJsonDir"
@@ -86,7 +86,7 @@
 				:disabled="mainStore.config.disbleListenner"
 				v-model="mainStore.config.enableCustomListener"
 			>
-				自定义监听地址
+				自定义IPV4监听地址
 			</ElCheckbox>
 			<ElButton
 				size="small"
@@ -123,6 +123,27 @@
 					</div>
 				</template>
 			</ElDialog>
+		</div>
+		<div class="flex items-center gap-[10px]">
+			<ElCheckbox
+				:disabled="mainStore.config.disbleListenner"
+				v-model="mainStore.config.enableCustomListenerV6"
+			>
+				自定义IPV6监听地址
+			</ElCheckbox>
+			<div class="w-[200px]">
+				<ElInput
+					:disabled="mainStore.config.disbleListenner || mainStore.config.enableCustomListenerV6"
+					size="small"
+					:maxlength="100"
+					v-model="mainStore.config.customListenerV6Data"
+					placeholder="请输入自定义IPV6监听地址"
+				/>
+			</div>
+			<ElTooltip content="例如：tcp://[::]:11010，如果未设置，将在随机UDP端口上监听">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.1.0" />
 		</div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
@@ -165,6 +186,27 @@
 		<div><ElCheckbox v-model="mainStore.config.enablExitNode">允许此节点成为出口节点</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableEncryption">禁用对等节点通信的加密</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.multiThread">启用多线程运行</ElCheckbox></div>
+		<div class="flex items-center gap-[10px]">
+			<ElText>压缩算法</ElText>
+			<div class="w-[90px]">
+				<ElSelect
+					size="small"
+					v-model="mainStore.config.compression"
+					placeholder="请选择压缩算法"
+				>
+					<ElOption
+						v-for="item in [
+							['none', '默认'],
+							['zstd', 'zstd算法']
+						]"
+						:key="item[0]"
+						:label="item[1]"
+						:value="item[0]"
+					></ElOption>
+				</ElSelect>
+			</div>
+			<CoreVersionWarning version="2.1.0" />
+		</div>
 		<ElDivider />
 
 		<div><ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox></div>
@@ -185,6 +227,7 @@
 	import { reactive } from "vue";
 	import { dataSubscribe } from "@/composables/windows";
 	import { supportProtocols } from "~/utils";
+	import CoreVersionWarning from "@/components/CoreVersionWarning.vue";
 
 	const protocols = supportProtocols();
 	const listenerDialogData = reactive<{ [key: string]: any }>({

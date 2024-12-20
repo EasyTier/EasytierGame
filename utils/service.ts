@@ -1,5 +1,4 @@
 import useMainStore from "@/stores/index";
-import * as tauriAutoStart from "@tauri-apps/plugin-autostart";
 import { open, Command } from "@tauri-apps/plugin-shell";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -51,20 +50,4 @@ const handleAutoStartByNssm = async () => {
 			config.autoStart = true;
 		}
 	}
-};
-
-// 兼容autostart插件
-const compatibleAutoStart = async () => {
-    const config = useMainStore().config;
-	const is_enable = await tauriAutoStart.isEnabled();
-	if (is_enable) {
-		try {
-			await tauriAutoStart.disable();
-			config.autoStart = false;
-		} catch (err) {
-			// ElMessage.error(`取消自启失败`);
-		}
-	}
-	const serverStatus = await Command.create("nssm", ["status", import.meta.env.VITE_AUTO_START_SERVICE_NAME]).execute();
-	console.log(serverStatus);
 };

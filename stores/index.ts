@@ -15,6 +15,8 @@ const store = defineStore("main", {
 				disableIpv6: false, // 是否禁用IPv6
 				port: "11010", // 监听端口号
 				enableCustomListener: false, // 是否自定义监听
+				customListenerV6Data: "", //自定义ipv6监听
+				enableCustomListenerV6: false, // 是否自定义监听
 				customListenerData: "", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: true, // 是否禁用加密
@@ -31,11 +33,12 @@ const store = defineStore("main", {
 				logLevel: "error", //日志等级
 				devName: false, //自定义网卡名
 				devNameValue: "", //自定义网卡名
-				enableCustonProtocol: false, //自定义默认协议
+				enableCustomProtocol: false, //自定义默认协议
 				customProtocol: "tcp", //自定义默认协议
 				enableNetCardMetric: false, //启用网卡自定义跃点
 				netCardMetricValue: 1, //自定义网卡跃点值
-				enablePreventSleep: false //组织系统休眠
+				enablePreventSleep: false, //组织系统休眠
+				compression: "none", //加密算法
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -71,7 +74,6 @@ const store = defineStore("main", {
 			"config.autoStart",
 			"config.connectAfterStart",
 			"config.disableIpv6",
-			"config.disbleListenner",
 			"config.disableEncryption",
 			"config.multiThread",
 			"config.enablExitNode",
@@ -89,11 +91,17 @@ const store = defineStore("main", {
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
 			"config.port",
+			
+			"config.disbleListenner",
 			"config.enableCustomListener",
 			"config.customListenerData",
+			"config.enableCustomListenerV6",
+			"config.customListenerV6Data",
+
 			"config.enableCustonProtocol",
 			"config.customProtocol",
 			"config.enablePreventSleep",
+			"config.compression",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',

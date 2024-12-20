@@ -83,15 +83,34 @@
 					:value="item"
 				>
 					<div class="flex max-w-[calc(100vw-62px)] flex-nowrap items-center gap-[20px] overflow-hidden">
-						<ElTooltip v-if="item && item.length > 30" placement="top" :content="item || '-'">
+						<ElTooltip
+							v-if="item && item.length > 26"
+							placement="top"
+							:content="item || '-'"
+						>
 							<p class="truncate">{{ item }}</p>
 						</ElTooltip>
-						<p v-else class="truncate">{{ item }}</p>
+						<p
+							v-else
+							class="truncate"
+						>
+							{{ item }}
+						</p>
 						<div class="ml-auto flex-shrink-0">
 							<ElButton
+								@click.stop="copyServerUrl(item)"
+								circle
+								size="small"
+								title="复制"
+								:icon="CopyDocument"
+							></ElButton>
+
+							<ElButton
 								@click.stop="handleDeleteServerUrl(item)"
-								round
+								circle
+								size="small"
 								:icon="Delete"
+								title="删除"
 								type="danger"
 							></ElButton>
 						</div>
@@ -310,17 +329,24 @@
 						增强工具
 					</ElButton>
 				</div>
-				
-				<ElBadge badge-class="!text-[9px] cursor-pointer" :hidden="!data.hasNewVersion" :offset="[6, 7]"  value="N">
+
+				<ElBadge
+					badge-class="!text-[9px] cursor-pointer"
+					:hidden="!data.hasNewVersion"
+					:offset="[6, 7]"
+					value="N"
+				>
 					<!-- <ElTooltip :disabled="!data.hasNewVersion" content="有新版发布了!"> -->
-						<ElLink
-							class="ml-[8px] truncate pb-[2px] !text-[9px]"
-							type="info"
-							:underline="false"
-							@click="open('https://github.com/EasyTier/EasytierGame')"
-						>EasytierGame主页</ElLink>
+					<ElLink
+						class="ml-[8px] truncate pb-[2px] !text-[9px]"
+						type="info"
+						:underline="false"
+						@click="open('https://github.com/EasyTier/EasytierGame')"
+					>
+						EasytierGame主页
+					</ElLink>
 					<!-- </ElTooltip> -->
-  				</ElBadge>
+				</ElBadge>
 			</div>
 		</div>
 	</div>
@@ -346,7 +372,10 @@
 			>
 				刷新
 			</ElButton>
-			<ElTooltip placement="top" content="打开内核缓存目录">
+			<ElTooltip
+				placement="top"
+				content="打开内核缓存目录"
+			>
 				<ElButton
 					:icon="Folder"
 					size="small"
@@ -510,7 +539,8 @@
 		Tools,
 		MagicStick,
 		SetUp,
-		Folder
+		Folder,
+		CopyDocument
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
@@ -526,7 +556,7 @@
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -590,6 +620,17 @@
 		data: ""
 	});
 
+	const copyServerUrl = async (serverUrl: string) => {
+		const [err, _] = await ATJ(writeText(serverUrl));
+
+		if (!err) {
+			ElMessage.success("地址已复制");
+		} else {
+			console.error(err);
+			ElMessage.success("复制失败");
+		}
+	};
+
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
@@ -647,18 +688,17 @@
 		}
 		mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers]);
 	};
-	
+
 	// 手动触发持久化数据
 	const persist = async (appWindow: Window) => {
 		try {
 			appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
 			mainStore.$persist();
-		}catch(err) {
+		} catch (err) {
 			console.error(err);
 			ElMessage.error("手动持久数据失败");
 		}
-		
-	}
+	};
 
 	const listenObj: { [key: string]: any } = {
 		unListenOutPut: null,
@@ -756,16 +796,16 @@
 				const ipv4 = config.ipv4;
 				mainStore.$patch(event.payload as any);
 				config.ipv4 = ipv4;
-				if(mainStore.config.enablePreventSleep) {
+				if (mainStore.config.enablePreventSleep) {
 					preventSleep();
-				}else {
+				} else {
 					stopPreventSleep();
 				}
 				persist(appWindow);
 			});
 			const unListen2 = mainStore.$subscribe(() => {
 				persist(appWindow);
-			})
+			});
 			this.unListenConfigStart = [unListen, unListen2];
 		},
 		async listenStartStopServer() {
@@ -908,7 +948,7 @@
 			const guiJsonStrUint8 = await readFile(path, { baseDir: BaseDirectory.Resource });
 			if (guiJsonStrUint8) {
 				try {
-					const decoder = new TextDecoder('utf-8');
+					const decoder = new TextDecoder("utf-8");
 					const guiJsonStr = decoder.decode(guiJsonStrUint8);
 					const regex = /^(\s*\/\/.*)/gm;
 					const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
@@ -973,9 +1013,9 @@
 
 	const initPreventSleep = async () => {
 		if (mainStore.config.enablePreventSleep) {
-		    preventSleep();
+			preventSleep();
 		}
-	}
+	};
 
 	const mountedShow = async () => {
 		const args = await getMatches();
@@ -988,7 +1028,7 @@
 
 	let logsTimer: NodeJS.Timeout | null = null;
 	let serverLogsTimer: NodeJS.Timeout | null = null;
-	let cidrTimer : NodeJS.Timeout | null = null;
+	let cidrTimer: NodeJS.Timeout | null = null;
 
 	onMounted(async () => {
 		await initGuiJson();
@@ -1064,13 +1104,13 @@
 			args.push("--network-secret", config.networkPassword);
 		}
 		if (config.ipv4) {
-			args.push("--ipv4", config.ipv4);
+			args.push("--ipv4", config.ipv4.trim());
 		}
 		if (config.serverUrl) {
 			const formatUrl = config.serverUrl.replace(/\\/g, "/");
 			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
 		}
-		if (config.enableCustonProtocol) {
+		if (config.enableCustomProtocol) {
 			const includes = config.protocol.includes(config.customProtocol);
 			if (includes) {
 				args.push("--default-protocol", config.customProtocol);
@@ -1095,6 +1135,9 @@
 				args.push("-l", ...customListener);
 			}
 		}
+		if (!config.disbleListenner && config.enableCustomListenerV6 && config.customListenerV6Data){
+			args.push("--ipv6-listener", config.customListenerV6Data)
+		}
 		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
 			args.push("-l", config.port);
 		}
@@ -1105,7 +1148,7 @@
 				.filter(cidr => {
 					return /^\d+\.\d+\.\d+\.\d+\/\d+$/g.test(cidr);
 				});
-			if(newformatProxyNetworks.length > 0) {
+			if (newformatProxyNetworks.length > 0) {
 				args.push("--proxy-networks", ...newformatProxyNetworks);
 			}
 			config.proxyNetworks = formatProxyNetworks.join("\n");
@@ -1188,7 +1231,6 @@
 			await invoke("run_command", {
 				args
 			});
-			
 		}
 	};
 

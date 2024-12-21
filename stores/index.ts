@@ -98,7 +98,7 @@ const store = defineStore("main", {
 			"config.enableCustomListenerV6",
 			"config.customListenerV6Data",
 
-			"config.enableCustonProtocol",
+			"config.enableCustomProtocol",
 			"config.customProtocol",
 			"config.enablePreventSleep",
 			"config.compression",

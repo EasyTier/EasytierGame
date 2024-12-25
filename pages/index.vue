@@ -55,6 +55,7 @@
 				placeholder="请选择服务器地址"
 				default-first-option
 				v-model="config.serverUrl"
+				no-data-text="无服务器地址"
 				@change="handleServerUrlChange"
 			>
 				<template #prefix>
@@ -542,7 +543,7 @@
 		Folder,
 		CopyDocument
 	} from "@element-plus/icons-vue";
-	import { reactive, onBeforeUnmount, onMounted, ref } from "vue";
+	import { reactive, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
 	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
@@ -1135,8 +1136,8 @@
 				args.push("-l", ...customListener);
 			}
 		}
-		if (!config.disbleListenner && config.enableCustomListenerV6 && config.customListenerV6Data){
-			args.push("--ipv6-listener", config.customListenerV6Data)
+		if (!config.disbleListenner && config.enableCustomListenerV6 && config.customListenerV6Data) {
+			args.push("--ipv6-listener", config.customListenerV6Data);
 		}
 		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
 			args.push("-l", config.port);
@@ -1183,7 +1184,7 @@
 		if (config.devName && config.devNameValue) {
 			args.push("--dev-name", config.devNameValue);
 		}
-		if(config.compression && config.compression != 'none') {
+		if (config.compression && config.compression != "none") {
 			args.push("--compression", config.compression);
 		}
 		return args;
@@ -1262,25 +1263,78 @@
 		if (command === "share_config") {
 			try {
 				const {
-					proxyNetworks,
-					autoStart,
-					connectAfterStart,
+					protocol,
+					serverUrl,
+					networkName,
+					networkPassword,
+					dhcp,
+					disableIpv6,
+					disbleP2p,
+					enableCustomProtocol,
+					customProtocol,
+					disbleListenner,
+					port,
+					enableCustomListener,
+					customListenerData,
+					enableCustomListenerV6,
+					customListenerV6Data,
+					devName,
+					devNameValue,
+					enableNetCardMetric,
+					netCardMetricValue,
+					disableEncryption,
 					multiThread,
-					hostname,
-					enablExitNode,
-					useSmoltcp,
-					saveErrorLog,
-					logLevel,
-					ipv4,
-					...otherConfig
+					latencyfirst,
+					disableUdpHolePunching,
+					relayAllPeerrpc,
+					compression,
+					enablePreventSleep,
 				} = mainStore.config;
-				const WT = btoa(encodeURIComponent(JSON.stringify({ config: otherConfig })));
+				const WT = btoa(
+					encodeURIComponent(
+						JSON.stringify({
+							config: {
+								protocol,
+								serverUrl,
+								networkName,
+								networkPassword,
+								dhcp,
+								disableIpv6,
+								disbleP2p,
+								enableCustomProtocol,
+								customProtocol,
+								disbleListenner,
+								port,
+								enableCustomListener,
+								customListenerData,
+								enableCustomListenerV6,
+								customListenerV6Data,
+								devName,
+								devNameValue,
+								enableNetCardMetric,
+								netCardMetricValue,
+								disableEncryption,
+								multiThread,
+								latencyfirst,
+								disableUdpHolePunching,
+								relayAllPeerrpc,
+								compression,
+								enablePreventSleep
+							}
+						})
+					)
+				);
 				await writeText(WT);
 				ElMessage.success("配置已复制");
 			} catch (err) {
 				console.error(err);
 				ElMessage.error("分享失败");
 			}
+			ElConfirmPrimary(`{action} 虚拟网IP，主机名，子网代理，为子网代理启用smoltcp堆栈，开机自启，软件启动自动联机，出口节点，不生成Tun网卡，错误日志相关配置`, "提示", {
+				confirmButtonText: "知道了",
+				showCancelButton: false,
+				action: "不会分享"
+			});
 		}
 		if (command === "import_config") {
 			importConfigData.data = "";
@@ -1298,6 +1352,7 @@
 		});
 		if (!err) {
 			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
+			payload.config.serverUrl = payload?.config?.serverUrl?.trim() || config.serverUrl;
 			mainStore.$patch({
 				config: {
 					...mainStore.config,
@@ -1306,7 +1361,7 @@
 			});
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
-			mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers]);
+			mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers].filter(el => el.trim()));
 		} else {
 			console.error(err);
 			if (err !== "cancel") {

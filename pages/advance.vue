@@ -58,7 +58,7 @@
 				打开config.json目录
 			</ElButton>
 		</div>
-		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止休眠</ElCheckbox></div>
+		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止系统休眠(比如:屏幕会一直亮着)</ElCheckbox></div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>

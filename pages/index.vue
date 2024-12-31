@@ -570,6 +570,7 @@
 			await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
 			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
 			await invoke("stop_command", { child_id: listenObj.server_thread_id.value || 0 });
+			await stopPreventSleep(); //关闭防休眠
 		},
 		async () => {
 			await handleConnection();

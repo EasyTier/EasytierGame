@@ -3,7 +3,7 @@ const store = defineStore("main", {
 	state() {
 		return {
 			config: {
-				protocol: ["tcp", "udp"], // 网络协议
+				protocol: ["tcp"], // 网络协议
 				serverUrl: "public.easytier.top:11010",
 				networkName: "",
 				networkPassword: "",
@@ -49,7 +49,7 @@ const store = defineStore("main", {
 				port: "11010" // 服务器端口
 			},
 			cidrEnable: false,
-			basePeers: ["public.easytier.top:11010"],
+			basePeers: ["public.easytier.top:11010","public.easytier.net:11010"],
 			theme: false, //主题  false light true dark
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径

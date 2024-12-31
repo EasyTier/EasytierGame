@@ -81,9 +81,10 @@ export const preventSleep = () => {
 	}, _prevent_timer_count * 1000);
 }
 
-export const stopPreventSleep = () => {
+export const stopPreventSleep = async () => {
 	_prevent_timer && clearInterval(_prevent_timer);
 	_prevent_timer = null;
+	const _result = await invoke('allow_sleep');
 }
 
 export const parseCliInfo = (content: string) => {

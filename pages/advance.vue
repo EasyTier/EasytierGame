@@ -222,12 +222,13 @@
 	import { QuestionFilled } from "@element-plus/icons-vue";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { Command } from "@tauri-apps/plugin-shell";
-	import { exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
+	import { exists, mkdir, BaseDirectory, remove } from "@tauri-apps/plugin-fs";
 	import { ElMessage } from "element-plus";
 	import { reactive } from "vue";
 	import { dataSubscribe } from "@/composables/windows";
-	import { supportProtocols } from "~/utils";
+	import { ATJ, supportProtocols } from "~/utils";
 	import CoreVersionWarning from "@/components/CoreVersionWarning.vue";
+	import { ElConfirmDanger } from "~/utils/element";
 
 	const protocols = supportProtocols();
 	const listenerDialogData = reactive<{ [key: string]: any }>({
@@ -269,6 +270,25 @@
 	};
 
 	dataSubscribe(async (...a) => {
+		if (!mainStore.createConfigInEasytier) {
+			// 考虑删除本地config.json文件
+			const configJsonPath = import.meta.env.VITE_CONFIG_FILE_NAME;
+			const isExists = await exists(configJsonPath, { baseDir: BaseDirectory.Resource });
+			// console.log({ isExists });
+			if (isExists) {
+				const [error, _] = await ElConfirmDanger("生成配置文件功能被关闭,是否删除本地config.json", "提示", {
+					confirmButtonText: "删除",
+					cancelButtonText: "取消"
+				});
+				if (!error) {
+					// 删除本地config.json文件
+					const [error, _] = await ATJ(remove(configJsonPath, { baseDir: BaseDirectory.Resource }));
+					if (error) {
+						ElMessage.error("删除失败，请打开目录手动删除");
+					}
+				}
+			}
+		}
 		return {
 			config: { ...mainStore.config },
 			createConfigInEasytier: mainStore.createConfigInEasytier

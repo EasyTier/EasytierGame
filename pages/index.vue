@@ -983,14 +983,14 @@
 					console.error(err);
 					ElMessage.error(`config.json格式或编码错误`);
 				} finally {
-					mainStore.$patch({
-						createConfigInEasytier: true // 发现本地存在config.json 默认启用该功能
-					});
+					// mainStore.$patch({
+					// 	createConfigInEasytier: true // 发现本地存在config.json 默认启用该功能
+					// });
 				}
 			}
 		}
 		const b = bounce(600);
-		mainStore.$subscribe((...a) => {
+		mainStore.$subscribe(async (...a) => {
 			if (mainStore.createConfigInEasytier) {
 				b(async () => {
 					await updateConfigJson(data.configJsonSeverUrl);

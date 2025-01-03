@@ -56,6 +56,9 @@ Releases： [https://github.com/EasyTier/EasytierGame/releases](https://github.c
 - 1.2.6重写 自建服务器功能，可以自行搭建服务器，但是需要一些网络知识，具体可以查看文档[自建服务器](https://www.easytier.top/guide/network/host-public-server.html),也可查看帮助.txt
 ![game-step13](/assets/game-step13.png)
 
+- 1.3.5 增强工具 新增了forceBindIP
+![game-step14](/assets/game-step14.png)
+
 ## 特性
 
 - 基于easytier组网工具开发，界面清晰简单

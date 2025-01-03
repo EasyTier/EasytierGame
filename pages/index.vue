@@ -1049,6 +1049,7 @@
 		mountedShow(); // 不需要await
 		closePrevent();
 		data.hasNewVersion = await checkNewVersion();
+		
 	});
 
 	onBeforeUnmount(() => {

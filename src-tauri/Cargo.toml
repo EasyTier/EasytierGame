@@ -42,13 +42,14 @@ tauri-plugin-fs = "2.2.0"
 tauri-plugin-clipboard-manager = "2.0.2"
 rand = "0.8.5"
 tokio = { version = "1.41.1", features = ["process"] }
+tauri-plugin-dialog = "2"
 # prost = "0.13"
 # prost-types = "0.13"
 
 
 [dependencies.windows]
 version = "0.58.0"
-features = ["Win32_System_TaskScheduler", "Win32_System_Power"]
+features = ["Win32_System_TaskScheduler", "Win32_System_Power", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_Networking_WinSock"]
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2.2.0"

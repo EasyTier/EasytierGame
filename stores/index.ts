@@ -57,6 +57,12 @@ const store = defineStore("main", {
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
 			githubFastUrl: "https://ghproxy.cc/",
 
+			// forceBindIp配置
+			forceBindIpBit: "64",
+			delayInjectDll: false,
+			forceBindInput: "",
+			forceBindFile: "",
+
 			winipBcPid: 0,
 			winipBcStart: false
 		};
@@ -117,7 +123,12 @@ const store = defineStore("main", {
 			"configPath",
 			"winIpBcAutoStart",
 			"createConfigInEasytier",
-			"githubFastUrl"
+			"githubFastUrl",
+
+			"forceBindIpBit",
+			"delayInjectDll",
+			"forceBindInput",
+			"forceBindFile"
 		]
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]

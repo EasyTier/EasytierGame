@@ -9,6 +9,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
 use std::process::{Command, Stdio};
+use std::ptr;
 use std::sync::mpsc;
 use std::{path, thread};
 use sysinfo::System;
@@ -17,16 +18,69 @@ use tauri::Emitter;
 use tauri::Manager;
 use windows::core::{BSTR, VARIANT};
 use windows::Win32::Foundation::VARIANT_BOOL;
+use windows::Win32::NetworkManagement::IpHelper::{
+    GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, IP_ADAPTER_ADDRESSES_LH,
+};
+use windows::Win32::Networking::WinSock::AF_UNSPEC;
 use windows::Win32::System::Com::*;
 use windows::Win32::System::TaskScheduler::*;
+// use std::ffi::CStr;
 
 use windows::Win32::System::Power::SetThreadExecutionState;
 use windows::Win32::System::Power::{
     ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED, EXECUTION_STATE,
 };
 
-use tokio::process::Command as tokioCommand;
 use rand::Rng;
+use tokio::process::Command as tokioCommand;
+
+#[tauri::command(rename_all = "snake_case")]
+fn get_network_adapter_guids() -> Vec<[String; 2]> {
+    let mut guids: Vec<[String; 2]> = Vec::new();
+    unsafe {
+        let mut buffer_length: u32 = 0;
+        let mut result = GetAdaptersAddresses(
+            AF_UNSPEC.0.into(),
+            GAA_FLAG_INCLUDE_PREFIX,
+            Some(ptr::null_mut()),
+            Some(ptr::null_mut()),
+            &mut buffer_length,
+        );
+
+        if result != 0 {
+            let mut buffer: Vec<u8> = vec![0; buffer_length as usize];
+            let adapter_addresses: *mut IP_ADAPTER_ADDRESSES_LH = buffer.as_mut_ptr() as *mut _;
+
+            result = GetAdaptersAddresses(
+                AF_UNSPEC.0.into(),
+                GAA_FLAG_INCLUDE_PREFIX,
+                Some(ptr::null_mut()),
+                Some(adapter_addresses),
+                &mut buffer_length,
+            );
+
+            if result == 0 {
+                let mut current_address = adapter_addresses;
+
+                while !current_address.is_null() {
+                    let adapter = &*current_address;
+
+                    let guid = adapter.AdapterName.to_string().unwrap();
+                    let desc = adapter.Description.to_string().unwrap();
+                    guids.push([guid, desc]);
+
+                    current_address = adapter.Next;
+                }
+            } else {
+                log::error!("GetAdaptersAddresses failed with error");
+            }
+        } else {
+            log::error!("GetAdaptersAddresses failed to retrieve buffer length with error");
+        }
+    }
+
+    return guids;
+}
 
 fn generate_random_user_agent() -> String {
     let user_agents = vec![
@@ -664,6 +718,7 @@ pub fn run() {
 
     let context = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_cli::init())
         .plugin(
             tauri_plugin_window_state::Builder::new()
@@ -740,7 +795,8 @@ pub fn run() {
             spawn_autostart,
             autostart_is_enabled,
             prevent_sleep,
-            allow_sleep
+            allow_sleep,
+            get_network_adapter_guids
         ])
         .run(context)
         .expect("error while running tauri application");

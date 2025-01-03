@@ -53,3 +53,7 @@ html.dark body {
 .el-table {
 	font-size: 12px!important;
 }
+
+.el-select-dropdown__wrap {
+	max-height: 150px!important;
+}

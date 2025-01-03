@@ -8,7 +8,7 @@
 			<ElTabPane
 				label="联机失败解决办法"
 				name="netcard"
-				class="flex flex-col h-full"
+				class="flex h-full flex-col"
 			>
 				<div>
 					<div>
@@ -23,7 +23,7 @@
 						</ElTooltip>
 					</div>
 					<ElLink
-						class="!text-[15px] mr-[10px]"
+						class="mr-[10px] !text-[15px]"
 						type="info"
 						:underline="false"
 						@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
@@ -41,14 +41,101 @@
 					></ElSwitch>
 				</div>
 				<div>
-					<ElTooltip content="设置网卡的跃点，提升网卡优先级，尝试将您联机使用的网卡跃点设置为最小，请先查询网卡信息">
+					<ElTooltip content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)">
 						<ElText>
 							方案2
 							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
 						</ElText>
 					</ElTooltip>
 				</div>
-				<div class="flex items-center mt-[5px]">
+				<div>
+					<div>
+						<ElLink
+							class="!text-[15px]"
+							type="info"
+							:underline="false"
+							@click="open('https://r1ch.net/projects/forcebindip')"
+						>
+							ForceBindIP
+						</ElLink>
+					</div>
+					<div>
+						<ElRadioGroup
+							class="mr-[30px]"
+							v-model="mainStore.forceBindIpBit"
+						>
+							<ElRadio
+								label="32位"
+								value="32"
+							></ElRadio>
+							<ElRadio
+								label="64位"
+								value="64"
+							></ElRadio>
+						</ElRadioGroup>
+						<ElTooltip
+							placement="top"
+							content="如果目标应用程序在启动时崩溃或出现其他意外行为，请尝试开启它，ForceBindIP 加载程序将等待应用程序进入其消息循环后再注入拦截 DLL"
+						>
+							<ElCheckbox
+								v-model="mainStore.delayInjectDll"
+								label="延迟注入DLL"
+							></ElCheckbox>
+						</ElTooltip>
+					</div>
+					<div class="flex items-center gap-[5px]">
+						<ElSelect
+							placeholder="请输入IP地址或选择GUID"
+							v-model="mainStore.forceBindInput"
+							filterable
+							allow-create
+							clearable
+							no-data-text="暂无网卡数据"
+						>
+							<ElOption
+								v-for="guid in data.guids"
+								:key="guid[0]"
+								:label="guid[1]"
+								:value="guid[0]"
+							></ElOption>
+						</ElSelect>
+						<ElButton @click="getGuids">刷新</ElButton>
+					</div>
+					<div class="mt-[5px] flex items-center gap-[5px]">
+						<ElInput
+							placeholder="请选择或输入应用程序路径"
+							:disabled="data.forceBindStart"
+							v-model="mainStore.forceBindFile"
+						></ElInput>
+						<div class="flex items-center">
+							<ElButton
+								@click="handleBrowser"
+								:disabled="data.forceBindStart"
+							>
+								浏览
+							</ElButton>
+							<ElButton
+								:disabled="data.forceBindStart"
+								@click="startForceBindIp"
+								type="primary"
+							>
+								启动
+							</ElButton>
+						</div>
+					</div>
+				</div>
+				<div>
+					<!-- const guids = await invoke<string[]>("get_network_adapter_guids"); -->
+				</div>
+				<div>
+					<ElTooltip content="设置网卡的跃点，提升网卡优先级，尝试将您联机使用的网卡跃点设置为最小，请先查询网卡信息">
+						<ElText>
+							方案3
+							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
+						</ElText>
+					</ElTooltip>
+				</div>
+				<div class="mt-[5px] flex items-center">
 					<ElButton
 						@click="initNetCardInfo"
 						size="small"
@@ -58,7 +145,7 @@
 					</ElButton>
 					<div
 						v-if="data.row.name"
-						class="ml-auto flex items-center flex-nowrap gap-[10px]"
+						class="ml-auto flex flex-nowrap items-center gap-[10px]"
 					>
 						<ElTooltip content="跃点越小，网卡优先级越高，范围(1-9999)">
 							<ElInput
@@ -78,7 +165,7 @@
 						</ElButton>
 					</div>
 				</div>
-				<div class="flex-1 overflow-auto mt-[5px]">
+				<div class="mt-[5px] flex-1 overflow-auto">
 					<ElTable
 						height="100%"
 						empty-text="暂无数据"
@@ -103,7 +190,7 @@
 			<ElTabPane
 				label="防火墙"
 				name="firewall"
-				class="flex flex-col h-full"
+				class="flex h-full flex-col"
 			>
 				<div class="flex flex-col items-center">
 					<div class="mb-[10px]">
@@ -176,6 +263,7 @@
 </template>
 <script setup lang="ts">
 	import { open, Command } from "@tauri-apps/plugin-shell";
+	import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
 	import { ElMessage, type TabPaneName } from "element-plus";
 	import { QuestionFilled } from "@element-plus/icons-vue";
 	import { onMounted, reactive } from "vue";
@@ -183,9 +271,11 @@
 	import { handleWinipBcStart, initStartWinIpBroadcast } from "@/composables/netcard";
 	import { isValidIP } from "~/utils";
 	import { dataSubscribe } from "~/composables/windows";
+	import { invoke } from "@tauri-apps/api/core";
+	import { BaseDirectory, exists } from "@tauri-apps/plugin-fs";
 
 	const mainStore = useMainStore();
-	const data = reactive({
+	const data = reactive<{ guids: string[][]; [key: string]: any }>({
 		activeTab: "netcard",
 		winipBcPid: 0,
 		pingNum: 1,
@@ -202,7 +292,9 @@
 			name: "",
 			metric: ""
 		},
-		netcardList: []
+		netcardList: [],
+		guids: [],
+		forceBindStart: false
 	});
 
 	const handleTabsChange = async (tabPaneName: TabPaneName) => {
@@ -328,17 +420,75 @@
 		}
 	};
 
+	const handleBrowser = async () => {
+		const file = await dialogOpen({
+			multiple: false,
+			directory: false
+		});
+		if (file) {
+			mainStore.forceBindFile = file;
+		} else {
+			ElMessage.error("获取文件路径失败");
+		}
+	};
+
+	const startForceBindIp = async () => {
+		if (!mainStore.forceBindInput) {
+			return ElMessage.error("请输入IP地址或者选择一个网卡");
+		}
+		if (!mainStore.forceBindFile) {
+			return ElMessage.error("请选择一个执行文件");
+		}
+
+		const forceBindIpExe = mainStore.forceBindIpBit == "32" ? "ForceBindIP" : "ForceBindIP64";
+		const isExists = await exists(`easytier/tool/${forceBindIpExe}.exe`, { baseDir: BaseDirectory.Resource });
+		if (!isExists) {
+			return ElMessage.error("forcebindIP文件不存在");
+		}
+
+		data.forceBindStart = true;
+		try {
+			const dealyDll = mainStore.delayInjectDll ? "-i" : "";
+			const child = await Command.create(
+				forceBindIpExe,
+				[dealyDll, mainStore.forceBindInput, mainStore.forceBindFile.replace(/\//g, "\\")].filter(el => el),
+				{
+					encoding: "gb2312"
+				}
+			).spawn();
+			// console.log({child});
+		} catch (err) {
+			ElMessage.error("forcebindIP启动发生未知错误");
+			console.error(err);
+		} finally {
+			data.forceBindStart = false;
+		}
+	};
+
 	dataSubscribe(async (...a) => {
 		return {
 			winIpBcAutoStart: mainStore.winIpBcAutoStart,
 			winipBcStart: mainStore.winipBcStart,
 			winipBcPid: mainStore.winipBcPid,
+			forceBindIpBit: mainStore.forceBindIpBit,
+			delayInjectDll: mainStore.delayInjectDll,
+			forceBindInput: mainStore.forceBindInput,
+			forceBindFile: mainStore.forceBindFile,
 			config: { ...mainStore.config }
 		};
 	});
 
+	const getGuids = async () => {
+		const guids = await invoke<string[][]>("get_network_adapter_guids");
+		mainStore.forceBindInput = mainStore.config.ipv4;
+		if (guids && guids.length > 0) {
+			data.guids = guids;
+		}
+	};
+
 	onMounted(() => {
 		data.pingIp = mainStore.config.ipv4;
 		initStartWinIpBroadcast();
+		getGuids();
 	});
 </script>

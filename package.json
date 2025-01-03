@@ -36,5 +36,8 @@
 		"prettier": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.6.9",
 		"vue-clipboard3": "^2.0.0"
+	},
+	"dependencies": {
+		"@tauri-apps/plugin-dialog": "~2"
 	}
 }

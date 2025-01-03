@@ -41,7 +41,9 @@
 					></ElSwitch>
 				</div>
 				<div>
-					<ElTooltip content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)">
+					<ElTooltip
+						content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)，如果还有没启动联机，请先启动联机，联机成功后，点击刷新获取easytier生成的网卡"
+					>
 						<ElText>
 							方案2
 							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
@@ -85,12 +87,11 @@
 					</div>
 					<div class="flex items-center gap-[5px]">
 						<ElSelect
-							placeholder="请输入IP地址或选择GUID"
+							placeholder="请输入IP地址或选择网卡"
 							v-model="mainStore.forceBindInput"
 							filterable
 							allow-create
-							clearable
-							no-data-text="暂无网卡数据"
+							no-data-text="暂无网卡数据，请尝试刷新"
 						>
 							<ElOption
 								v-for="guid in data.guids"
@@ -480,9 +481,12 @@
 
 	const getGuids = async () => {
 		const guids = await invoke<string[][]>("get_network_adapter_guids");
-		mainStore.forceBindInput = mainStore.config.ipv4;
-		if (guids && guids.length > 0) {
-			data.guids = guids;
+		data.guids = guids && guids.length > 0 ? guids : [];
+		if (mainStore.forceBindInput.startsWith("{")) {
+			const has = data.guids.find(el => el[0] == mainStore.forceBindInput);
+			if (!has) {
+				mainStore.forceBindInput = "";
+			}
 		}
 	};
 

@@ -7,7 +7,7 @@ import useMainStore from "@/stores/index";
 import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 import { invoke } from "@tauri-apps/api/core";
 // import { ElConfirmPrimary } from "~/utils/element";
-// import { open } from "@tauri-apps/plugin-shell";
+import { open } from "@tauri-apps/plugin-shell";
 
 const DEFAULT_TRAY_NAME = "main";
 
@@ -64,6 +64,8 @@ export async function generateMenuItem(beforExit: Function, handleConnection:Fun
 		await MenuItemExchangeConnection("联机 / 断开", handleConnection),
 		await MenuItemTheme(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
+		await MenuItemPublicPeers(),
+		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemExit("退出", beforExit),
 	];
 }
@@ -77,6 +79,17 @@ export async function MenuItemExit(text: string, beforExit: Function) {
 				await beforExit();
 			}
 			await getCurrentWindow().close();
+		},
+	});
+}
+
+export async function MenuItemPublicPeers() {
+
+	return await MenuItem.new({
+		id: "publicPeers",
+		text: "公共节点",
+		action: async () => {
+			await open("https://easytier.gd.nkbpal.cn/status/easytier")
 		},
 	});
 }

@@ -278,7 +278,7 @@
 			if (isExists) {
 				const [error, _] = await ElConfirmDanger("生成配置文件功能被关闭,是否删除本地config.json", "提示", {
 					confirmButtonText: "删除",
-					cancelButtonText: "取消"
+					cancelButtonText: "保留"
 				});
 				if (!error) {
 					// 删除本地config.json文件

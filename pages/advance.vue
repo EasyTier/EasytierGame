@@ -1,9 +1,8 @@
 <template>
 	<div class="flex h-full flex-col items-start overflow-auto px-[25px]">
-		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[15px]">
 			<div class="flex flex-nowrap items-center gap-[5px]">
-				<ElCheckbox v-model="mainStore.config.enableCustomProtocol">自定义联机时使用的默认协议</ElCheckbox>
+				<ElCheckbox v-model="mainStore.config.enableCustomProtocol">默认直连(p2p)使用的协议</ElCheckbox>
 				<ElTooltip content="如果没有支持该协议的节点地址，程序会自动处理，请放心使用">
 					<ElIcon><QuestionFilled /></ElIcon>
 				</ElTooltip>
@@ -24,29 +23,8 @@
 				</ElSelect>
 			</div>
 		</div>
-		<div class="flex flex-nowrap items-center gap-[15px]">
-			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
-			<div class="w-[140px]">
-				<ElSelect
-					size="small"
-					v-model="mainStore.config.logLevel"
-					placeholder="请选择日志等级"
-					class="ml-[5px]"
-				>
-					<ElOption
-						v-for="item in data"
-						:key="item"
-						:label="`level - ${item}`"
-						:value="item"
-					></ElOption>
-				</ElSelect>
-			</div>
-			<ElButton
-				@click="openLogDir"
-				size="small"
-			>
-				打开日志目录
-			</ElButton>
+		<div>
+			<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">帮助对等节点建立直连(p2p)通信</ElCheckbox>
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.connectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[15px]">
@@ -59,6 +37,13 @@
 			</ElButton>
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止系统休眠(比如:屏幕会一直亮着)</ElCheckbox></div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.latencyfirst">延迟优先模式，将尝试使用最低延迟路径转发流量</ElCheckbox>
+			<ElTooltip content="视网络质量进行选择，可能会出现中转与直连(p2p)来回切换的情况">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+		</div>
+		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>
@@ -210,10 +195,30 @@
 		<ElDivider />
 
 		<div><ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.latencyfirst">延迟优先模式，将尝试使用最低延迟路径转发流量</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
-		<div>
-			<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">转发所有对等节点的RPC数据包，即使对等节点不在转发网络白名单内</ElCheckbox>
+		<div class="flex flex-nowrap items-center gap-[15px]">
+			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
+			<div class="w-[140px]">
+				<ElSelect
+					size="small"
+					v-model="mainStore.config.logLevel"
+					placeholder="请选择日志等级"
+					class="ml-[5px]"
+				>
+					<ElOption
+						v-for="item in data"
+						:key="item"
+						:label="`level - ${item}`"
+						:value="item"
+					></ElOption>
+				</ElSelect>
+			</div>
+			<ElButton
+				@click="openLogDir"
+				size="small"
+			>
+				打开日志目录
+			</ElButton>
 		</div>
 	</div>
 </template>

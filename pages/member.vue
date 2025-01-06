@@ -16,7 +16,7 @@
 				<ElTableColumn
 					sortable
 					width="140"
-					label="主机名"
+					label="成员名"
 					prop="hostname"
 				>
 					<template #default="{ row }">

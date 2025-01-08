@@ -76,6 +76,11 @@
 				},
 				{
 					"args": true,
+					"cmd": "wf.msc",
+					"name": "wf.msc"
+				},
+				{
+					"args": true,
 					"cmd": "netsh",
 					"name": "netsh"
 				},

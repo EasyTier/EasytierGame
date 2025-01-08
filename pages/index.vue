@@ -11,7 +11,12 @@
 		>
 			<template #label>
 				<div class="flex flex-nowrap items-center gap-[0_5px]">
-					<div>服务器</div>
+					<div class="flex flex-nowrap items-center gap-[5px]">
+						<div>服务器</div>
+						<ElTooltip content="服务器是什么协议，中转就是什么协议">
+							<ElIcon><QuestionFilled /></ElIcon>
+						</ElTooltip>
+					</div>
 					<span>-</span>
 					<ElTag
 						effect="dark"
@@ -29,7 +34,7 @@
 						v-else
 						class="flex-1 truncate"
 					>
-						<ElTooltip :content="data.coreVersion">
+						<ElTooltip :content="`内核版本:${data.coreVersion}(不是软件的版本)`">
 							<ElTag type="info">
 								{{ data.coreVersion }}
 							</ElTag>
@@ -121,10 +126,10 @@
 		</ElFormItem>
 		<div class="flex flex-wrap items-center gap-[0_10px]">
 			<div class="flex-1">
-				<ElFormItem label="网络名">
+				<ElFormItem label="房间名">
 					<template #label>
 						<div class="flex items-center">
-							网络名
+							房间名
 							<ElTooltip content="对应命令行参数 --network-name">
 								<ElIcon><QuestionFilled /></ElIcon>
 							</ElTooltip>
@@ -132,16 +137,16 @@
 					</template>
 					<ElInput
 						maxlength="100"
-						placeholder="请输入网络名"
+						placeholder="请输入房间名"
 						v-model="config.networkName"
 					></ElInput>
 				</ElFormItem>
 			</div>
 			<div class="flex-1">
-				<ElFormItem label="网络密码">
+				<ElFormItem label="房间密码">
 					<template #label>
 						<div class="flex items-center">
-							网络密码
+							房间密码
 							<ElTooltip content="对应命令行参数 --network-secret">
 								<ElIcon><QuestionFilled /></ElIcon>
 							</ElTooltip>
@@ -150,7 +155,7 @@
 					<ElInput
 						show-password
 						maxlength="100"
-						placeholder="请输入网络密码"
+						placeholder="请输入房间密码"
 						v-model="config.networkPassword"
 						type="password"
 					></ElInput>
@@ -158,10 +163,10 @@
 			</div>
 		</div>
 		<div class="flex gap-[0_10px]">
-			<ElFormItem label="主机名">
+			<ElFormItem label="成员名">
 				<template #label>
 					<div class="flex items-center">
-						主机名
+						成员名
 						<ElTooltip content="对应命令行参数 --hostname">
 							<ElIcon><QuestionFilled /></ElIcon>
 						</ElTooltip>
@@ -271,15 +276,15 @@
 				</ElTooltip>
 				<ElTooltip
 					placement="left"
-					content="成员"
+					content="房间信息"
 				>
 					<ElButton
+						class="!ml-[7px]"
 						@click="handleShowMemberDialog"
-						:icon="UserFilled"
 						plain
 						type="success"
 						size="small"
-					></ElButton>
+					>房间信息</ElButton>
 				</ElTooltip>
 			</div>
 		</div>
@@ -548,7 +553,7 @@
 	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
-	import { ElMessage, ElMessageBox } from "element-plus";
+	import { ElMessage, ElMessageBox, ElTooltip } from "element-plus";
 	import { getCurrentWindow, type Window } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
@@ -1049,7 +1054,6 @@
 		mountedShow(); // 不需要await
 		closePrevent();
 		data.hasNewVersion = await checkNewVersion();
-		
 	});
 
 	onBeforeUnmount(() => {
@@ -1290,7 +1294,7 @@
 					disableUdpHolePunching,
 					relayAllPeerrpc,
 					compression,
-					enablePreventSleep,
+					enablePreventSleep
 				} = mainStore.config;
 				const WT = btoa(
 					encodeURIComponent(
@@ -1332,11 +1336,15 @@
 				console.error(err);
 				ElMessage.error("分享失败");
 			}
-			ElConfirmPrimary(`{action} 虚拟网IP，主机名，子网代理，为子网代理启用smoltcp堆栈，开机自启，软件启动自动联机，出口节点，不生成Tun网卡，错误日志相关配置`, "提示", {
-				confirmButtonText: "知道了",
-				showCancelButton: false,
-				action: "不会分享"
-			});
+			ElConfirmPrimary(
+				`{action} 虚拟网IP，主机名，子网代理，为子网代理启用smoltcp堆栈，开机自启，软件启动自动联机，出口节点，不生成Tun网卡，错误日志相关配置`,
+				"提示",
+				{
+					confirmButtonText: "知道了",
+					showCancelButton: false,
+					action: "不会分享"
+				}
+			);
 		}
 		if (command === "import_config") {
 			importConfigData.data = "";

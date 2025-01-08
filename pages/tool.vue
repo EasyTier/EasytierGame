@@ -201,6 +201,13 @@
 						>
 							一键关闭防火墙
 						</ElButton>
+						<ElButton
+							@click="handleCustomFireWall"
+							type="danger"
+							size="small"
+						>
+							自定义防火墙策略
+						</ElButton>
 					</div>
 					<div class="mb-[10px]">
 						<ElText class="!mx-[10px]">域防火墙</ElText>
@@ -297,6 +304,10 @@
 		guids: [],
 		forceBindStart: false
 	});
+
+	const handleCustomFireWall = async () => {
+		await open("wf.msc");
+	}
 
 	const handleTabsChange = async (tabPaneName: TabPaneName) => {
 		if (tabPaneName === "netcard") {

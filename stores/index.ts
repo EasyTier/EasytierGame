@@ -14,28 +14,28 @@ const store = defineStore("main", {
 				connectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
 				port: "11010", // 监听端口号
-				enableCustomListener: false, // 是否自定义监听
-				customListenerV6Data: "", //自定义ipv6监听
-				enableCustomListenerV6: false, // 是否自定义监听
-				customListenerData: "", // 自定义监听地址
+				enableCustomListener: true, // 是否自定义监听
+				customListenerV6Data: "udp://[::]:11010", //自定义ipv6监听
+				enableCustomListenerV6: true, // 是否自定义监听
+				customListenerData: "tcp://0.0.0.0:11010\nudp://0.0.0.0:11010\ntcp://[::]:11010", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听
-				disableEncryption: true, // 是否禁用加密
+				disableEncryption: false, // 是否禁用加密
 				multiThread: false, //使用多线程
 				enablExitNode: false, // 是否启用退出节点
 				noTun: false, // 是否使用TUN
 				latencyfirst: false, // 是否优先延迟
 				useSmoltcp: false, // 是否为子网代理启用smoltcp堆栈
 				disableUdpHolePunching: false, // 是否禁用UDP打洞
-				relayAllPeerrpc: false, // 是否启用所有对等RPC
+				relayAllPeerrpc: true, // 是否启用所有对等RPC
 				disbleP2p: false, // 是否使用P2P
 				dhcp: true, // 是否使用DHCP
 				saveErrorLog: true, // 是否保存错误日志
 				logLevel: "error", //日志等级
-				devName: false, //自定义网卡名
-				devNameValue: "", //自定义网卡名
-				enableCustomProtocol: false, //自定义默认协议
+				devName: true, //自定义网卡名
+				devNameValue: "etgame", //自定义网卡名
+				enableCustomProtocol: true, //自定义默认协议
 				customProtocol: "tcp", //自定义默认协议
-				enableNetCardMetric: false, //启用网卡自定义跃点
+				enableNetCardMetric: true, //启用网卡自定义跃点
 				netCardMetricValue: 1, //自定义网卡跃点值
 				enablePreventSleep: false, //组织系统休眠
 				compression: "none", //加密算法

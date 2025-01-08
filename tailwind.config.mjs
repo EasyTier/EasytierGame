@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 /** @type {import('tailwindcss/plugin')} */
-
-const plugin = require("tailwindcss/plugin");
-module.exports = {
+import plugin from "tailwindcss/plugin"
+// const plugin = require("tailwindcss/plugin");
+export default {
 	content: ["./components/**/*.{js,vue,ts}", "./layouts/**/*.vue", "./pages/**/*.vue", "./plugins/**/*.{js,ts}", "./app.vue", "./error.vue"],
 	theme: {
 		extend: {}

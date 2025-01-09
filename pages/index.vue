@@ -274,10 +274,10 @@
 						plain
 					></ElButton>
 				</ElTooltip>
-				<ElTooltip
+				<!-- <ElTooltip
 					placement="left"
 					content="房间信息"
-				>
+				> -->
 					<ElButton
 						class="!ml-[7px]"
 						@click="handleShowMemberDialog"
@@ -285,7 +285,7 @@
 						type="success"
 						size="small"
 					>房间信息</ElButton>
-				</ElTooltip>
+				<!-- </ElTooltip> -->
 			</div>
 		</div>
 		<div class="ml-auto">

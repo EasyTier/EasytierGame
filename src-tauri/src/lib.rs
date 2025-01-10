@@ -754,7 +754,7 @@ pub fn run() {
             // }
             #[cfg(not(target_os = "android"))]
             let _tray_menu = TrayIconBuilder::with_id("main")
-                .menu_on_left_click(false)
+                .show_menu_on_left_click(false)
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
                         button: MouseButton::Left,

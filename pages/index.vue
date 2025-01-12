@@ -17,7 +17,7 @@
 							<ElIcon><QuestionFilled /></ElIcon>
 						</ElTooltip>
 					</div>
-					<span>-</span>
+					<div class="h-[fit-content]">-</div>
 					<ElTag
 						effect="dark"
 						:type="data.isSuccessGetIp ? 'success' : 'info'"
@@ -32,10 +32,13 @@
 					</ElButton>
 					<div
 						v-else
-						class="flex-1 truncate"
+						class="flex-1 truncate leading-[1em]"
 					>
 						<ElTooltip :content="`内核版本:${data.coreVersion}(不是软件的版本)`">
-							<ElTag type="info">
+							<ElTag
+								size="small"
+								type="info"
+							>
 								{{ data.coreVersion }}
 							</ElTag>
 						</ElTooltip>
@@ -278,13 +281,15 @@
 					placement="left"
 					content="房间信息"
 				> -->
-					<ElButton
-						class="!ml-[7px]"
-						@click="handleShowMemberDialog"
-						plain
-						type="success"
-						size="small"
-					>房间信息</ElButton>
+				<ElButton
+					class="!ml-[7px]"
+					@click="handleShowMemberDialog"
+					plain
+					type="success"
+					size="small"
+				>
+					房间信息
+				</ElButton>
 				<!-- </ElTooltip> -->
 			</div>
 		</div>

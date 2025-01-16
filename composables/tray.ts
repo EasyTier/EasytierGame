@@ -46,7 +46,7 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 
 	if (init) {
 		tray.setTooltip(`EasyTierGame\n${pkg.version}`);
-		tray.setMenuOnLeftClick(false);
+		tray.setShowMenuOnLeftClick(false);
 		tray.setMenu(
 			await Menu.new({
 				id: "main",

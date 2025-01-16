@@ -1,14 +1,15 @@
 /**
  * 生成 release 发布包 zip 文件
  */
-
-const releaseDir = "./src-tauri/target/release";
+const pkg = require("./package.json");
+const isWin7 = process.argv[2] == 'win7';
+const releaseDir = isWin7 ? "./src-tauri/target/x86_64-win7-windows-msvc/release" : "./src-tauri/target/release";
+const fileName = isWin7 ?  `easytier-game_windows7_fix_${pkg.version}.zip` : `easytier-game_windows_x86_64_${pkg.version}.zip`; // 发布包格式
 const releaseDirEasytier = `${releaseDir}/easytier/`;
 const releaseExe = `${releaseDir}/easytier-game.exe`;
 const releaseHelp = `${releaseDir}/帮助.txt`;
+const releaseUninstall = `${releaseDir}/uninstall.exe`;
 const deleteEasytierFiles = ["logs/", "guiLogs/", "cache/"];
-const pkg = require("./package.json");
-const fileName = `easytier-game_windows_x86_64_${pkg.version}.zip`; // 发布包格式
 const releaseZipDir = "./release";
 const releaseZip = `${releaseZipDir}/${fileName}`;
 
@@ -62,5 +63,6 @@ archive.pipe(output);
 archive
 	.append(fs.createReadStream(path.join(__dirname, releaseExe)), { name: "easytier-game.exe" })
 	.append(fs.createReadStream(path.join(__dirname, releaseHelp)), { name: "帮助.txt" })
+	.append(fs.createReadStream(path.join(__dirname, releaseUninstall)), { name: "uninstall.exe" })
 	.directory(path.join(__dirname, releaseDirEasytier), "easytier")
 	.finalize();

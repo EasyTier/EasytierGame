@@ -1331,20 +1331,21 @@
 					)
 				);
 				await writeText(WT);
+				await ElConfirmPrimary(
+					`{action} 虚拟网IP，主机名，子网代理，为子网代理启用smoltcp堆栈，开机自启，软件启动自动联机，出口节点，不生成Tun网卡，错误日志相关配置`,
+					"提示",
+					{
+						confirmButtonText: "知道了",
+						showCancelButton: false,
+						action: "不会分享"
+					}
+				);
 				ElMessage.success("配置已复制");
 			} catch (err) {
 				console.error(err);
 				ElMessage.error("分享失败");
 			}
-			ElConfirmPrimary(
-				`{action} 虚拟网IP，主机名，子网代理，为子网代理启用smoltcp堆栈，开机自启，软件启动自动联机，出口节点，不生成Tun网卡，错误日志相关配置`,
-				"提示",
-				{
-					confirmButtonText: "知道了",
-					showCancelButton: false,
-					action: "不会分享"
-				}
-			);
+			
 		}
 		if (command === "import_config") {
 			importConfigData.data = "";

@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-shell";
+import { ElMessage } from "element-plus";
 export const ENV = import.meta.env;
 
 //防抖
@@ -51,8 +53,8 @@ export const numRemoveZero = (num: Number) => {
 // await-to-js
 export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefined) => {
 	return promise
-		.then((data) => [null, data])
-		.catch((err) => {
+		.then(data => [null, data])
+		.catch(err => {
 			if (errorExt) {
 				if (typeof errorExt !== "object") {
 					return [errorExt, undefined];
@@ -69,26 +71,26 @@ const _supportProtocols = ["tcp", "udp", "ws", "wss", "quic"];
 
 export const supportProtocols = () => {
 	return _supportProtocols.slice();
-}
+};
 
-let _prevent_timer: NodeJS.Timeout| null = null;
+let _prevent_timer: NodeJS.Timeout | null = null;
 let _prevent_timer_count = 15; // 秒
 export const preventSleep = () => {
 	_prevent_timer && clearInterval(_prevent_timer);
 	_prevent_timer = setInterval(async () => {
-	    const result = await invoke('prevent_sleep');
+		const result = await invoke("prevent_sleep");
 		// console.log(`trigger prevent sleep ${result}`);
 	}, _prevent_timer_count * 1000);
-}
+};
 
 export const stopPreventSleep = async () => {
 	_prevent_timer && clearInterval(_prevent_timer);
 	_prevent_timer = null;
-	const _result = await invoke('allow_sleep');
-}
+	const _result = await invoke("allow_sleep");
+};
 
 export const parseCliInfo = (content: string) => {
-	if(!content) return [];
+	if (!content) return [];
 	// 将表格字符串分割成行
 	const lines = content.split("\n");
 
@@ -96,7 +98,7 @@ export const parseCliInfo = (content: string) => {
 	const headers = lines[1]
 		.split("│")
 		.slice(1, -1)
-		.map((h) => h.trim());
+		.map(h => h.trim());
 
 	// 初始化结果数组
 	const result: any[] = [];
@@ -109,7 +111,7 @@ export const parseCliInfo = (content: string) => {
 		const values = lines[i]
 			.split("│")
 			.slice(1, -1)
-			.map((v) => v.trim());
+			.map(v => v.trim());
 
 		// 创建对象并添加到结果数组
 		const obj: any = {};
@@ -134,3 +136,14 @@ export function isValidIP(ip: string) {
 	const ipv6Pattern = /^(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}$/;
 	return ipv4Pattern.test(ip) || ipv6Pattern.test(ip);
 }
+
+export const copyText = async (text: string, message: string = "复制成功") => {
+	const [err, _] = await ATJ(writeText(text));
+
+	if (!err) {
+		ElMessage.success(message);
+	} else {
+		console.error(err);
+		ElMessage.success("复制失败");
+	}
+};

@@ -32,7 +32,7 @@
 					</ElButton>
 					<div
 						v-else
-						class="flex-1 truncate leading-[1em]"
+						class="flex-1 truncate !leading-[1em]"
 					>
 						<ElTooltip :content="`内核版本:${data.coreVersion}(不是软件的版本)`">
 							<ElTag
@@ -107,7 +107,7 @@
 						</p>
 						<div class="ml-auto flex-shrink-0">
 							<ElButton
-								@click.stop="copyServerUrl(item)"
+								@click.stop="copyText(item)"
 								circle
 								size="small"
 								title="复制"
@@ -186,33 +186,49 @@
 				label="局域网IP"
 			>
 				<template #label>
-					<div class="flex h-[20px] items-center">
+					<div class="flex h-[20px] items-center gap-[3px]">
 						虚拟网IP
+						<ElButton
+							@click.stop="handleCopyIp"
+							type="primary"
+							text
+							size="small"
+							title="复制IP"
+							:icon="CopyDocument"
+						></ElButton>
+						<ElSwitch
+							v-model="config.dhcp"
+							inline-prompt
+							inactive-text="固定IP"
+							active-text="动态获取"
+							size="small"
+						></ElSwitch>
 						<ElTooltip content="对应命令行参数 --ipv4">
 							<ElIcon><QuestionFilled /></ElIcon>
 						</ElTooltip>
-						<ElSwitch
-							v-model="config.dhcp"
-							class="ml-[5px]"
-							inline-prompt
-							inactive-text="固定IP"
-							active-text="动态获取IP"
-							size="small"
-						></ElSwitch>
 					</div>
 				</template>
 				<ElInput
 					maxlength="100"
-					:disabled="config.dhcp"
+					:readonly="config.dhcp"
 					:placeholder="data.isStart && config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
 					v-model="config.ipv4"
-				></ElInput>
+				>
+					<template #prefix>
+						<ElTag
+							size="small"
+							:type="config.dhcp ? 'info' : 'success'"
+						>
+							{{ config.dhcp ? "只读" : "可填" }}
+						</ElTag>
+					</template>
+				</ElInput>
 			</ElFormItem>
 		</div>
 	</ElForm>
 	<div class="mt-auto flex items-start">
 		<div>
-			<div>
+			<div class="pt-[4px]">
 				<ElDropdown
 					@command="handleStartCommand"
 					split-button
@@ -264,7 +280,7 @@
 					</template>
 				</ElDropdown>
 			</div>
-			<div class="mt-[6px] pl-[2px]">
+			<div class="mt-[10px] pl-[2px]">
 				<ElTooltip
 					placement="left"
 					content="日志"
@@ -567,7 +583,7 @@
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -592,7 +608,7 @@
 	const config = mainStore.config;
 	// console.error(config);
 	const protocols = supportProtocols();
-	const data = reactive<{ [key: string]: any; releaseList: Array<Array<string>> }>({
+	const data = reactive({
 		hasNewVersion: false, //easytierGame有没有新版
 		logVisible: false,
 		cidrVisible: false,
@@ -605,7 +621,7 @@
 		log: "",
 		serverLog: "", //服务端日志
 		update: false,
-		releaseList: [],
+		releaseList: [[]],
 		coreVersion: "-",
 		isSuccessGetIp: false,
 		startLoading: false,
@@ -632,17 +648,6 @@
 		data: ""
 	});
 
-	const copyServerUrl = async (serverUrl: string) => {
-		const [err, _] = await ATJ(writeText(serverUrl));
-
-		if (!err) {
-			ElMessage.success("地址已复制");
-		} else {
-			console.error(err);
-			ElMessage.success("复制失败");
-		}
-	};
-
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
 		if (appWindow.label == "main") {
@@ -654,6 +659,15 @@
 					appWindow.hide();
 				}
 			});
+		}
+	};
+
+	const handleCopyIp = async () => {
+		if (!config.ipv4?.trim()) return;
+		if (data.isStart || !config.dhcp) {
+			await copyText(mainStore.config.ipv4);
+		} else {
+			await copyText(mainStore.config.ipv4, "复制成功,联机后IP可能会变化");
 		}
 	};
 
@@ -917,7 +931,7 @@
 				// console.log(el, el[0], el[2]);
 				return el && el[0] && el[2] && !el[2].includes("gui");
 			})
-		];
+		] as any;
 		coreManagementData.loading = false;
 		// console.log(data.releaseList);
 	};
@@ -1350,7 +1364,6 @@
 				console.error(err);
 				ElMessage.error("分享失败");
 			}
-			
 		}
 		if (command === "import_config") {
 			importConfigData.data = "";

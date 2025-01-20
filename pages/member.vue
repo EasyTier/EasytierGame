@@ -39,7 +39,7 @@
 							effect="dark"
 							:type="row.cost == 'p2p' ? 'success' : 'info'"
 						>
-							{{ row.cost ? row.cost.replace("relay", "中转") : row.cost }}
+							{{ row.cost ? row.cost.replace("relay", "中转").replace("p2p", "直连") : row.cost }}
 						</ElTag>
 					</template>
 				</ElTableColumn>

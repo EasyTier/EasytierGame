@@ -302,13 +302,13 @@
 								command="config_admin"
 								:icon="Platform"
 							>
-								配置管理
+								房间配置管理
 							</ElDropdownItem>
 							<ElDropdownItem
 								command="save_config_admin"
 								:icon="CirclePlusFilled"
 							>
-								保存当前配置
+								保存当前房间配置
 							</ElDropdownItem>
 						</ElDropdownMenu>
 					</template>
@@ -591,7 +591,7 @@
 		class="!mb-0"
 		v-model="configAdminData.visible"
 		:close-on-press-escape="false"
-		title="配置管理"
+		title="房间配置管理"
 	>
 		<div class="flex items-center gap-[0_4px]">
 			<ElButton

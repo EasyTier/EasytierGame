@@ -43,6 +43,7 @@
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 		</div>
+		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
@@ -195,7 +196,6 @@
 		<ElDivider />
 
 		<div><ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[15px]">
 			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
 			<div class="w-[140px]">

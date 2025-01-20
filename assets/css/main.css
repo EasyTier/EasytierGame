@@ -55,5 +55,12 @@ html.dark body {
 }
 
 .el-select-dropdown__wrap {
-	max-height: 150px!important;
+	max-height: 138px!important;
+}
+
+.el-popper:not(.is-pure) {
+	font-size: 10px!important;
+	line-height: 1.2em!important;
+	padding: 5px!important;
+	font-weight: lighter!important;
 }

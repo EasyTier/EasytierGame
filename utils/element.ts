@@ -4,7 +4,7 @@ import { h, type VNode } from "vue";
 type Opt = { action?: string; confirmButtonText?: string; cancelButtonText?: string; VNode?: VNode | null, showCancelButton?:boolean }
 export const ElConfirmDanger = (
 	content: string,
-	title: string,
+	title: string = "提示",
 	opt: Opt = {
 		action: "",
 		confirmButtonText: "确定",
@@ -40,7 +40,7 @@ export const ElConfirmDanger = (
 
 export const ElConfirmSucces = (
 	content: string,
-	title: string,
+	title: string = "提示",
 	opt: Opt = {
 		action: "",
 		confirmButtonText: "确定",
@@ -76,7 +76,7 @@ export const ElConfirmSucces = (
 
 export const ElConfirmPrimary = (
 	content: string,
-	title: string,
+	title: string = "提示",
 	opt: Opt = {
 		action: "",
 		confirmButtonText: "确定",

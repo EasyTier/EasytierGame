@@ -89,7 +89,7 @@ export async function MenuItemPublicPeers() {
 		id: "publicPeers",
 		text: "公共节点",
 		action: async () => {
-			await open("https://easytier.gd.nkbpal.cn/status/easytier")
+			await open(import.meta.env.VITE_PUBLIC_PEERS_URL)
 		},
 	});
 }

@@ -85,6 +85,18 @@
 						</ElSelect>
 					</div>
 				</template>
+				<template #footer>
+					<div class="text-center">
+						<ElLink
+							type="primary"
+							size="small"
+							:underline="false"
+							@click.stop="open(publicPeersLink)"
+						>
+							其他公共服务器
+						</ElLink>
+					</div>
+				</template>
 				<ElOption
 					v-for="item in mainStore.basePeers"
 					:key="item"
@@ -133,9 +145,9 @@
 					<template #label>
 						<div class="flex items-center">
 							房间名
-							<ElTooltip content="对应命令行参数 --network-name">
+							<!-- <ElTooltip content="对应命令行参数 --network-name">
 								<ElIcon><QuestionFilled /></ElIcon>
-							</ElTooltip>
+							</ElTooltip> -->
 						</div>
 					</template>
 					<ElInput
@@ -150,9 +162,9 @@
 					<template #label>
 						<div class="flex items-center">
 							房间密码
-							<ElTooltip content="对应命令行参数 --network-secret">
+							<!-- <ElTooltip content="对应命令行参数 --network-secret">
 								<ElIcon><QuestionFilled /></ElIcon>
-							</ElTooltip>
+							</ElTooltip> -->
 						</div>
 					</template>
 					<ElInput
@@ -170,9 +182,9 @@
 				<template #label>
 					<div class="flex items-center">
 						成员名
-						<ElTooltip content="对应命令行参数 --hostname">
+						<!-- <ElTooltip content="对应命令行参数 --hostname">
 							<ElIcon><QuestionFilled /></ElIcon>
-						</ElTooltip>
+						</ElTooltip> -->
 					</div>
 				</template>
 				<ElInput
@@ -203,9 +215,9 @@
 							active-text="动态获取"
 							size="small"
 						></ElSwitch>
-						<ElTooltip content="对应命令行参数 --ipv4">
+						<!-- <ElTooltip content="对应命令行参数 --ipv4">
 							<ElIcon><QuestionFilled /></ElIcon>
-						</ElTooltip>
+						</ElTooltip> -->
 					</div>
 				</template>
 				<ElInput
@@ -215,12 +227,18 @@
 					v-model="config.ipv4"
 				>
 					<template #prefix>
-						<ElTag
-							size="small"
-							:type="config.dhcp ? 'info' : 'success'"
+						<ElTooltip
+							class="!text-[10px]"
+							placement="top-end"
+							:content="config.dhcp ? '动态获取无法手动填写' : '固定IP可以手动填写'"
 						>
-							{{ config.dhcp ? "只读" : "可填" }}
-						</ElTag>
+							<ElTag
+								size="small"
+								:type="config.dhcp ? 'info' : 'success'"
+							>
+								{{ config.dhcp ? "只读" : "可填" }}
+							</ElTag>
+						</ElTooltip>
 					</template>
 				</ElInput>
 			</ElFormItem>
@@ -234,6 +252,7 @@
 					split-button
 					trigger="click"
 					size="default"
+					placement="right-end"
 					:type="!data.isStart ? 'primary' : 'danger'"
 					:disabled="data.startLoading || !data.coreVersion || data.update"
 					@click="handleConnection"
@@ -245,13 +264,13 @@
 								command="import_config"
 								:icon="Link"
 							>
-								导入配置
+								导入联机配置
 							</ElDropdownItem>
 							<ElDropdownItem
 								command="share_config"
 								:icon="Share"
 							>
-								分享联机相关配置
+								分享联机配置
 							</ElDropdownItem>
 							<ElDropdownItem disabled>
 								<ElDivider class="!m-0 !h-[2px]" />
@@ -275,6 +294,21 @@
 								:disabled="data.isStart"
 							>
 								使用外部配置文件
+							</ElDropdownItem>
+							<ElDropdownItem disabled>
+								<ElDivider class="!m-0 !h-[2px]" />
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="config_admin"
+								:icon="Platform"
+							>
+								配置管理
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="save_config_admin"
+								:icon="CirclePlusFilled"
+							>
+								保存当前配置
 							</ElDropdownItem>
 						</ElDropdownMenu>
 					</template>
@@ -511,7 +545,7 @@
 				@click="openConfigDir"
 				size="small"
 			>
-				打开配置目录
+				打开存储目录
 			</ElButton>
 			<ElButton
 				@click="handleStartCommand('toml')"
@@ -549,6 +583,70 @@
 			</div>
 		</template>
 	</ElDialog>
+	<ElDialog
+		width="95%"
+		top="30px"
+		append-to-body
+		:z-index="10"
+		class="!mb-0"
+		v-model="configAdminData.visible"
+		:close-on-press-escape="false"
+		title="配置管理"
+	>
+		<div class="flex items-center gap-[0_4px]">
+			<ElButton
+				@click="openConfigAdminDir"
+				size="small"
+			>
+				打开存储目录
+			</ElButton>
+			<ElButton
+				@click="handleStartCommand('config_admin')"
+				type="primary"
+				:icon="RefreshRight"
+				size="small"
+			>
+				刷新
+			</ElButton>
+		</div>
+		<div class="mt-[5px]">
+			<ElSelect
+				v-model="configAdminData.fileName"
+				no-data-text="目录没有配置文件"
+				placeholder="选择配置文件"
+				filterable
+			>
+				<ElOption
+					v-for="item in configAdminData.list"
+					:key="item.path"
+					:value="item.path"
+					:label="item.name"
+				>
+				</ElOption>
+			</ElSelect>
+		</div>
+		<template #footer>
+			<div class="text-right">
+				<div class="mb-[5px]">
+					<ElAlert show-icon type="warning" title="打开目录删除文件即可删除配置"></ElAlert>
+				</div>
+				<ElButton
+					size="small"
+					@click="handleExchangeAdminConfig"
+					type="primary"
+				>
+					切换选中配置
+				</ElButton>
+				<ElButton
+					size="small"
+					@click="configAdminData.visible = false"
+					type="danger"
+				>
+					关闭
+				</ElButton>
+			</div>
+		</template>
+	</ElDialog>
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
@@ -558,7 +656,7 @@
 		QuestionFilled,
 		Delete,
 		List,
-		UserFilled,
+		CirclePlusFilled,
 		Setting,
 		Share,
 		RefreshRight,
@@ -567,7 +665,8 @@
 		MagicStick,
 		SetUp,
 		Folder,
-		CopyDocument
+		CopyDocument,
+		Platform
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
@@ -579,16 +678,16 @@
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile } from "@tauri-apps/plugin-fs";
+	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText } from "~/utils";
+	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
 	let is_close = false;
-
+	const publicPeersLink = import.meta.env.VITE_PUBLIC_PEERS_URL;
 	const tray = await useTray(
 		true,
 		async () => {
@@ -634,6 +733,13 @@
 		visible: false,
 		loading: false,
 		list: [] //配置文件列表
+	});
+
+	const configAdminData = reactive<{ fileName: string; list: Array<{ path: string; name: string }>; [key: string]: any }>({
+		visible: false,
+		loading: false,
+		list: [],
+		fileName: ""
 	});
 
 	const importConfigData = reactive<{ data: ""; [key: string]: any }>({
@@ -1269,21 +1375,26 @@
 			configStart.visible = true;
 			const path = import.meta.env.VITE_CONFIG_PATH;
 			const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
-			if (isExists) {
-				const entries = await readDir(path, { baseDir: BaseDirectory.Resource });
-				configStart.list = entries
-					.filter(item => item.isFile)
-					.map(item => ({
-						name: item.name,
-						path: `${path}${item.name}`
-					})) as any;
-			} else {
+			if (!isExists) {
 				mainStore.configStartEnable = false;
 				mainStore.configPath = "";
 				try {
-					await mkdir(path, { baseDir: BaseDirectory.Resource });
-				} catch (err) {}
+					await mkdir(path, { baseDir: BaseDirectory.Resource, recursive: true });
+				} catch (err) {
+					console.error(err);
+					return;
+				}
 			}
+			const entries = await readDir(path, { baseDir: BaseDirectory.Resource });
+			configStart.list = entries
+				.filter(item => {
+					const nameLower = item.name.toLowerCase();
+					return item.isFile && (nameLower.endsWith(".toml") || nameLower.endsWith(".yaml"));
+				})
+				.map(item => ({
+					name: item.name,
+					path: `${path}${item.name}`
+				})) as any;
 		}
 		if (command === "share_config") {
 			try {
@@ -1372,6 +1483,97 @@
 		if (command === "create_server") {
 			await handleShowServerDialog();
 		}
+		if (command === "config_admin") {
+			configAdminData.visible = true;
+			const path = import.meta.env.VITE_CONFIG_ADMIN_PATH;
+			const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
+			if (!isExists) {
+				try {
+					await mkdir(path, { baseDir: BaseDirectory.Resource, recursive: true });
+				} catch (err) {
+					console.error(err);
+					return;
+				}
+			}
+			const entries = await readDir(path, { baseDir: BaseDirectory.Resource });
+			configAdminData.list = entries
+				.filter(item => item.isFile)
+				.map(item => ({
+					name: item.name,
+					path: `${path}${item.name}`
+				})) as any;
+		}
+		if (command === "save_config_admin") {
+			const config = btoa(encodeURIComponent(JSON.stringify(mainStore.$state)));
+			const [error, { value = "" } = {}] = await ATJ(
+				ElMessageBox.prompt("请输入配置的存储名", "提示", {
+					confirmButtonText: "保存",
+					cancelButtonText: "取消",
+					inputPlaceholder: "请输入2个字以上的存储名",
+					inputValidator: (value: string) => {
+						const result = isValidWindowsFileName(value);
+						if (result) {
+							return true;
+						}
+						return "文件名不合法";
+					}
+				})
+			);
+			if (!error) {
+				const dir = import.meta.env.VITE_CONFIG_ADMIN_PATH;
+				const filePath = `${dir}${value}`;
+				const isExistsDir = await exists(dir, { baseDir: BaseDirectory.Resource });
+				if (!isExistsDir) {
+					try {
+						await mkdir(dir, { baseDir: BaseDirectory.Resource, recursive: true });
+					} catch (err) {
+						console.error(err);
+						return;
+					}
+				}
+				const isExists = await exists(filePath, { baseDir: BaseDirectory.Resource });
+				let allowWrite = true;
+				if (isExists) {
+					const [err] = await ElConfirmPrimary("配置名已存在，是否覆盖?", "提示", {
+						confirmButtonText: "确定",
+						cancelButtonText: "取消"
+					});
+					if (err) {
+						allowWrite = false;
+					}
+				}
+				if (allowWrite) {
+					let encoder = new TextEncoder();
+					let data = encoder.encode(config);
+					// console.log(filePath, data);
+					await writeFile(filePath, data, { baseDir: BaseDirectory.Resource });
+					ElMessage.success("保存成功");
+				}
+			}
+		}
+	};
+
+	const handleExchangeAdminConfig = async () => {
+		const path = configAdminData.fileName;
+		if (!path) return ElMessage.warning("请选择配置");
+		// import.meta.env.VITE_CONFIG_ADMIN_PATH
+		const [err] = await ElConfirmPrimary("会覆盖当前配置,确定切换吗?");
+		if (err) return;
+		const base64U8Arrray = await readFile(path, { baseDir: BaseDirectory.Resource });
+		const decoder = new TextDecoder("utf-8");
+		try {
+			if (data.isStart) {
+				ElMessage.warning("停止联机..");
+				await reset();
+			}
+			const json: typeof mainStore.$state = JSON.parse(decodeURIComponent(atob(decoder.decode(base64U8Arrray))));
+			mainStore.$patch(json);
+			ElMessage.success("切换成功");
+			configAdminData.visible = false;
+		} catch (err) {
+			ElMessage.error("读取配置失败");
+			console.log(err);
+		}
 	};
 
 	const handleStartImport = async () => {
@@ -1416,6 +1618,12 @@
 	const openConfigDir = async () => {
 		const resourceDir = await getResourceDir();
 		const configPath = await join(resourceDir, import.meta.env.VITE_CONFIG_PATH);
+		// console.error(configPath);
+		await Command.create("explorer", [configPath]).execute();
+	};
+	const openConfigAdminDir = async () => {
+		const resourceDir = await getResourceDir();
+		const configPath = await join(resourceDir, import.meta.env.VITE_CONFIG_ADMIN_PATH);
 		// console.error(configPath);
 		await Command.create("explorer", [configPath]).execute();
 	};

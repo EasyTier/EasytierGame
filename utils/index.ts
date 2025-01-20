@@ -126,6 +126,20 @@ export const parseCliInfo = (content: string) => {
 	return result;
 };
 
+export function isValidWindowsFileName(name: string) {
+	if(name.length > 255) return false;
+	const reserved_names = [
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+	];
+	if(reserved_names.includes(name.toUpperCase())) {
+		return false;
+	}
+	return /^[^<>:"/\\|?*\x00-\x1F]+[^<>:"/\\|?*\x00-\x1F .]$/g.test(name);
+	
+}
+
 export const addQQGroup = () => {
 	open("https://qm.qq.com/q/Yo3HmaEIWC");
 };

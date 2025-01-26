@@ -10,7 +10,7 @@
 	}
 } */
 html {
-	font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
+	font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
 }
 html,
 body {
@@ -51,16 +51,24 @@ html.dark body {
 }
 
 .el-table {
-	font-size: 12px!important;
+	font-size: 12px !important;
 }
 
 .el-select-dropdown__wrap {
-	max-height: 138px!important;
+	max-height: 138px !important;
 }
 
 .el-popper:not(.is-pure) {
-	font-size: 10px!important;
-	line-height: 1.2em!important;
-	padding: 5px!important;
-	font-weight: lighter!important;
+	font-size: 10px !important;
+	line-height: 1.2em !important;
+	padding: 5px !important;
+	font-weight: lighter !important;
+}
+
+.el-message-box__content + .el-message-box__btns {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	flex-direction: row-reverse;
+	gap: 0 10px;
 }

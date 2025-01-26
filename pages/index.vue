@@ -593,7 +593,7 @@
 		:close-on-press-escape="false"
 		title="房间配置管理"
 	>
-		<div class="flex items-center gap-[0_4px]">
+		<div class="flex items-center">
 			<ElButton
 				@click="openConfigAdminDir"
 				size="small"
@@ -608,6 +608,20 @@
 			>
 				刷新
 			</ElButton>
+			<ElTooltip
+				placement="top-start"
+				:offset="2"
+				:show-arrow="false"
+				content="删除选中配置"
+			>
+				<ElButton
+					class="!ml-auto"
+					:icon="Delete"
+					@click="handleDeleteAdminConfig"
+					type="danger"
+					size="small"
+				></ElButton>
+			</ElTooltip>
 		</div>
 		<div class="mt-[5px]">
 			<ElSelect
@@ -621,15 +635,19 @@
 					:key="item.path"
 					:value="item.path"
 					:label="item.name"
-				>
-				</ElOption>
+				></ElOption>
 			</ElSelect>
 		</div>
 		<template #footer>
 			<div class="text-right">
 				<div class="mb-[5px]">
-					<ElAlert show-icon type="warning" title="打开目录删除文件即可删除配置"></ElAlert>
+					<ElAlert
+						show-icon
+						type="warning"
+						title="打开目录删除文件即可删除配置"
+					></ElAlert>
 				</div>
+
 				<ElButton
 					size="small"
 					@click="handleExchangeAdminConfig"
@@ -640,7 +658,7 @@
 				<ElButton
 					size="small"
 					@click="configAdminData.visible = false"
-					type="danger"
+					plain
 				>
 					关闭
 				</ElButton>
@@ -678,7 +696,7 @@
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile } from "@tauri-apps/plugin-fs";
+	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile, remove as removeFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
@@ -1510,6 +1528,8 @@
 					confirmButtonText: "保存",
 					cancelButtonText: "取消",
 					inputPlaceholder: "请输入2个字以上的存储名",
+					closeOnPressEscape: false,
+					closeOnClickModal: false,
 					inputValidator: (value: string) => {
 						const result = isValidWindowsFileName(value);
 						if (result) {
@@ -1550,6 +1570,26 @@
 					ElMessage.success("保存成功");
 				}
 			}
+		}
+	};
+
+	const handleDeleteAdminConfig = async () => {
+		const path = configAdminData.fileName;
+		if (!path) return ElMessage.warning("请选择配置");
+		const [err] = await ElConfirmDanger("确定{action}选中的配置吗?", "提示", {
+			confirmButtonText: "确定",
+			cancelButtonText: "取消",
+			action: "删除"
+		});
+		if (err) return;
+		try {
+			await removeFile(path, { baseDir: BaseDirectory.Resource });
+			ElMessage.success("删除成功");
+			configAdminData.fileName = "";
+			await handleStartCommand("config_admin");
+		} catch (err) {
+			ElMessage.error("删除配置失败");
+			console.log(err);
 		}
 	};
 

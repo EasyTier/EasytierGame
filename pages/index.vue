@@ -839,23 +839,11 @@
 		mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers]);
 	};
 
-	// 手动触发持久化数据
-	const persist = async (appWindow: Window) => {
-		try {
-			appWindow.emitTo({ kind: "Any" }, "global-main-store", { store: { ...mainStore.$state } });
-			mainStore.$persist();
-		} catch (err) {
-			console.error(err);
-			ElMessage.error("手动持久数据失败");
-		}
-	};
-
 	const listenObj: { [key: string]: any } = {
 		unListenOutPut: null,
 		unListenThreadId: null,
 		unListenServerOutPut: null,
 		unListenServerThreadId: null,
-		unListenConfigStart: null,
 		unListenStartStopServer: null,
 		thread_id: null,
 		server_thread_id: ref(null),
@@ -940,24 +928,7 @@
 			});
 			this.unListenServerThreadId = unListen;
 		},
-		async listenConfigStart() {
-			const appWindow = getCurrentWindow();
-			const unListen = await listen("config", event => {
-				const ipv4 = config.ipv4;
-				mainStore.$patch(event.payload as any);
-				config.ipv4 = ipv4;
-				if (mainStore.config.enablePreventSleep) {
-					preventSleep();
-				} else {
-					stopPreventSleep();
-				}
-				persist(appWindow);
-			});
-			const unListen2 = mainStore.$subscribe(() => {
-				persist(appWindow);
-			});
-			this.unListenConfigStart = [unListen, unListen2];
-		},
+
 		async listenStartStopServer() {
 			const unListen = await listen<{ args: Array<string> }>("startStopServer", async event => {
 				await listenObj?.unListenServerOutPut?.();
@@ -1137,14 +1108,6 @@
 				}
 			}
 		}
-		const b = bounce(600);
-		mainStore.$subscribe(async (...a) => {
-			if (mainStore.createConfigInEasytier) {
-				b(async () => {
-					await updateConfigJson(data.configJsonSeverUrl);
-				});
-			}
-		});
 	};
 
 	const initAutoStartServer = async () => {
@@ -1180,6 +1143,7 @@
 	let serverLogsTimer: NodeJS.Timeout | null = null;
 	let cidrTimer: NodeJS.Timeout | null = null;
 
+	const b = bounce(600);
 	onMounted(async () => {
 		await initGuiJson();
 		await compatibleInitAutoStart();
@@ -1188,7 +1152,6 @@
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		await listenObj.listenServerThreadId();
-		await listenObj.listenConfigStart();
 		await listenObj.listenStartStopServer();
 		await initConfigDir();
 		await initAutoStartServer();
@@ -1197,13 +1160,19 @@
 		mountedShow(); // 不需要await
 		closePrevent();
 		data.hasNewVersion = await checkNewVersion();
+		window.addEventListener("storage", () => {
+			mainStore.$hydrate();
+			if (mainStore.createConfigInEasytier) {
+				b(async () => {
+					await updateConfigJson(data.configJsonSeverUrl);
+				});
+			}
+		});
 	});
 
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
-		listenObj.unListenConfigStart && listenObj.unListenConfigStart[0]();
-		listenObj.unListenConfigStart && listenObj.unListenConfigStart[1]();
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);

@@ -477,19 +477,6 @@
 		}
 	};
 
-	dataSubscribe(async (...a) => {
-		return {
-			winIpBcAutoStart: mainStore.winIpBcAutoStart,
-			winipBcStart: mainStore.winipBcStart,
-			winipBcPid: mainStore.winipBcPid,
-			forceBindIpBit: mainStore.forceBindIpBit,
-			delayInjectDll: mainStore.delayInjectDll,
-			forceBindInput: mainStore.forceBindInput,
-			forceBindFile: mainStore.forceBindFile,
-			config: { ...mainStore.config }
-		};
-	});
-
 	const getGuids = async () => {
 		const guids = await invoke<string[][]>("get_network_adapter_guids");
 		data.guids = guids && guids.length > 0 ? guids : [];
@@ -505,5 +492,6 @@
 		data.pingIp = mainStore.config.ipv4;
 		initStartWinIpBroadcast();
 		getGuids();
+		dataSubscribe();
 	});
 </script>

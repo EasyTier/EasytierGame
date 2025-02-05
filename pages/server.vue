@@ -123,8 +123,6 @@
 		await appWindow.emitTo("main", "startStopServer", { args });
 	};
 
-	dataSubscribe(async (...a) => {
-		return { serverConfig: { ...mainStore.serverConfig }};
-	});
+	dataSubscribe();
 
 </script>

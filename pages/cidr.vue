@@ -107,13 +107,12 @@
 
 	onMounted(async () => {
 		unlistenStart = await listenStart();
+		dataSubscribe();
 	});
 
 	onBeforeUnmount(() => {
 		unlistenStart && unlistenStart();
 	});
 
-	dataSubscribe(async (...a) => {
-		return { cidrEnable: mainStore.cidrEnable, config: { ...mainStore.config } };
-	});
+
 </script>

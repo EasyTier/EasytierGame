@@ -302,7 +302,7 @@
 		guids.value = guidsValue && guidsValue.length > 0 ? guidsValue : [];
 	};
 
-	dataSubscribe(async (...a) => {
+	dataSubscribe(async () => {
 		if (!mainStore.createConfigInEasytier) {
 			// 考虑删除本地config.json文件
 			const configJsonPath = import.meta.env.VITE_CONFIG_FILE_NAME;
@@ -322,9 +322,5 @@
 				}
 			}
 		}
-		return {
-			config: { ...mainStore.config },
-			createConfigInEasytier: mainStore.createConfigInEasytier
-		};
 	});
 </script>

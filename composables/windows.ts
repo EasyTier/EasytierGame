@@ -67,21 +67,16 @@ export default async (
 export const dataSubscribe = async (cb?: (...args: any) => any) => {
 	if (!cb) return;
 	const mainStore = useMainStore();
-	const currentWindow = getCurrentWindow();
-	let removeSubscribe = mainStore.$subscribe(async (...args) => {
-		const emitData = await cb(args);
-		await currentWindow.emitTo({ kind: "Window", label: "main" }, "config", emitData);
-	});
-	const unlisten = currentWindow.listen<any>("global-main-store", event => {
-		removeSubscribe && removeSubscribe();
-		mainStore.$patch({ ...event.payload.store }); // 更新全局状态
-		removeSubscribe = mainStore.$subscribe(async (...args) => {
-			const emitData = await cb(args);
-			await currentWindow.emitTo({ kind: "Window", label: "main" }, "config", emitData);
-		});
-	});
-	onBeforeUnmount(async () => {
-		unlisten && (await unlisten)();
-		removeSubscribe && removeSubscribe();
-	});
+	const abort = new AbortController();
+	window.addEventListener("storage", async () => {
+		mainStore.$hydrate();
+		if (cb && cb instanceof Function) {
+			await cb();
+		}
+	}, {
+		signal: abort.signal
+	})
+	onBeforeUnmount(() => {
+		abort?.abort();
+	})
 };

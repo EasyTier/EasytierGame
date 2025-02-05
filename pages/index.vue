@@ -1336,6 +1336,12 @@
 		if (config.compression && config.compression != "none") {
 			args.push("--compression", config.compression);
 		}
+		if (config.enableKcpProxy) {
+			args.push("--enable-kcp-proxy");
+		}
+		if (config.disableKcpInput) {
+			args.push("--disable-kcp-input");
+		}
 		return args;
 	};
 
@@ -1442,7 +1448,9 @@
 					disableUdpHolePunching,
 					relayAllPeerrpc,
 					compression,
-					enablePreventSleep
+					enablePreventSleep,
+					enableKcpProxy,
+					disableKcpInput
 				} = mainStore.config;
 				const WT = btoa(
 					encodeURIComponent(
@@ -1473,7 +1481,9 @@
 								disableUdpHolePunching,
 								relayAllPeerrpc,
 								compression,
-								enablePreventSleep
+								enablePreventSleep,
+								enableKcpProxy,
+								disableKcpInput
 							}
 						})
 					)

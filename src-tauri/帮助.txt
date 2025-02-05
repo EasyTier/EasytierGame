@@ -8,12 +8,14 @@
 
 
 [如果想彻底删除easytierGame]
-
+--
 1. 关闭easytierGame
 
 2. 运行easytier-game安装目录下的 easytier/clear_local_data.bat (需要管理员权限) 输入y确认，清除本地存储数据
 
 3. 删除easytierGame文件夹
+--
+或者直接使用uninstall.exe
 
 
 [没有服务器，怎么自建服务]

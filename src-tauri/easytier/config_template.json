@@ -24,5 +24,7 @@
     "enableCustonProtocol": false,  // 是否启用自定义协议
     "customProtocol": "tcp", // 自定义协议类型
     "enableNetCardMetric": false,  // 自定义easytier每次生成的网卡跃点
-    "netCardMetricValue": 1 // 网卡跃点数量(1-9999)
+    "netCardMetricValue": 1, // 网卡跃点数量(1-9999)
+    "enableKcpProxy": false, // 启用kcp代理
+    "disableKcpInput": false //禁用kcp输入
 }

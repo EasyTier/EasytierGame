@@ -43,6 +43,20 @@
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.enableKcpProxy">启用KCP代理</ElCheckbox>
+			<ElTooltip content="将TCP流量转为KCP流量，降低传输延迟，提升传输速度">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.2.0" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.disableKcpInput">禁用KCP输入</ElCheckbox>
+			<ElTooltip content="禁用KCP入站流量，其他开启KCP代理的节点无法连接到本节点">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.2.0" />
+		</div>
 		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
 		<ElDivider />
@@ -195,7 +209,12 @@
 		</div>
 		<ElDivider />
 
-		<div><ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox></div>
+		<div class="flex items-center gap-[10px]">
+			<ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox>
+			<ElTooltip content="使用用户态TCP/IP协议栈smoltcp，避免操作系统防火墙问题导致无法子网代理">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+		</div>
 		<div class="flex flex-nowrap items-center gap-[15px]">
 			<ElCheckbox v-model="mainStore.config.saveErrorLog">输出日志到本地</ElCheckbox>
 			<div class="w-[140px]">
@@ -229,11 +248,12 @@
 	import { Command } from "@tauri-apps/plugin-shell";
 	import { exists, mkdir, BaseDirectory, remove } from "@tauri-apps/plugin-fs";
 	import { ElMessage } from "element-plus";
-	import { reactive } from "vue";
+	import { reactive, ref } from "vue";
 	import { dataSubscribe } from "@/composables/windows";
 	import { ATJ, supportProtocols } from "~/utils";
 	import CoreVersionWarning from "@/components/CoreVersionWarning.vue";
 	import { ElConfirmDanger } from "~/utils/element";
+	import { invoke } from "@tauri-apps/api/core";
 
 	const protocols = supportProtocols();
 	const listenerDialogData = reactive<{ [key: string]: any }>({
@@ -251,6 +271,7 @@
 
 	const mainStore = useMainStore();
 	const data = ["trace", "debug", "info", "warn", "error", "off"];
+	const guids = ref<string[][]>([]);
 	const openLogDir = async () => {
 		const resourceDir = await getResourceDir();
 		const logPath = import.meta.env.VITE_LOG_PATH;
@@ -263,6 +284,7 @@
 		}
 		await Command.create("explorer", [logDirPath]).execute();
 	};
+
 	const openConfigJsonDir = async () => {
 		const resourceDir = await getResourceDir();
 		const easytierDir = await join(resourceDir, "easytier/");
@@ -272,6 +294,12 @@
 		} else {
 			ElMessage.error("config.json的目录不存在");
 		}
+	};
+
+	// 为bind_device功能增加改方法
+	const _getGuids = async () => {
+		const guidsValue = await invoke<string[][]>("get_network_adapter_guids");
+		guids.value = guidsValue && guidsValue.length > 0 ? guidsValue : [];
 	};
 
 	dataSubscribe(async (...a) => {

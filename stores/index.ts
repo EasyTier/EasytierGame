@@ -39,6 +39,8 @@ const store = defineStore("main", {
 				netCardMetricValue: 1, //自定义网卡跃点值
 				enablePreventSleep: false, //组织系统休眠
 				compression: "none", //加密算法
+				enableKcpProxy: true, //启用kcp代理  默认开启
+				disableKcpInput: false, //禁用kcp输入
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -108,6 +110,9 @@ const store = defineStore("main", {
 			"config.customProtocol",
 			"config.enablePreventSleep",
 			"config.compression",
+
+			"config.enableKcpProxy",
+			"config.disableKcpInput",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',

@@ -28,7 +28,7 @@
 		"@vitejs/plugin-vue-jsx": "^4.1.1",
 		"@vueuse/core": "12.4.0",
 		"archiver": "^7.0.1",
-		"element-plus": "2.9.3",
+		"element-plus": "2.9.4",
 		"less": "4.2.1",
 		"lodash-es": "^4.17.21",
 		"nuxt": "3.15.4",

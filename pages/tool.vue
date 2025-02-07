@@ -42,7 +42,7 @@
 				</div>
 				<div>
 					<ElTooltip
-						content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)，如果还有没启动联机，请先启动联机，联机成功后，点击刷新获取easytier生成的网卡"
+						content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)，如果还没有启动联机，请先启动联机，联机成功后，点击刷新获取easytier生成的网卡"
 					>
 						<ElText>
 							方案2

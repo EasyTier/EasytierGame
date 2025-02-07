@@ -2,7 +2,7 @@
 	"$schema": "../gen/schemas/desktop-schema.json",
 	"identifier": "default",
 	"description": "enables the default permissions",
-	"windows": ["main", "log", "member", "cidr", "advance", "tool", "server"],
+	"windows": ["main", "log", "member", "cidr", "advance", "tool", "server", "gameList"],
 	"permissions": [
 		"core:default",
 		"core:window:allow-minimize",

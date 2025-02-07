@@ -44,16 +44,24 @@
 						</ElTooltip>
 					</div>
 					<ElTooltip content="请先停止自建服务和联机后再使用，否则内核被占用的情况下，无法进行内核更换">
-						<ElButton
-							class="ml-auto"
-							:disabled="data.isStart || listenObj.server_thread_id.value"
-							@click="handleCoreManagement"
-							:loading="data.update"
-							type="primary"
-							size="small"
+						<ElBadge
+							badge-class="!text-[9px] cursor-pointer"
+							:hidden="!haveNewCoreVersion"
+							:offset="[-5, 6]"
+							@click.stop="handleCoreManagement"
+							value="N"
 						>
-							内核管理
-						</ElButton>
+							<ElButton
+								class="ml-auto mr-[3px]"
+								:disabled="data.isStart || listenObj.server_thread_id.value"
+								@click.stop="handleCoreManagement"
+								:loading="data.update"
+								type="primary"
+								size="small"
+							>
+								内核管理
+							</ElButton>
+						</ElBadge>
 					</ElTooltip>
 				</div>
 			</template>
@@ -309,6 +317,12 @@
 								:icon="CirclePlusFilled"
 							>
 								保存当前房间配置
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="game_start_config"
+								:icon="SwitchFilled"
+							>
+								本地游戏列表
 							</ElDropdownItem>
 						</ElDropdownMenu>
 					</template>
@@ -684,9 +698,10 @@
 		SetUp,
 		Folder,
 		CopyDocument,
-		Platform
+		Platform,
+		SwitchFilled
 	} from "@element-plus/icons-vue";
-	import { reactive, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
+	import { reactive, onBeforeUnmount, onMounted, ref, toRaw, computed } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
 	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
@@ -694,7 +709,7 @@
 	import { ElMessage, ElMessageBox, ElTooltip } from "element-plus";
 	import { getCurrentWindow, type Window } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
-	import etWindows from "@/composables/windows";
+	import etWindows, { dataSubscribe } from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile, remove as removeFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson } from "~/composables/configJson";
@@ -731,6 +746,7 @@
 		cidrVisible: false,
 		advanceVisible: false,
 		toolVisible: false,
+		gameListVisible: false,
 		serverVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
@@ -962,6 +978,18 @@
 		data.coreVersion = (coreVersion as string).replace("easytier-core ", "");
 	};
 
+	const haveNewCoreVersion = computed<boolean>(() => {
+		if (!data.coreVersion) return false;
+		const releaseLatestVersion = data?.releaseList?.[0]?.[0];
+		if (!releaseLatestVersion) return false;
+		const version = `v${/(\d+\.\d+\.\d+)/g.exec(data.coreVersion || "")?.[1]}`;
+		// console.log(version, releaseLatestVersion)
+		if (releaseLatestVersion != version) {
+			return true;
+		}
+		return false;
+	});
+
 	const checkUpdate = async () => {
 		// const latestVersionFileName = data.releaseList?.[0]?.[0]?.[1] as string;
 		let [downloadUrl, versionFileName] = (coreManagementData.data as string).split("<>");
@@ -993,7 +1021,7 @@
 
 	const handleCoreManagement = async () => {
 		coreManagementData.visible = true;
-		await getReleaseList();
+		// await getReleaseList();
 	};
 
 	const handleInstallCore = async () => {
@@ -1160,14 +1188,14 @@
 		mountedShow(); // 不需要await
 		closePrevent();
 		data.hasNewVersion = await checkNewVersion();
-		window.addEventListener("storage", () => {
-			mainStore.$hydrate();
+		dataSubscribe(async () => {
 			if (mainStore.createConfigInEasytier) {
 				b(async () => {
 					await updateConfigJson(data.configJsonSeverUrl);
 				});
 			}
 		});
+		getReleaseList();
 	});
 
 	onBeforeUnmount(() => {
@@ -1549,6 +1577,27 @@
 					ElMessage.success("保存成功");
 				}
 			}
+		}
+
+		if (command === "game_start_config") {
+			await etWindows(
+				"gameList",
+				{
+					title: "本地游戏列表",
+					width: 800,
+					height: 400,
+					minWidth: 800,
+					minHeight: 400,
+					resizable: true,
+					url: "#/gameList"
+				},
+				(_, appWindow) => {
+					data.gameListVisible = true;
+				},
+				() => {
+					data.gameListVisible = false;
+				}
+			);
 		}
 	};
 

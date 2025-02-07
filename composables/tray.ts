@@ -121,9 +121,10 @@ export async function MenuItemTheme() {
 		text: "主题切换",
 		action: async () => {
 			const mainStore = useMainStore();
-			mainStore.theme = !mainStore.theme;
-			// const appWindow = getCurrentWindow();
-			// appWindow.emitTo("main", "config", { theme: mainStore.theme });
+			mainStore.$patch({
+				theme: !mainStore.theme
+			});
+			// mainStore.$persist();
 			await setTheme(mainStore.theme);
 		},
 	});

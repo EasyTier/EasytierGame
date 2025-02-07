@@ -57,7 +57,7 @@ const store = defineStore("main", {
 			configPath: "", //配置文件路径
 			winIpBcAutoStart: true,
 			createConfigInEasytier: false, //在easytier目录生成config.json文件吗
-			githubFastUrl: "https://ghproxy.cc/",
+			githubFastUrl: "https://ghfast.top/",
 
 			// forceBindIp配置
 			forceBindIpBit: "64",
@@ -66,7 +66,9 @@ const store = defineStore("main", {
 			forceBindFile: "",
 
 			winipBcPid: 0,
-			winipBcStart: false
+			winipBcStart: false,
+
+			gameList: [] as Array<{name: string, exePath: string, id: string, coverImg: string; showImg: string}>, // 游戏列表
 		};
 	},
 	persist: {
@@ -133,7 +135,9 @@ const store = defineStore("main", {
 			"forceBindIpBit",
 			"delayInjectDll",
 			"forceBindInput",
-			"forceBindFile"
+			"forceBindFile",
+
+			"gameList"
 		]
 		// // 除了这些，其他都要存下来
 		// omit: ["winipBcPid", "winipBcStart"]

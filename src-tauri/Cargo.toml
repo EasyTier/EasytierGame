@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.4.0"
+version = "1.4.1"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -47,6 +47,7 @@ tauri-plugin-dialog = "2.2.0"
 # prost = "0.13"
 # prost-types = "0.13"
 hashbrown = "0.15.2"
+# futures-util = "0.3"
 
 [dependencies.windows]
 version = "0.58.0"

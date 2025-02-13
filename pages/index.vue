@@ -437,8 +437,11 @@
 	>
 		<div>
 			<ElText>当前版本: {{ data.coreVersion || "-" }}</ElText>
+			<div v-if="data.update">
+				<ElProgress :percentage="progress"></ElProgress>
+			</div>
 		</div>
-		<div class="mt-[10px] pb-[5px]">
+		<div class="mt-[5px] pb-[5px]">
 			<ElText class="!mr-[10px]">选择一个内核版本安装</ElText>
 			<ElButton
 				:loading="coreManagementData.loading"
@@ -481,7 +484,13 @@
 		<ElInput
 			v-model="mainStore.githubFastUrl"
 			placeholder="请输入github加速地址"
-		></ElInput>
+		>
+			<template #append>
+				<ElTooltip content="github加速链接的发布地址,当前地址失效后,访问它获取最新的地址">
+					<ElButton @click="open('https://ghproxy.link/')">发布地址</ElButton>
+				</ElTooltip>
+			</template>
+		</ElInput>
 		<template #footer>
 			<div class="text-right">
 				<ElButton
@@ -682,7 +691,7 @@
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { listen } from "@tauri-apps/api/event";
+	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 	import { open, Command } from "@tauri-apps/plugin-shell";
 	import {
 		QuestionFilled,
@@ -1024,11 +1033,17 @@
 		// await getReleaseList();
 	};
 
+	let unlistenDownload: UnlistenFn | null = null;
+	let unlistenDownloadError: UnlistenFn | null = null;
+	let progress = ref<number>(0);
+	let size = 0;
 	const handleInstallCore = async () => {
 		try {
 			if (!coreManagementData.data) {
 				return ElMessage.error("请选择一个内核");
 			}
+			progress.value = 0;
+			size = 0;
 			data.update = true;
 			await getCoreVersion();
 			const [isNeedUpdate, downloadUrl, latestVersionFileName] = await checkUpdate();
@@ -1036,6 +1051,22 @@
 			if (isNeedUpdate) {
 				await reset();
 				// console.error(downloadUrl);
+				if (unlistenDownload) {
+					await unlistenDownload();
+				}
+				if (unlistenDownloadError) {
+					await unlistenDownloadError();
+				}
+				unlistenDownload = await listen<[number, number]>("download_core_progress", ({ payload }) => {
+					size += payload[0];
+					progress.value = Math.round((size / payload[1]) * 100);
+				});
+				unlistenDownloadError = await listen("download_core_progress_error", () => {
+					data.update = false;
+					progress.value = 0;
+					size = 0;
+					ElMessage.error("发生错误，请重试");
+				});
 				await invoke("download_easytier_zip", { download_url: downloadUrl, file_name: latestVersionFileName });
 			}
 			await getCoreVersion();

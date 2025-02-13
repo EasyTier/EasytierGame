@@ -3,6 +3,7 @@ use planif::schedule::TaskScheduler as planIfTaskScheduler;
 use planif::schedule_builder::{Action, ScheduleBuilder};
 use planif::settings::{Duration, LogonType, PrincipalSettings, RunLevel};
 use reqwest::{Client, Error};
+// use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
@@ -325,7 +326,7 @@ async fn get_route_by_cli() -> String {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn download_easytier_zip(download_url: String, file_name: String) {
+async fn download_easytier_zip(app_handle: tauri::AppHandle ,download_url: String, file_name: String) {
     let cache_dir_path = get_tool_exe_path("\\easytier\\cache");
     let cache_file_name = format!("{}\\{}", cache_dir_path, file_name);
     let cache_file_name_path = path::Path::new(&cache_file_name);
@@ -335,12 +336,12 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
     }
 
     let target = format!("{}", download_url);
-    let response = reqwest::get(target)
+    let mut response = reqwest::get(target)
         .await
         .expect("error to download easytier url");
     let easytier_path = get_tool_exe_path("\\easytier");
     let file_path = format!("{}\\{}", easytier_path, file_name);
-    println!("download easytier to {}", file_path);
+    // println!("download easytier to {}", file_path);
 
     let easytier_dir = path::Path::new(&easytier_path);
     if !easytier_dir.exists() {
@@ -354,11 +355,20 @@ async fn download_easytier_zip(download_url: String, file_name: String) {
         Err(why) => panic!("couldn't create {}", why),
         Ok(file) => file,
     };
-
-    let content = response.bytes().await.expect("error to bytes easytier");
-    println!("下载完成，开始写入");
-    file.write_all(&content).expect("error to write easytier");
-    println!("写入完成");
+    let context_size: u64 = response.content_length().unwrap();
+    while let Some(item) = response.chunk().await.unwrap() {
+        match file.write_all(&item) {
+            Ok(_) => {
+                app_handle.emit("download_core_progress", [item.len() as u64, context_size]).expect("error to emit download_core_progress");
+            },Err(why) => {
+                log::error!("error to write file: {}", why);
+                app_handle.emit("download_core_progress_error", why.to_string()).expect("error to emit download_core_progress_error");
+                return
+            }
+        };
+        
+    }
+    println!("下载完成");
     unzip(path);
 
     let cache_dir_path = path::Path::new(&cache_dir_path);

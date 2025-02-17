@@ -1091,6 +1091,7 @@
 	};
 
 	const handleAutoStartByTask = async () => {
+		if (import.meta.env.DEV) return ElMessage.warning("开发环境不支持开机自启");
 		await invoke("spawn_autostart", { enabled: !config.autoStart });
 		const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 		config.autoStart = is_enable_by_task;
@@ -1101,6 +1102,7 @@
 			let is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
 			if (is_enable_by_task) {
 				// 每次打开Exe重新加载一次开机自启，因为可能路径变了
+				if (import.meta.env.DEV) return ElMessage.warning("开发环境不支持开机自启");
 				await invoke("spawn_autostart", { enabled: false });
 				await invoke("spawn_autostart", { enabled: true });
 			}

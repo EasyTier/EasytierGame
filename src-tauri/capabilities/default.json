@@ -88,11 +88,19 @@
 					"args": true,
 					"cmd": "ping",
 					"name": "ping"
+				},
+				{
+					"args": true,
+					"cmd": "powershell",
+					"name": "powershell"
 				}
 			]
 		},
 		"fs:default",
-		"fs:allow-read-dir",
+		{
+			"identifier": "fs:allow-read-dir",
+			"allow": [{ "path": "$DESKTOP" }, { "path": "$DESKTOP/*" }, { "path": "**/*" }, { "path": "**" }]
+		},
 		"fs:allow-exists",
 		"fs:allow-open",
 		"fs:allow-resource-read",

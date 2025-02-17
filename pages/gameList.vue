@@ -16,14 +16,14 @@
 					class="mr-[5px]"
 					@click="handleCreate"
 				>
-					新增本地游戏
+					新增游戏
 				</ElButton>
 				<ElButton
 					size="small"
-					class="mr-[5px]"
+					class="!ml-[0px] mr-[5px]"
 					@click="openCoverDir"
 				>
-					打开封面目录
+					封面目录
 				</ElButton>
 			</div>
 		</div>
@@ -92,10 +92,13 @@
 						@click.stop="handleCreate"
 						shadow="hover"
 					>
-						<div class="group/plus flex cursor-pointer items-center justify-center py-[25px]">
+						<div class="group/plus flex cursor-pointer flex-col items-center justify-center py-[25px]">
 							<ElIcon class="!text-[80px] transition-all group-hover/plus:text-[color:var(--el-color-primary)]">
 								<Plus></Plus>
 							</ElIcon>
+							<div>
+								<ElText>支持从桌面拖放新增</ElText>
+							</div>
 						</div>
 					</ElCard>
 				</ElTooltip>
@@ -191,9 +194,9 @@
 <script lang="ts" setup>
 	import { VideoPlay, DeleteFilled, EditPen, Plus, Delete } from "@element-plus/icons-vue";
 	import { dataSubscribe } from "~/composables/windows";
-	import { BaseDirectory, resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { convertFileSrc } from "@tauri-apps/api/core";
-	import { computed, nextTick, reactive, ref, useTemplateRef } from "vue";
+	import { BaseDirectory, basename, extname, resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
+	import { convertFileSrc, Resource } from "@tauri-apps/api/core";
+	import { computed, nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
 	import useMainStore from "@/stores/index";
 	import { uniqueId } from "lodash-es";
 	import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
@@ -202,6 +205,8 @@
 	import { ElConfirmDanger } from "~/utils/element";
 	import { copyFile, exists, mkdir, readDir, remove } from "@tauri-apps/plugin-fs";
 	import { Command, open } from "@tauri-apps/plugin-shell";
+	import { listen } from "@tauri-apps/api/event";
+
 	const resourceDir = await getResourceDir();
 	const gameListResourceDir = await join(resourceDir, import.meta.env.VITE_GAME_LIST_PATH);
 	// const defaultLocalIconPath = await join(configPath, "icon.png");
@@ -338,11 +343,15 @@
 
 	const removeFileById = async (id: string) => {
 		if (!id) return;
+		const isExists = await exists(gameListResourceDir);
+		if (!isExists) return;
 		const entries = await readDir(gameListResourceDir);
 		if (entries.length > 0) {
 			for (const entry of entries) {
 				if (entry.name.includes(id + ".")) {
 					const imgPath = await join(gameListResourceDir, entry.name);
+					const isExists = await exists(imgPath);
+					if (!isExists) continue;
 					await remove(imgPath);
 				}
 			}
@@ -393,5 +402,103 @@
 	const showImgConvertFileSrc = (showImg: string) => {
 		return showImg != defaultPng ? `${convertFileSrc(showImg)}?${new Date().getTime()}` : defaultPng;
 	};
+
+	onMounted(() => {
+		listen<{ paths: string[]; position: { x: number; y: number } }>("tauri://drag-drop", async e => {
+			const AllFiles = e.payload.paths;
+			let result: Array<gameItemType> = [];
+			const date = new Date().getTime();
+			const showImg = defaultPng;
+			const coverImg = "";
+			const extUrls = [];
+			const lnkFiles = [];
+			for (const item of AllFiles) {
+				if (item.endsWith(".url")) {
+					extUrls.push(item);
+				} else {
+					lnkFiles.push(item);
+				}
+			}
+
+			if (lnkFiles.length > 0) {
+				console.log(lnkFiles)
+				let lnkFilesstr = "$lnkFiles = @(";
+				for (let i = 0; i < lnkFiles.length; i++) {
+					lnkFilesstr = lnkFilesstr + `\"${lnkFiles[i]}\"`;
+					if (i == lnkFiles.length - 1) {
+						lnkFilesstr = lnkFilesstr + ");";
+					} else {
+						lnkFilesstr = lnkFilesstr + ",";
+					}
+				}
+				let forstr =
+					lnkFilesstr +
+					`
+					$shell = New-Object -ComObject WScript.Shell;
+					$results = @();
+					foreach ($lnkFile in $lnkFiles) {
+						$shortcut = $shell.CreateShortcut($lnkFile);
+						$targetPath = $shortcut.TargetPath;
+						$iconLocation = $shortcut.IconLocation;
+						$results += [PSCustomObject]@{
+							TargetPath = $targetPath
+							LinkFile = $lnkFile
+						};
+					};
+					$results | ConvertTo-Json
+				`;
+				let outputtarget = await Command.create("powershell", [`${forstr}`], {
+					encoding: "GBK"
+				}).execute();
+				let res: {
+					TargetPath: string;
+					LinkFile: string;
+				}[] = JSON.parse(outputtarget.stdout);
+				if(res && !Array.isArray(res)) {
+					res = [res];
+				}
+				if (res.length > 0) {
+					for (const idx in res) {
+						const item = res[idx];
+						console.log(item);
+						const id = `${date}-${idx}`;
+						const exePath = item.TargetPath ||item.LinkFile
+						const namePath = item.LinkFile || item.TargetPath
+						const allName = await basename(namePath);
+						const extName = await extname(namePath);
+						result.push({
+							exePath: exePath,
+							name: allName.replace(`.${extName}`, ""),
+							id,
+							showImg,
+							coverImg
+						});
+					}
+				}
+			}
+			if (extUrls.length > 0) {
+				for (const idx in extUrls) {
+					const TargetPath = extUrls[idx];
+					const id = `${date}-${idx}-url`;
+					const allName = await basename(TargetPath);
+					const extName = await extname(TargetPath);
+					result.push({
+						exePath: TargetPath,
+						name: allName.replace(`.${extName}`, ""),
+						id,
+						showImg,
+						coverImg
+					});
+				}
+			}
+
+			if (result.length > 0) {
+				mainStore.$patch({
+					gameList: [...mainStore.gameList, ...result]
+				});
+			}
+		});
+	});
+
 	dataSubscribe();
 </script>

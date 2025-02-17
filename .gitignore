@@ -12,3 +12,5 @@ dist
 release
 
 src-tauri/easytier/logs
+src-tauri/easytier/tool/ResourcesExtract.exe
+src-tauri/easytier/tool/ResourcesExtract.cfg

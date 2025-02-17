@@ -37,7 +37,7 @@
 					<ElCard>
 						<template #header>
 							<div class="flex flex-nowrap gap-[0_8px]">
-								<ElTooltip :content="item.name">
+								<ElTooltip :content="item.name" placement="top">
 									<p class="ml-auto flex-1 truncate">
 										<ElText
 											size="default"
@@ -56,7 +56,7 @@
 						/>
 					</ElCard>
 					<div
-						class="absolute left-0 top-0 z-[1] hidden h-full w-full flex-col items-center justify-center rounded-[5px] bg-[var(--el-mask-color)] group-hover/card:flex"
+						class="absolute left-0 top-[61px] z-[1] hidden h-[calc(100%-61px)] w-full flex-col items-center justify-center rounded-[5px] bg-[var(--el-mask-color)] group-hover/card:flex"
 					>
 						<ElButton
 							size="large"
@@ -151,7 +151,7 @@
 				</ElFormItem>
 				<ElFormItem
 					label="游戏封面"
-					prop="coverImg"
+					prop="showImg"
 				>
 					<ElBadge :hidden="createGameData.form.showImg == defaultPng">
 						<template #content="{ value }">
@@ -165,7 +165,7 @@
 							</div>
 						</template>
 						<img
-							@click.stop="handleBrowser('coverImg')"
+							@click.stop="handleBrowser('showImg')"
 							:src="showImgConvertFileSrc(createGameData.form.showImg)"
 							class="aspect-[1] w-[120px] cursor-pointer object-cover"
 						/>
@@ -196,7 +196,7 @@
 	import { dataSubscribe } from "~/composables/windows";
 	import { BaseDirectory, basename, extname, resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { convertFileSrc, Resource } from "@tauri-apps/api/core";
-	import { computed, nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
+	import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef } from "vue";
 	import useMainStore from "@/stores/index";
 	import { uniqueId } from "lodash-es";
 	import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
@@ -205,7 +205,7 @@
 	import { ElConfirmDanger } from "~/utils/element";
 	import { copyFile, exists, mkdir, readDir, remove } from "@tauri-apps/plugin-fs";
 	import { Command, open } from "@tauri-apps/plugin-shell";
-	import { listen } from "@tauri-apps/api/event";
+	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 	const resourceDir = await getResourceDir();
 	const gameListResourceDir = await join(resourceDir, import.meta.env.VITE_GAME_LIST_PATH);
@@ -216,7 +216,7 @@
 	const searchValue = ref("");
 	const defaultPng = "/default.png";
 	// const b = bounce(600);
-	type gameItemType = { name: string; exePath: string; coverImg: string; id: string; showImg: string };
+	type gameItemType = { name: string; exePath: string; id: string; showImg: string };
 	const createGameData = reactive({
 		visible: false,
 		isEdit: false,
@@ -224,7 +224,6 @@
 			id: "",
 			name: "",
 			exePath: "",
-			coverImg: "",
 			showImg: defaultPng
 		},
 		rules: {
@@ -246,29 +245,27 @@
 			id: "",
 			name: "",
 			exePath: "",
-			coverImg: "",
 			showImg: defaultPng
 		};
 		await nextTick();
 		createGameData.visible = true;
 	};
 
-	const handleBrowser = async (type: "coverImg" | "exePath") => {
-		const filters = type === "coverImg" ? [{ name: "", extensions: ["png", "jpg", "jpeg"] }] : [{ name: "", extensions: ["exe"] }];
+	const handleBrowser = async (type: "showImg" | "exePath") => {
+		const filters = type === "showImg" ? [{ name: "", extensions: ["png", "jpg", "jpeg"] }] : [{ name: "", extensions: ["exe"] }];
 		const file = await dialogOpen({
 			multiple: false,
 			directory: false,
 			filters
 		});
 		if (file) {
-			if (type === "coverImg") {
-				createGameData.form.coverImg = file;
-				if (createGameData.form.coverImg) {
+			if (type === "showImg") {
+				if (file) {
 					if (!createGameData.form.id) {
 						const time = new Date().getTime();
 						createGameData.form.id = uniqueId(`${time}`);
 					}
-					let coverImg = createGameData.form.coverImg;
+					let showImg = file;
 					const game_list_path = import.meta.env.VITE_GAME_LIST_PATH;
 					const isExists = await exists(game_list_path, { baseDir: BaseDirectory.Resource });
 					if (!isExists) {
@@ -277,14 +274,16 @@
 						} catch (err) {}
 					}
 					const toPath = await join(gameListResourceDir, createGameData.form.id);
-					const suffix = coverImg.split(".").pop();
+					const suffix = showImg.split(".").pop();
 					const toPathFileName = `${toPath}.${suffix}`;
-					if (coverImg != toPathFileName) {
-						await copyFile(coverImg, toPathFileName);
+					if (showImg != toPathFileName) {
+						await copyFile(showImg, toPathFileName);
 					}
+					// console.log(toPathFileName);
 					const isExistsToPath = await exists(toPathFileName);
 					if (isExistsToPath) {
-						createGameData.form = { ...createGameData.form, showImg: `${toPathFileName}` }; // 如果复制正确，那就存储文件名即可
+						const baseName = await basename(toPathFileName);
+						createGameData.form = { ...createGameData.form, showImg: `${baseName}` }; // 如果复制正确，那就存储文件名即可
 					}
 				}
 			}
@@ -313,7 +312,6 @@
 			if (createGameData.form.showImg == defaultPng) {
 				//删除本地封面图
 				// const toPath = await join(gameListResourceDir, createGameData.form.id);
-				// const suffix = coverImg.split(".").pop();
 				// const imgPath = `${toPath}.${suffix}`;
 				// await remove(imgPath);
 			}
@@ -338,7 +336,7 @@
 
 	const handleBadgeDeleteCover = async () => {
 		await removeFileById(createGameData.form.id);
-		createGameData.form = { ...createGameData.form, coverImg: "", showImg: defaultPng };
+		createGameData.form = { ...createGameData.form, showImg: defaultPng };
 	};
 
 	const removeFileById = async (id: string) => {
@@ -358,7 +356,7 @@
 		}
 	};
 
-	const handleDeleteItem = async ({ coverImg, id }: gameItemType) => {
+	const handleDeleteItem = async ({ id }: gameItemType) => {
 		if (id) {
 			const [error, _] = await ElConfirmDanger("确定要删除吗？");
 			if (!error) {
@@ -392,7 +390,6 @@
 
 	const handleImgError = (item: gameItemType, idx: number) => {
 		item.showImg = defaultPng;
-		item.coverImg = "";
 		mainStore.gameList[idx] = { ...item };
 		mainStore.$patch({
 			gameList: [...mainStore.gameList]
@@ -400,16 +397,20 @@
 	};
 
 	const showImgConvertFileSrc = (showImg: string) => {
-		return showImg != defaultPng ? `${convertFileSrc(showImg)}?${new Date().getTime()}` : defaultPng;
+		if (showImg == defaultPng) return defaultPng;
+		showImg = /^[a-z]\:/g.test(showImg.toLowerCase())
+			? `${convertFileSrc(showImg)}?${new Date().getTime()}`
+			: `${convertFileSrc(`${gameListResourceDir}\\${showImg}`)}?${new Date().getTime()}`;
+		return showImg;
 	};
 
-	onMounted(() => {
-		listen<{ paths: string[]; position: { x: number; y: number } }>("tauri://drag-drop", async e => {
+	let unlistenDragDrop: UnlistenFn | null = null;
+	const listenDragDrop = async () => {
+		unlistenDragDrop = await listen<{ paths: string[]; position: { x: number; y: number } }>("tauri://drag-drop", async e => {
 			const AllFiles = e.payload.paths;
 			let result: Array<gameItemType> = [];
 			const date = new Date().getTime();
 			const showImg = defaultPng;
-			const coverImg = "";
 			const extUrls = [];
 			const lnkFiles = [];
 			for (const item of AllFiles) {
@@ -421,7 +422,7 @@
 			}
 
 			if (lnkFiles.length > 0) {
-				console.log(lnkFiles)
+				// console.log(lnkFiles)
 				let lnkFilesstr = "$lnkFiles = @(";
 				for (let i = 0; i < lnkFiles.length; i++) {
 					lnkFilesstr = lnkFilesstr + `\"${lnkFiles[i]}\"`;
@@ -454,24 +455,23 @@
 					TargetPath: string;
 					LinkFile: string;
 				}[] = JSON.parse(outputtarget.stdout);
-				if(res && !Array.isArray(res)) {
+				if (res && !Array.isArray(res)) {
 					res = [res];
 				}
 				if (res.length > 0) {
 					for (const idx in res) {
 						const item = res[idx];
-						console.log(item);
+						// console.log(item);
 						const id = `${date}-${idx}`;
-						const exePath = item.TargetPath ||item.LinkFile
-						const namePath = item.LinkFile || item.TargetPath
+						const exePath = item.TargetPath || item.LinkFile;
+						const namePath = item.LinkFile || item.TargetPath;
 						const allName = await basename(namePath);
 						const extName = await extname(namePath);
 						result.push({
 							exePath: exePath,
 							name: allName.replace(`.${extName}`, ""),
 							id,
-							showImg,
-							coverImg
+							showImg
 						});
 					}
 				}
@@ -486,8 +486,7 @@
 						exePath: TargetPath,
 						name: allName.replace(`.${extName}`, ""),
 						id,
-						showImg,
-						coverImg
+						showImg
 					});
 				}
 			}
@@ -498,7 +497,37 @@
 				});
 			}
 		});
+	};
+
+	// 兼容新的存储方式
+	const compatibleGameList = async () => {
+		const gameList = [...mainStore.gameList];
+		if(gameList.length <= 0) return;
+		const newGameList = [];
+		for(const item of gameList) {
+			const newItem = {...item}
+			if(newItem.showImg != defaultPng && /^[a-z]\:/g.test(newItem.showImg.toLowerCase())) {
+				newItem.showImg = await basename(item.showImg);
+				if(Reflect.has(newItem, "coverImg")) {
+					delete newItem['coverImg'];
+				}
+			}
+			newGameList.push(newItem);
+		}
+		mainStore.$patch({
+			gameList: newGameList
+		})
+	}
+
+	onMounted(async () => {
+		await compatibleGameList();
+		listenDragDrop(); //监听拖放
 	});
+
+	onBeforeUnmount(() =>{
+		unlistenDragDrop && unlistenDragDrop();
+	})
+
 
 	dataSubscribe();
 </script>

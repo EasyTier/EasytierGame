@@ -68,7 +68,7 @@ const store = defineStore("main", {
 			winipBcPid: 0,
 			winipBcStart: false,
 
-			gameList: [] as Array<{name: string, exePath: string, id: string, coverImg: string; showImg: string}>, // 游戏列表
+			gameList: [] as Array<{name: string, exePath: string, id: string, coverImg?: string; showImg: string}>, // 游戏列表
 		};
 	},
 	persist: {

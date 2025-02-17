@@ -21,7 +21,6 @@ export const getIcon = async function (sourcePath: string, icoDirPath: string) {
 	if (res.code == 0) {
 		let icoPath = icoDirPath + "\\" + (await basename(sourcePath));
 		icoPath = icoPath.replace(`.${await extname(sourcePath)}`, "_1.ico");
-		console.log(icoPath)
 		if (await exists(icoPath)) {
 			return icoPath;
 		} else {

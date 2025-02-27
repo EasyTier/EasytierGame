@@ -92,13 +92,13 @@ fn generate_random_user_agent() -> String {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:{version}) Gecko/20100101 Firefox/{version}",
     ];
 
-    let mut rng = rand::thread_rng();
-    let template = user_agents[rng.gen_range(0..user_agents.len())];
+    let mut rng = rand::rng();
+    let template = user_agents[rng.random_range(0..user_agents.len())];
 
     // 生成随机版本号
-    let version_major: u8 = rng.gen_range(70..90);
-    let version_minor: u8 = rng.gen_range(0..10);
-    let version_patch: u8 = rng.gen_range(0..10);
+    let version_major: u8 = rng.random_range(70..90);
+    let version_minor: u8 = rng.random_range(0..10);
+    let version_patch: u8 = rng.random_range(0..10);
     let version = format!("{}.{}.{}", version_major, version_minor, version_patch);
 
     // 替换模板中的版本号占位符

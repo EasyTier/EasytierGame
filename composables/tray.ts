@@ -8,6 +8,7 @@ import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 import { invoke } from "@tauri-apps/api/core";
 // import { ElConfirmPrimary } from "~/utils/element";
 import { open } from "@tauri-apps/plugin-shell";
+import { computed } from "vue";
 
 const DEFAULT_TRAY_NAME = "main";
 
@@ -161,16 +162,14 @@ export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | n
 
 
 export const checkNewVersion = async () => {
+	const mainStore = useMainStore();
+	// if(mainStore.latestTagName && mainStore.latestTagName == pkg.version) return;
+	if (hasNewVersion.value) return;
 	let [tagName, downloadUrl] = await invoke<string[]>("fetch_game_releases");
-	if(tagName && pkg.version !== tagName) {
-		return true; //有新版
-		// const [err] = await ElConfirmPrimary("有新版本是否下载?", "发现新版本", {
-		// 	confirmButtonText: "下载",
-		// 	cancelButtonText: "取消",
-		// })
-		// if(!err) {
-		// 	open(downloadUrl);
-		// }
-	}
-	return false; //没有新版
+	mainStore.latestTagName = tagName;
 }
+
+export const hasNewVersion = computed<boolean>(() => {
+	const mainStore = useMainStore();
+	return !!mainStore.latestTagName && mainStore.latestTagName != pkg.version;
+})

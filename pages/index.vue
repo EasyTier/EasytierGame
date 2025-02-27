@@ -407,7 +407,7 @@
 
 				<ElBadge
 					badge-class="!text-[9px] cursor-pointer"
-					:hidden="!data.hasNewVersion"
+					:hidden="!hasNewVersion"
 					:offset="[6, 7]"
 					value="N"
 				>
@@ -711,7 +711,7 @@
 		SwitchFilled
 	} from "@element-plus/icons-vue";
 	import { reactive, onBeforeUnmount, onMounted, ref, toRaw, computed } from "vue";
-	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion } from "~/composables/tray";
+	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion, hasNewVersion } from "~/composables/tray";
 	import { getMatches } from "@tauri-apps/plugin-cli";
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
@@ -749,8 +749,7 @@
 	const config = mainStore.config;
 	// console.error(config);
 	const protocols = supportProtocols();
-	const data = reactive({
-		hasNewVersion: false, //easytierGame有没有新版
+	const data = reactive({ //easytierGame有没有新版
 		logVisible: false,
 		cidrVisible: false,
 		advanceVisible: false,
@@ -1132,10 +1131,12 @@
 				try {
 					const decoder = new TextDecoder("utf-8");
 					const guiJsonStr = decoder.decode(guiJsonStrUint8);
-					const regex = /^(\s*\/\/.*)/gm;
-					const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
-					const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
-					const guiJson = JSON.parse(resultStr);
+					// console.log(guiJsonStr);
+					// const regex = /^(\s*\/\/.*)/gm;
+					// const regex2 = /(,?)\s*\/\/.*(?=\n|$|\r\n)/gm;
+					// const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
+					// console.log(resultStr);
+					const guiJson = JSON.parse(guiJsonStr);
 					let saveServerUrl = "";
 					if (guiJson.serverUrl) {
 						if (Array.isArray(guiJson.serverUrl)) {
@@ -1153,6 +1154,7 @@
 						config: {
 							...mainStore.config,
 							...guiJson,
+							customListenerData: guiJson?.customListenerData.join("\n") || "",
 							serverUrl: saveServerUrl
 						}
 					});
@@ -1220,7 +1222,6 @@
 		initPreventSleep();
 		mountedShow(); // 不需要await
 		closePrevent();
-		data.hasNewVersion = await checkNewVersion();
 		dataSubscribe(async () => {
 			if (mainStore.createConfigInEasytier) {
 				b(async () => {
@@ -1229,6 +1230,7 @@
 			}
 		});
 		getReleaseList();
+		checkNewVersion();
 	});
 
 	onBeforeUnmount(() => {

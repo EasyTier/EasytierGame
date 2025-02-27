@@ -4,27 +4,37 @@
         "tcp",
         "udp"
     ], // 协议类型
-    
     // easytier服务地址 - 可填写多个 方式1，逗号分隔，"xxxx.cn,yyyy.com" 方式2,数组 ["xxxx.cn","yyyy.com"] （默认选中第一个）
-    "serverUrl": "public.easytier.top:11010", 
-    "networkName": "",  // 网络名
-    "networkPassword": "", // 网络密码
-    "hostname": "configTest", // 主机名
-    "ipv4": "10.126.126.1", // IP地址(选填，下面有dhcp)
-    "disableIpv6": false, // 禁用ipv6
-    "disbleListenner": true, // 禁用端口监听
+    "serverUrl": "public.easytier.top:11010",
+    "enableCustomListener": true,
+    "customListenerData": [
+        "tcp://0.0.0.0:11010",
+        "udp://0.0.0.0:11010",
+        "tcp://[::]:11010"
+    ],
+    "networkName": "",  //房间名
+    "networkPassword": "", //房间密码
+    "hostname": "", //主机名
+    "ipv4": "", // 虚拟IP地址
+    "disableIpv6": false,  // 禁用ipv6
+    "enableCustomListenerV6": true, // 启用ipv6监听
+    "customListenerV6Data": "udp://[::]:11010",  // ipv6监听地址
+    "disbleListenner": false, //    禁用监听
     "disableEncryption": false, // 禁用加密
+    "enablExitNode": false, // 启用出口节点
     "noTun": false, // 禁用tun
     "latencyfirst": false, // 延迟优先
-    "disableUdpHolePunching": false, // 禁用udp打洞
-    "disbleP2p": false,  // 禁用p2p, 强制中转
-    "dhcp": false,  // 动态分配IP
-    "devName": false, // 是否启用自定义网卡名
-    "devNameValue": "", // 网卡名(启用devName之后才生效)
-    "enableCustonProtocol": false,  // 是否启用自定义协议
-    "customProtocol": "tcp", // 自定义协议类型
-    "enableNetCardMetric": false,  // 自定义easytier每次生成的网卡跃点
-    "netCardMetricValue": 1, // 网卡跃点数量(1-9999)
-    "enableKcpProxy": false, // 启用kcp代理
-    "disableKcpInput": false //禁用kcp输入
+    "disableUdpHolePunching": false,  // 禁用udp打洞
+    "disbleP2p": false, // 禁用p2p 强制中转
+    "dhcp": true, // 启用dhcp,动态获取IP
+    "devName": true, // 启用自定义网卡名
+    "devNameValue": "etgame", // 自定义网卡名
+    "enableCustomProtocol": true, // 自定义p2p时默认协议
+    "customProtocol": "tcp", // 自定义p2p时使用的协议类型
+    "enableNetCardMetric": true, // 启用自定义网卡跃点
+    "netCardMetricValue": 1, // 网卡跃点
+    "enablePreventSleep": false, // 启用防止睡眠
+    "compression": "none", // 压缩算法
+    "enableKcpProxy": true, // 启用kcp代理
+    "disableKcpInput": false //     禁用kcp输入
 }

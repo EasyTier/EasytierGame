@@ -15,8 +15,8 @@ const store = defineStore("main", {
 				disableIpv6: false, // 是否禁用IPv6
 				port: "11010", // 监听端口号
 				enableCustomListener: true, // 是否自定义监听
-				customListenerV6Data: "udp://[::]:11010", //自定义ipv6监听
-				enableCustomListenerV6: true, // 是否自定义监听
+				enableCustomListenerV6: true, // 是否自定义IPV6监听
+				customListenerV6Data: "udp://[::]:11010", //自定义ipv6监
 				customListenerData: "tcp://0.0.0.0:11010\nudp://0.0.0.0:11010\ntcp://[::]:11010", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: false, // 是否禁用加密
@@ -40,7 +40,7 @@ const store = defineStore("main", {
 				enablePreventSleep: false, //组织系统休眠
 				compression: "none", //加密算法
 				enableKcpProxy: true, //启用kcp代理  默认开启
-				disableKcpInput: false, //禁用kcp输入
+				disableKcpInput: false //禁用kcp输入
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -51,7 +51,7 @@ const store = defineStore("main", {
 				port: "11010" // 服务器端口
 			},
 			cidrEnable: false,
-			basePeers: ["public.easytier.top:11010","public.easytier.net:11010"],
+			basePeers: ["public.easytier.top:11010", "public.easytier.net:11010"],
 			theme: false, //主题  false light true dark
 			configStartEnable: false, //使用配置文件启动
 			configPath: "", //配置文件路径
@@ -67,8 +67,9 @@ const store = defineStore("main", {
 
 			winipBcPid: 0,
 			winipBcStart: false,
+			latestTagName: "",
 
-			gameList: [] as Array<{name: string, exePath: string, id: string, coverImg?: string; showImg: string}>, // 游戏列表
+			gameList: [] as Array<{ name: string; exePath: string; id: string; coverImg?: string; showImg: string }> // 游戏列表
 		};
 	},
 	persist: {
@@ -101,7 +102,7 @@ const store = defineStore("main", {
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
 			"config.port",
-			
+
 			"config.disbleListenner",
 			"config.enableCustomListener",
 			"config.customListenerData",
@@ -136,7 +137,8 @@ const store = defineStore("main", {
 			"delayInjectDll",
 			"forceBindInput",
 			"forceBindFile",
-
+			"latestTagName",
+			
 			"gameList"
 		]
 		// // 除了这些，其他都要存下来

@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.4.1"
+version = "1.4.2"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -18,30 +18,29 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.5", features = [] }
+tauri-build = { version = "2.0.6", features = [] }
 # prost-build = "0.13.2"
 
 [dependencies]
 serde_json = "1.0.137"
 serde = { version = "1.0.217", features = ["derive"] }
-log = "0.4.25"
-tauri = { version = "2.2.5", features = [ "protocol-asset",
+log = "0.4.26"
+tauri = { version = "2.3.0", features = [ "protocol-asset",
     "tray-icon",
     "image-png",
-    "image-ico",
-    "devtools"
+    "image-ico"
 ] }
 
-tauri-plugin-log = "2.2.1"
+tauri-plugin-log = "2.2.2"
 tauri-plugin-shell = "2.2.0"
 reqwest = { version = "0.12.12", features = ["json"] }
-zip = "2.2.2"
+zip = "2.2.3"
 sysinfo = '0.33.1'
 planif = { git = "https://github.com/mattrobineau/planif", tag = "1.0.1" }
 whoami = "1.5.2"
 tauri-plugin-fs = "2.2.0"
 tauri-plugin-clipboard-manager = "2.2.1"
-rand = "0.8.5"
+rand = "0.9.0"
 tokio = { version = "1.43.0", features = ["process"] }
 tauri-plugin-dialog = "2.2.0"
 # prost = "0.13"
@@ -51,9 +50,9 @@ hashbrown = "0.15.2"
 
 [dependencies.windows]
 version = "0.58.0"
-features = ["Win32_System_TaskScheduler", "Win32_System_Power", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_Networking_WinSock"]
+features = ["Win32_System_TaskScheduler", "Win32_System_Com", "Win32_System_Power", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_Networking_WinSock"]
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2.2.0"
-tauri-plugin-single-instance = "2.2.1"
+tauri-plugin-single-instance = "2.2.2"
 tauri-plugin-window-state = "2.2.1"

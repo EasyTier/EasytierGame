@@ -14,23 +14,15 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 		const {
 			proxyNetworks,
 			autoStart,
-			relayAllPeerrpc,
 			connectAfterStart,
-			multiThread,
-			enablExitNode,
-			useSmoltcp,
 			saveErrorLog,
-			logLevel,
 			serverUrl,
-			port,
 			enableCustomListener,
-			enablePreventSleep,
 			customListenerData,
-			customListenerV6Data,
-			enableCustomListenerV6,
 			...otherConfig
 		} = mainStore.config;
 		let writeServerUrl: Array<string> | string = serverUrl;
+		let writeCustomListenerData: Array<string> = (customListenerData || "").split("\n");
 		if (isArray) {
 			writeServerUrl = intersection(
 				uniq([serverUrl, ...configJsonSeverUrl]).filter(boolean => boolean),
@@ -43,7 +35,11 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 				mainStore.basePeers
 			).join(",");
 		}
-		await writeTextFile(path, JSON.stringify({ serverUrl: writeServerUrl, ...otherConfig }, null, 4), { baseDir: BaseDirectory.Resource });
+		await writeTextFile(
+			path,
+			JSON.stringify({ serverUrl: writeServerUrl, enableCustomListener, customListenerData: writeCustomListenerData, ...otherConfig }, null, 4),
+			{ baseDir: BaseDirectory.Resource }
+		);
 	} catch (err) {
 		console.error(err);
 		ElMessage.error(`更新config.json失败`);

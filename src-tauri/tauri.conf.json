@@ -12,7 +12,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "easytier-game 1.4.1",
+				"title": "easytier-game 1.4.2",
 				"label": "main",
 				"minWidth": 340,
 				"width": 340,

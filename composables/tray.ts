@@ -31,13 +31,10 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 				tooltip: `EasyTierGame\n${pkg.version}`,
 				title: `EasyTierGame\n${pkg.version}`,
 				id: DEFAULT_TRAY_NAME,
-				menu: await Menu.new({
-					id: "main",
-					items: await generateMenuItem(beforExit, handleConnection),
-				}),
-				action: async (e) => {
+				menu: await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection) }),
+				action: async e => {
 					toggleVisibility();
-				},
+				}
 			});
 		}
 	} catch (error) {
@@ -48,18 +45,13 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 	if (init) {
 		tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 		tray.setShowMenuOnLeftClick(false);
-		tray.setMenu(
-			await Menu.new({
-				id: "main",
-				items: await generateMenuItem(beforExit, handleConnection),
-			})
-		);
+		tray.setMenu(await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection) }));
 	}
 
 	return tray;
 }
 
-export async function generateMenuItem(beforExit: Function, handleConnection:Function) {
+export async function generateMenuItem(beforExit: Function, handleConnection: Function) {
 	return [
 		await MenuItemShow("显示 / 隐藏"),
 		await MenuItemExchangeConnection("联机 / 断开", handleConnection),
@@ -67,7 +59,7 @@ export async function generateMenuItem(beforExit: Function, handleConnection:Fun
 		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemPublicPeers(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
-		await MenuItemExit("退出", beforExit),
+		await MenuItemExit("退出", beforExit)
 	];
 }
 
@@ -80,18 +72,17 @@ export async function MenuItemExit(text: string, beforExit: Function) {
 				await beforExit();
 			}
 			await getCurrentWindow().close();
-		},
+		}
 	});
 }
 
 export async function MenuItemPublicPeers() {
-
 	return await MenuItem.new({
 		id: "publicPeers",
 		text: "公共节点",
 		action: async () => {
-			await open(import.meta.env.VITE_PUBLIC_PEERS_URL)
-		},
+			await open(import.meta.env.VITE_PUBLIC_PEERS_URL);
+		}
 	});
 }
 
@@ -101,17 +92,17 @@ export async function MenuItemShow(text: string) {
 		text,
 		action: async () => {
 			await toggleVisibility();
-		},
+		}
 	});
 }
 
-export async function MenuItemExchangeConnection(text: string, handleConnection:Function) {
-	const menutItem =  await MenuItem.new({
+export async function MenuItemExchangeConnection(text: string, handleConnection: Function) {
+	const menutItem = await MenuItem.new({
 		id: "exchangeConnection",
 		text,
 		action: async () => {
 			const isStart = await handleConnection();
-		},
+		}
 	});
 	return menutItem;
 }
@@ -122,12 +113,10 @@ export async function MenuItemTheme() {
 		text: "主题切换",
 		action: async () => {
 			const mainStore = useMainStore();
-			mainStore.$patch({
-				theme: !mainStore.theme
-			});
+			mainStore.$patch({ theme: !mainStore.theme });
 			// mainStore.$persist();
 			await setTheme(mainStore.theme);
-		},
+		}
 	});
 }
 
@@ -160,6 +149,17 @@ export async function setTrayTooltip(tray: TrayIcon | null, tooltip?: string | n
 	}
 }
 
+const versionWeight = (version: string) => {
+	version = version ? version.trim() : "";
+	const [major = "0", minor = "0", patch = "0"] = version.split(".");
+	return parseInt(major) * 10000 + parseInt(minor) * 100 + parseInt(patch);
+};
+
+const versionDifference = (current: string, latest: string) => {
+	const currentVersion = versionWeight(current);
+	const latestVersion = versionWeight(latest);
+	return currentVersion - latestVersion;
+};
 
 export const checkNewVersion = async () => {
 	const mainStore = useMainStore();
@@ -167,9 +167,9 @@ export const checkNewVersion = async () => {
 	if (hasNewVersion.value) return;
 	let [tagName, downloadUrl] = await invoke<string[]>("fetch_game_releases");
 	mainStore.latestTagName = tagName;
-}
+};
 
 export const hasNewVersion = computed<boolean>(() => {
 	const mainStore = useMainStore();
-	return !!mainStore.latestTagName && mainStore.latestTagName != pkg.version;
-})
+	return !!mainStore.latestTagName && versionDifference(pkg.version, mainStore.latestTagName) < 0 ;
+});

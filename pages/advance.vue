@@ -127,7 +127,8 @@
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox
 				:disabled="mainStore.config.disbleListenner"
-				v-model="mainStore.config.enableCustomListenerV6"
+				:model-value="mainStore.config.enableCustomListenerV6"
+				@change="handleCustomListenerV6Change"
 			>
 				自定义IPV6监听地址
 			</ElCheckbox>
@@ -140,7 +141,7 @@
 					placeholder="请输入自定义IPV6监听地址"
 				/>
 			</div>
-			<ElTooltip content="例如：tcp://[::]:11010，如果未设置，将在随机UDP端口上监听">
+			<ElTooltip content="例如：tcp://[::]:11010，如果未设置，将在随机UDP端口上监听(内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听')">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 			<CoreVersionWarning version="2.1.0" />
@@ -179,6 +180,29 @@
 			>
 				(不使用自定义网卡名,那么联机时默认会生成一个名为 "et_xxx" 的网卡，也可以使用 “设置跃点” 功能，除非你启用了下面的功能)
 			</ElText>
+		</div>
+		<div class="flex items-center gap-[5px]">
+			<div><ElCheckbox v-model="mainStore.config.bindDeviceEnable">绑定设备</ElCheckbox></div>
+			<!-- <div class="flex items-center gap-[5px]"> -->
+				<!-- <ElSelect
+					placeholder="选择设备"
+					v-model="mainStore.config.bindDevice"
+					filterable
+					no-data-text="暂无网卡设备数据，请刷新"
+				>
+					<ElOption
+						v-for="guid in guids"
+						:key="guid[0]"
+						:label="guid[1]"
+						:value="guid[0]"
+					></ElOption>
+				</ElSelect> -->
+				<!-- <ElButton @click="getGuids">刷新</ElButton> -->
+				<ElTooltip content="将连接器的套接字绑定到物理设备以避免路由问题。比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信">
+					<ElIcon><QuestionFilled /></ElIcon>
+				</ElTooltip>
+			<!-- </div> -->
+			<CoreVersionWarning version="2.2.3" />
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.noTun">不创建TUN设备(网卡)，可以使用子网代理访问节点</ElCheckbox></div>
 
@@ -269,6 +293,20 @@
 		listenerDialogData.visible = false;
 	};
 
+	const handleCustomListenerV6Change = async (value: boolean) => {
+		if (value) {
+			const [error, _] = await ElConfirmDanger("内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听'，请谨慎使用", "警告", {
+				confirmButtonText: "继续使用",
+				cancelButtonText: "取消"
+			});
+			if (!error) {
+				mainStore.config.enableCustomListenerV6 = value;
+			}
+		} else {
+			mainStore.config.enableCustomListenerV6 = value;
+		}
+	};
+
 	const mainStore = useMainStore();
 	const data = ["trace", "debug", "info", "warn", "error", "off"];
 	const guids = ref<string[][]>([]);
@@ -297,7 +335,7 @@
 	};
 
 	// 为bind_device功能增加改方法
-	const _getGuids = async () => {
+	const getGuids = async () => {
 		const guidsValue = await invoke<string[][]>("get_network_adapter_guids");
 		guids.value = guidsValue && guidsValue.length > 0 ? guidsValue : [];
 	};

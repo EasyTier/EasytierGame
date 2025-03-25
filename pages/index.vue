@@ -749,7 +749,8 @@
 	const config = mainStore.config;
 	// console.error(config);
 	const protocols = supportProtocols();
-	const data = reactive({ //easytierGame有没有新版
+	const data = reactive({
+		//easytierGame有没有新版
 		logVisible: false,
 		cidrVisible: false,
 		advanceVisible: false,
@@ -1115,6 +1116,24 @@
 		}
 	};
 
+	const compatibleIpv6Listener = async () => {
+		// ipv6监听在后续版本合并到customListenner里了，这里做兼容处理
+		if (config.enableCustomListenerV6 && config.customListenerV6Data) {
+			const customListener = config.customListenerV6Data.trim();
+			if (customListener) {
+				const customListenerV4 = config.customListenerData
+					.trim()
+					.split("\n")
+					.map(el => el.trim())
+					.filter(el => el);
+				if (!customListenerV4.includes(customListener)) {
+					config.customListenerData += `\n${customListener}`;
+				}
+			}
+		}
+		config.enableCustomListenerV6 = false;
+	};
+
 	const initConnectAfterStart = async () => {
 		if (config.connectAfterStart && data.coreVersion) {
 			await reset();
@@ -1212,6 +1231,7 @@
 		await compatibleInitAutoStart();
 		// await initAutoStart();
 		await initStartWinIpBroadcast();
+		await compatibleIpv6Listener();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		await listenObj.listenServerThreadId();
@@ -1373,6 +1393,12 @@
 		}
 		if (config.disableKcpInput) {
 			args.push("--disable-kcp-input");
+		}
+		if (config.bindDeviceEnable) {
+			args.push("--bind-device", "true");
+		}
+		if (mainStore.proxyForwardBySystem) {
+			args.push("--proxy-forward-by-system");
 		}
 		return args;
 	};

@@ -40,7 +40,8 @@ const store = defineStore("main", {
 				enablePreventSleep: false, //组织系统休眠
 				compression: "none", //加密算法
 				enableKcpProxy: true, //启用kcp代理  默认开启
-				disableKcpInput: false //禁用kcp输入
+				disableKcpInput: false, //禁用kcp输入
+				bindDeviceEnable: false, //是否绑定设备
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -51,6 +52,7 @@ const store = defineStore("main", {
 				port: "11010" // 服务器端口
 			},
 			cidrEnable: false,
+			proxyForwardBySystem: false, // 是否通过系统内核转发子网代理数据包，禁用内置NAT
 			basePeers: ["public.easytier.top:11010", "public.easytier.net:11010"],
 			theme: false, //主题  false light true dark
 			configStartEnable: false, //使用配置文件启动
@@ -117,6 +119,8 @@ const store = defineStore("main", {
 			"config.enableKcpProxy",
 			"config.disableKcpInput",
 
+			"config.bindDeviceEnable",
+
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',
 			"serverConfig.enableWhiteList",
@@ -125,6 +129,7 @@ const store = defineStore("main", {
 			"serverConfig.port",
 
 			"cidrEnable",
+			"proxyForwardBySystem",
 			"basePeers",
 			"theme",
 			"configStartEnable",

@@ -1,12 +1,18 @@
 <template>
 	<div class="flex h-full flex-col gap-[10px]">
-		<ElRadioGroup
-			:disabled="!data.isSwitchEnable"
-			v-model="mainStore.cidrEnable"
-		>
-			<ElRadioButton :value="true">开启</ElRadioButton>
-			<ElRadioButton :value="false">关闭</ElRadioButton>
-		</ElRadioGroup>
+		<div class="flex items-center gap-[10px]">
+			<ElRadioGroup
+				:disabled="!data.isSwitchEnable"
+				v-model="mainStore.cidrEnable"
+			>
+				<ElRadioButton :value="true">开启</ElRadioButton>
+				<ElRadioButton :value="false">关闭</ElRadioButton>
+			</ElRadioGroup>
+			<div class="flex items-center gap-[10px]">
+				<ElCheckbox v-model="mainStore.proxyForwardBySystem">通过系统内核转发子网代理数据包，禁用内置NAT</ElCheckbox>
+				<CoreVersionWarning version="2.2.3" />
+			</div>
+		</div>
 		<div class="flex-1 overflow-auto">
 			<ElInput
 				placeholder="例如: 192.168.1.0/24 一行一个"
@@ -113,6 +119,4 @@
 	onBeforeUnmount(() => {
 		unlistenStart && unlistenStart();
 	});
-
-
 </script>

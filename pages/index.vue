@@ -252,6 +252,10 @@
 			</ElFormItem>
 		</div>
 	</ElForm>
+	<!-- <div class="flex justify-center items-center gap-[5px]">
+		<el-button>分享当前配置</el-button>
+		<el-button>导入联机配置</el-button>
+	</div> -->
 	<div class="mt-auto flex items-start">
 		<div>
 			<div class="pt-[4px]">
@@ -330,7 +334,7 @@
 			</div>
 			<div class="mt-[10px] pl-[2px]">
 				<ElTooltip
-					placement="left"
+					placement="top"
 					content="日志"
 				>
 					<ElButton
@@ -1131,7 +1135,9 @@
 				}
 			}
 		}
-		config.enableCustomListenerV6 = false;
+		if (config.enableCustomListenerV6) {
+			config.enableCustomListenerV6 = false;
+		}
 	};
 
 	const initConnectAfterStart = async () => {

@@ -2,8 +2,8 @@
 	<div class="flex h-full flex-col items-start overflow-auto px-[25px]">
 		<div class="flex flex-nowrap items-center gap-[15px]">
 			<div class="flex flex-nowrap items-center gap-[5px]">
-				<ElCheckbox v-model="mainStore.config.enableCustomProtocol">默认直连(p2p)使用的协议</ElCheckbox>
-				<ElTooltip content="如果没有支持该协议的节点地址，程序会自动处理，请放心使用">
+				<ElCheckbox v-model="mainStore.config.enableCustomProtocol">直连(P2P)优先使用传输协议</ElCheckbox>
+				<ElTooltip content="若无法建立指定的协议，会自动使用可建立连接的协议">
 					<ElIcon><QuestionFilled /></ElIcon>
 				</ElTooltip>
 			</div>
@@ -24,7 +24,7 @@
 			</div>
 		</div>
 		<div>
-			<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">帮助对等节点建立直连(p2p)通信</ElCheckbox>
+			<ElCheckbox v-model="mainStore.config.relayAllPeerrpc">帮助他人建立直连(P2P)连接</ElCheckbox>
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.connectAfterStart">软件启动后，自动"启动联机"(搭配开机自启，无感联机)</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[15px]">
@@ -38,8 +38,8 @@
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止系统休眠(比如:屏幕会一直亮着)</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[5px]">
-			<ElCheckbox v-model="mainStore.config.latencyfirst">延迟优先模式，将尝试使用最低延迟路径转发流量</ElCheckbox>
-			<ElTooltip content="视网络质量进行选择，可能会出现中转与直连(p2p)来回切换的情况">
+			<ElCheckbox v-model="mainStore.config.latencyfirst">使用低延迟模式</ElCheckbox>
+			<ElTooltip content="弱网环境下可能会导致网络延迟延迟忽高忽低">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 		</div>
@@ -124,7 +124,7 @@
 				</template>
 			</ElDialog>
 		</div>
-		<div class="flex items-center gap-[10px]">
+		<!-- <div class="flex items-center gap-[10px]">
 			<ElCheckbox
 				:disabled="mainStore.config.disbleListenner"
 				:model-value="mainStore.config.enableCustomListenerV6"
@@ -145,19 +145,19 @@
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 			<CoreVersionWarning version="2.1.0" />
-		</div>
+		</div> -->
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
-			<ElCheckbox v-model="mainStore.config.devName">自定义网卡名</ElCheckbox>
+			<ElCheckbox v-model="mainStore.config.devName">自定义虚拟网卡名称</ElCheckbox>
 			<ElInput
 				size="small"
 				maxlength="10"
 				v-model="mainStore.config.devNameValue"
-				placeholder="请输入网卡名"
+				placeholder="请输入虚拟网卡名称"
 			/>
 		</div>
 		<div class="flex items-center gap-[10px]">
-			<ElCheckbox v-model="mainStore.config.enableNetCardMetric">自定义easytier网卡跃点</ElCheckbox>
+			<ElCheckbox v-model="mainStore.config.enableNetCardMetric">自定义虚拟网卡优先级</ElCheckbox>
 			<ElInputNumber
 				controls-position="right"
 				:min="1"
@@ -167,9 +167,9 @@
 				:precision="0"
 				size="small"
 				v-model="mainStore.config.netCardMetricValue"
-				placeholder="请选择跃点数"
+				placeholder="请输入优先级"
 			/>
-			<ElTooltip content="设置easytier网卡的跃点，提升网卡优先级，跃点越小，网卡优先级越高">
+			<ElTooltip content="数值越小，优先级越高">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 		</div>
@@ -178,13 +178,23 @@
 				size="small"
 				type="warning"
 			>
-				(不使用自定义网卡名,那么联机时默认会生成一个名为 "et_xxx" 的网卡，也可以使用 “设置跃点” 功能，除非你启用了下面的功能)
+				(不使用自定义虚拟网卡名称,那么联机时默认会生成一个名为 "et_xxx" 的网卡，也可以使用 “自定义虚拟网卡优先级”
+				功能，除非你启用了下面的功能)
 			</ElText>
 		</div>
+
 		<div class="flex items-center gap-[5px]">
-			<div><ElCheckbox v-model="mainStore.config.bindDeviceEnable">绑定设备</ElCheckbox></div>
+			<ElCheckbox v-model="mainStore.config.noTun">不创建TUN虚拟网卡</ElCheckbox>
+
+			<ElTooltip content="开启后该节点无法主动访问其他节点">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+		</div>
+
+		<div class="flex items-center gap-[5px]">
+			<div><ElCheckbox v-model="mainStore.config.bindDeviceEnable">绑定物理网卡</ElCheckbox></div>
 			<!-- <div class="flex items-center gap-[5px]"> -->
-				<!-- <ElSelect
+			<!-- <ElSelect
 					placeholder="选择设备"
 					v-model="mainStore.config.bindDevice"
 					filterable
@@ -197,21 +207,30 @@
 						:value="guid[0]"
 					></ElOption>
 				</ElSelect> -->
-				<!-- <ElButton @click="getGuids">刷新</ElButton> -->
-				<ElTooltip content="将连接器的套接字绑定到物理设备以避免路由问题。比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信">
-					<ElIcon><QuestionFilled /></ElIcon>
-				</ElTooltip>
+			<!-- <ElButton @click="getGuids">刷新</ElButton> -->
+			<ElTooltip content="将连接器的套接字绑定到物理设备以避免路由问题。比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
 			<!-- </div> -->
 			<CoreVersionWarning version="2.2.3" />
 		</div>
-		<div><ElCheckbox v-model="mainStore.config.noTun">不创建TUN设备(网卡)，可以使用子网代理访问节点</ElCheckbox></div>
 
 		<ElDivider />
 		<div><ElCheckbox v-model="mainStore.config.enablExitNode">允许此节点成为出口节点</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.disableEncryption">禁用对等节点通信的加密</ElCheckbox></div>
-		<div><ElCheckbox v-model="mainStore.config.multiThread">启用多线程运行</ElCheckbox></div>
+		<div class="flex items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.disableEncryption">关闭信息加密</ElCheckbox>
+			<ElTooltip content="关闭后通信数据将在互联网上明文传输，如房间名和密码">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+		</div>
+		<div class="flex items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.multiThread">开启多线程</ElCheckbox>
+			<ElTooltip content="开启后可能会提高网络性能">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+		</div>
 		<div class="flex items-center gap-[10px]">
-			<ElText>压缩算法</ElText>
+			<ElText>传输数据压缩算法</ElText>
 			<div class="w-[160px]">
 				<ElSelect
 					size="small"
@@ -234,8 +253,8 @@
 		<ElDivider />
 
 		<div class="flex items-center gap-[10px]">
-			<ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理启用smoltcp堆栈</ElCheckbox>
-			<ElTooltip content="使用用户态TCP/IP协议栈smoltcp，避免操作系统防火墙问题导致无法子网代理">
+			<ElCheckbox v-model="mainStore.config.useSmoltcp">为子网代理和 KCP 代理开启用户网络栈</ElCheckbox>
+			<ElTooltip content="开启后会降低网络性能，但不需要配置防火墙">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 		</div>
@@ -293,19 +312,19 @@
 		listenerDialogData.visible = false;
 	};
 
-	const handleCustomListenerV6Change = async (value: boolean) => {
-		if (value) {
-			const [error, _] = await ElConfirmDanger("内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听'，请谨慎使用", "警告", {
-				confirmButtonText: "继续使用",
-				cancelButtonText: "取消"
-			});
-			if (!error) {
-				mainStore.config.enableCustomListenerV6 = value;
-			}
-		} else {
-			mainStore.config.enableCustomListenerV6 = value;
-		}
-	};
+	// const handleCustomListenerV6Change = async (value: boolean) => {
+	// 	if (value) {
+	// 		const [error, _] = await ElConfirmDanger("内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听'，请谨慎使用", "警告", {
+	// 			confirmButtonText: "继续使用",
+	// 			cancelButtonText: "取消"
+	// 		});
+	// 		if (!error) {
+	// 			mainStore.config.enableCustomListenerV6 = value;
+	// 		}
+	// 	} else {
+	// 		mainStore.config.enableCustomListenerV6 = value;
+	// 	}
+	// };
 
 	const mainStore = useMainStore();
 	const data = ["trace", "debug", "info", "warn", "error", "off"];

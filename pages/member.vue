@@ -54,7 +54,11 @@
 					prop="lat_ms"
 					width="100"
 					label="延迟/ms"
-				></ElTableColumn>
+				>
+					<template #default="{ row }">
+						{{ row.lat_ms && !isNaN(Number(row.lat_ms)) ? Number(row.lat_ms).toFixed(0) : row.lat_ms || "-" }}
+					</template>
+				</ElTableColumn>
 				<ElTableColumn
 					sortable
 					width="100"
@@ -108,6 +112,7 @@
 	import { ATJ, parseCliInfo } from "@/utils";
 	import { ElConfirmDanger } from "~/utils/element";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
+	import { isNaN } from "lodash-es";
 	// 	enum NatType {
 	//   // has NAT; but own a single public IP, port is not changed
 	//   Unknown = 0;

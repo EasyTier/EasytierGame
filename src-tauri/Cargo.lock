@@ -1273,6 +1273,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
  "tauri-plugin-window-state",
+ "thunk-rs",
  "tokio",
  "whoami",
  "windows 0.58.0",
@@ -5165,6 +5166,11 @@ dependencies = [
  "quote",
  "syn 2.0.96",
 ]
+
+[[package]]
+name = "thunk-rs"
+version = "0.3.3"
+source = "git+https://github.com/easytier/thunk.git#5e8371a3100dbc18dda952a2036c6bd6fb0504db"
 
 [[package]]
 name = "tiff"

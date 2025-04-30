@@ -1,4 +1,5 @@
 fn main() {
+    thunk::thunk();
     let mut windows = tauri_build::WindowsAttributes::new();
     windows = windows.app_manifest(
         r#"

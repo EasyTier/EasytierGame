@@ -21,6 +21,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.2.0", features = [] }
 # prost-build = "0.13.2"
 
+[target.x86_64-pc-windows-msvc.build-dependencies]
+thunk-rs = { git = "https://github.com/easytier/thunk.git", default-features = false, features = ["win7"] } # 需要安装curl和7zip，并添加他们的路径到环境变量
+
 [dependencies]
 serde_json = "1.0.137"
 serde = { version = "1.0.217", features = ["derive"] }

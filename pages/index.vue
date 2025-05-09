@@ -1827,7 +1827,7 @@
 				cidrTimer && clearInterval(cidrTimer);
 				cidrTimer = setInterval(() => {
 					appWindow.emitTo({ kind: "WebviewWindow", label: "cidr" }, "route", data.isStart);
-				}, 1000);
+				}, 650);
 			},
 			() => {
 				cidrTimer && clearInterval(cidrTimer);

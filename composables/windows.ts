@@ -5,16 +5,31 @@ import type { WebviewLabel, WebviewOptions } from "@tauri-apps/api/webview";
 import useMainStore from "@/stores/index";
 import { onBeforeUnmount } from "vue";
 
-const _listenersMaps: { [key: string]: [UnlistenFn | null, UnlistenFn | null] } = {};
+const _listenersMaps: { [key: string]: [UnlistenFn | null] } = {};
 
+const dealCloseListener = async (
+	dialog: WebviewWindow,
+	label: string,
+	beforeCloseFunc?: () => void | null
+) => {
+	const unlistenFnList: [UnlistenFn | null] = _listenersMaps[label] || [null];
+	let [unListenlogClose] = unlistenFnList;
+
+	unListenlogClose && (await unListenlogClose());
+
+	unListenlogClose = await dialog.onCloseRequested(async () => {
+		beforeCloseFunc && (await beforeCloseFunc());
+		unListenlogClose && (await unListenlogClose());
+		console.log("close")
+	});
+};
 export default async (
 	label: WebviewLabel,
 	options?: Omit<WebviewOptions, "x" | "y" | "width" | "height"> & WindowOptions,
 	afterCreatedFunc?: (webviewWindow: WebviewWindow, appWindow: Window) => void | null,
 	beforeCloseFunc?: () => void | null
 ) => {
-	const unlistenFnList: [UnlistenFn | null, UnlistenFn | null] = _listenersMaps[label] || [null, null];
-	let [unlistenLogCreated, unListenlogClose] = unlistenFnList;
+	const unlistenFnList: [UnlistenFn | null] = _listenersMaps[label] || [null];
 	let dialog = await WebviewWindow.getByLabel(label);
 	if (!dialog) {
 		let defaultOpts: { [key: string]: any; parent: Window | undefined } = {
@@ -38,28 +53,20 @@ export default async (
 			defaultOpts.x = logicalPosition.x;
 			defaultOpts.y = logicalPosition.y;
 		}
-		unlistenLogCreated && (await (unlistenLogCreated as Function)());
-		unListenlogClose && (await unListenlogClose());
 		dialog = new WebviewWindow(label, { ...defaultOpts, ...options });
-		unlistenLogCreated = await dialog.listen("tauri://webview-created", async () => {
-			if (dialog) {
-				afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
-				await dialog.show();
-			}
-		});
-		unlistenFnList[0] = unlistenLogCreated;
-		unListenlogClose = await dialog.onCloseRequested(async () => {
-			beforeCloseFunc && (await beforeCloseFunc());
-			unListenlogClose && (await unListenlogClose());
-			unlistenLogCreated && (await (unlistenLogCreated as Function)());
-		});
-		unlistenFnList[1] = unlistenLogCreated;
-		_listenersMaps[label] = unlistenFnList;
+		await dealCloseListener(dialog, label, beforeCloseFunc);
+		afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
+		await dialog.show();
+
 	} else {
 		const visible = await dialog.isVisible();
 		if (visible) {
 			await dialog.close();
-			unlistenLogCreated && (await (unlistenLogCreated as Function)());
+		} else {
+			const appWindow = getCurrentWindow();
+			await dealCloseListener(dialog, label, beforeCloseFunc);
+			afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
+			await dialog.show();
 		}
 	}
 };
@@ -68,15 +75,19 @@ export const dataSubscribe = async (cb?: (...args: any) => any) => {
 	if (!cb) return;
 	const mainStore = useMainStore();
 	const abort = new AbortController();
-	window.addEventListener("storage", async () => {
-		mainStore.$hydrate();
-		if (cb && cb instanceof Function) {
-			await cb();
+	window.addEventListener(
+		"storage",
+		async () => {
+			mainStore.$hydrate();
+			if (cb && cb instanceof Function) {
+				await cb();
+			}
+		},
+		{
+			signal: abort.signal
 		}
-	}, {
-		signal: abort.signal
-	})
+	);
 	onBeforeUnmount(() => {
 		abort?.abort();
-	})
+	});
 };

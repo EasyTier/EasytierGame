@@ -25,7 +25,7 @@
 					<ElLink
 						class="mr-[10px] !text-[15px]"
 						type="info"
-						:underline="false"
+						underline="never"
 						@click="open('https://github.com/dechamps/WinIPBroadcast/releases/tag/winipbroadcast-1.6')"
 					>
 						WinIPBroadcast
@@ -55,7 +55,7 @@
 						<ElLink
 							class="!text-[15px]"
 							type="info"
-							:underline="false"
+							underline="never"
 							@click="open('https://r1ch.net/projects/forcebindip')"
 						>
 							ForceBindIP
@@ -198,15 +198,9 @@
 						<ElButton
 							type="warning"
 							size="small"
+							@click.stop="handleCloseAllFireWall"
 						>
 							一键关闭防火墙
-						</ElButton>
-						<ElButton
-							@click="handleCustomFireWall"
-							type="danger"
-							size="small"
-						>
-							自定义防火墙策略
 						</ElButton>
 					</div>
 					<div class="mb-[10px]">
@@ -251,10 +245,17 @@
 					<ElButton
 						size="small"
 						:disabled="data.isPing"
-						@click="handleTestPing"
+						@click="handleTestPing('v4')"
 					>
 						Ping一下
 					</ElButton>
+					<!-- <ElButton
+						size="small"
+						:disabled="data.isPing"
+						@click="handleTestPing('v6')"
+					>
+						Ping一下(v6)
+					</ElButton> -->
 				</div>
 				<div class="mt-[5px] flex-1 overflow-auto">
 					<ElInput
@@ -305,8 +306,18 @@
 		forceBindStart: false
 	});
 
-	const handleCustomFireWall = async () => {
-		await open("wf.msc");
+
+	const handleCloseAllFireWall = async () => {
+		try {
+				const output = await Command.create("netsh", ["advfirewall", "set", "allprofiles", "state", "off"], {
+					encoding: "gb2312"
+				}).execute();
+				ElMessage.success("关闭成功");
+				await initFirewall();
+			} catch (err) {
+				ElMessage.error(`关闭失败${err}`);
+				console.error(err);
+			}
 	}
 
 	const handleTabsChange = async (tabPaneName: TabPaneName) => {
@@ -341,14 +352,15 @@
 		});
 	};
 
-	const handleTestPing = async () => {
+	const handleTestPing = async (type: 'v4' | 'v6' = 'v4') => {
 		// const is = isValidIP(data.pingIp);
 		if (data.pingIp) {
 			data.pingLog = "";
 			data.isPing = true;
+			const args = type === 'v4' ? ["-n", "1", data.pingIp] : ["-6", '-n', "1", data.pingIp]
 			try {
 				for (let i = 0; i < data.pingNum; i++) {
-					const output = await Command.create("ping", ["-n", "1", data.pingIp], {
+					const output = await Command.create("ping", args, {
 						encoding: "gb2312"
 					}).execute();
 					if (output.stdout) {

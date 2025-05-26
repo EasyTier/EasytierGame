@@ -1411,8 +1411,17 @@
 		if (mainStore.proxyForwardBySystem) {
 			args.push("--proxy-forward-by-system");
 		}
-		if(mainStore.config.acceptDNS) {
-			args.push("--accept-dns")
+		if (mainStore.config.acceptDNS) {
+			args.push("--accept-dns");
+		}
+		if (mainStore.config.enablePortForward) {
+			let formatPortForward = mainStore.config.portForwardData.trim().split("\n");
+			const newformatPortForward = formatPortForward.map(el => el.trim()).filter(el => el);
+			if (newformatPortForward.length > 0) {
+				newformatPortForward.map(el => {
+					args.push("--port-forward", el);
+				});
+			}
 		}
 		return args;
 	};

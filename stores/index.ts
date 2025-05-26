@@ -46,6 +46,9 @@ const store = defineStore("main", {
 				disableKcpInput: false, //禁用kcp输入
 				bindDeviceEnable: false, //是否绑定设备
 				acceptDNS: false, //魔法dns
+
+				enablePortForward: false, //是否启用端口转发
+				portForwardData: "", //端口转发数据
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -108,6 +111,9 @@ const store = defineStore("main", {
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
 			"config.port",
+
+			"config.enablePortForward",
+			"config.portForwardData",
 
 			"config.disbleListenner",
 			"config.enableCustomListener",

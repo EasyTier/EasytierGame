@@ -35,6 +35,8 @@ export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType)
 			customListenerData,
 			bindDeviceEnable,
 			acceptDNS,
+			enablePortForward,
+			portForwardData,
 			...otherConfig
 		} = mainStore.config;
 		let writeServerUrl: Array<string> | string = serverUrl;

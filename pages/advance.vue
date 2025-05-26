@@ -110,6 +110,7 @@
 				class="!mb-0"
 				v-model="listenerDialogData.visible"
 				:close-on-press-escape="false"
+				:close-on-click-modal="false"
 				title="自定义监听地址"
 			>
 				<ElInput
@@ -131,28 +132,60 @@
 				</template>
 			</ElDialog>
 		</div>
-		<!-- <div class="flex items-center gap-[10px]">
-			<ElCheckbox
-				:disabled="mainStore.config.disbleListenner"
-				:model-value="mainStore.config.enableCustomListenerV6"
-				@change="handleCustomListenerV6Change"
+		<div class="flex items-center gap-[10px]">
+			<ElCheckbox v-model="mainStore.config.enablePortForward">端口转发</ElCheckbox>
+			<ElTooltip
+				:disabled="mainStore.config.enablePortForward"
+				content="请先开启端口转发功能"
 			>
-				自定义IPV6监听地址
-			</ElCheckbox>
-			<div class="w-[200px]">
-				<ElInput
-					:disabled="mainStore.config.disbleListenner || mainStore.config.enableCustomListenerV6"
+				<ElButton
 					size="small"
-					:maxlength="100"
-					v-model="mainStore.config.customListenerV6Data"
-					placeholder="请输入自定义IPV6监听地址"
-				/>
-			</div>
-			<ElTooltip content="例如：tcp://[::]:11010，如果未设置，将在随机UDP端口上监听(内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听')">
-				<ElIcon><QuestionFilled /></ElIcon>
+					:disabled="!mainStore.config.enablePortForward"
+					@click="handlePortForwardDialog"
+				>
+					配置
+				</ElButton>
 			</ElTooltip>
-			<CoreVersionWarning version="2.1.0" />
-		</div> -->
+			<CoreVersionWarning version="2.3.0" />
+			<ElDialog
+				width="95%"
+				top="5px"
+				append-to-body
+				:z-index="10"
+				class="!mb-0"
+				v-model="portForwardDialogData.visible"
+				:close-on-press-escape="false"
+				:close-on-click-modal="false"
+				title="端口转发配置"
+			>
+				<div class="mb-4">
+					<ElText
+						size="small"
+						type="info"
+					>
+						<div>• 每行一个转发规则</div>
+						<div>• 格式：协议://本地地址:本地端口/目标地址:目标端口</div>
+						<div class="flex items-center">
+							<span class="mr-auto">• 例如：udp://0.0.0.0:12345/10.126.126.1:23456</span>
+							<ElButton
+								size="default"
+								type="primary"
+								@click.stop="handleFinishInputPortForward"
+							>
+								填写完毕
+							</ElButton>
+						</div>
+					</ElText>
+				</div>
+				<ElInput
+					type="textarea"
+					:rows="10"
+					placeholder="请输入端口转发规则，每行一个&#10;例如：&#10;udp://0.0.0.0:12345/10.126.126.1:23456&#10;tcp://0.0.0.0:8080/192.168.1.100:80"
+					v-model="mainStore.config.portForwardData"
+				></ElInput>
+				<!--  -->
+			</ElDialog>
+		</div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.devName">自定义虚拟网卡名称</ElCheckbox>
@@ -200,25 +233,9 @@
 
 		<div class="flex items-center gap-[5px]">
 			<div><ElCheckbox v-model="mainStore.config.bindDeviceEnable">绑定物理网卡</ElCheckbox></div>
-			<!-- <div class="flex items-center gap-[5px]"> -->
-			<!-- <ElSelect
-					placeholder="选择设备"
-					v-model="mainStore.config.bindDevice"
-					filterable
-					no-data-text="暂无网卡设备数据，请刷新"
-				>
-					<ElOption
-						v-for="guid in guids"
-						:key="guid[0]"
-						:label="guid[1]"
-						:value="guid[0]"
-					></ElOption>
-				</ElSelect> -->
-			<!-- <ElButton @click="getGuids">刷新</ElButton> -->
 			<ElTooltip content="将连接器的套接字绑定到物理设备以避免路由问题。比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
-			<!-- </div> -->
 			<CoreVersionWarning version="2.2.3" />
 		</div>
 
@@ -311,6 +328,15 @@
 		loading: false
 	});
 
+	const portForwardDialogData = reactive<{ [key: string]: any }>({
+		visible: false,
+		loading: false
+	});
+
+	const handlePortForwardDialog = () => {
+		portForwardDialogData.visible = true;
+	};
+
 	const handleListenerDialog = () => {
 		listenerDialogData.visible = true;
 	};
@@ -319,19 +345,9 @@
 		listenerDialogData.visible = false;
 	};
 
-	// const handleCustomListenerV6Change = async (value: boolean) => {
-	// 	if (value) {
-	// 		const [error, _] = await ElConfirmDanger("内核版本2.2.3之后，ipv6监听被移除并合并到'自定义监听'，请谨慎使用", "警告", {
-	// 			confirmButtonText: "继续使用",
-	// 			cancelButtonText: "取消"
-	// 		});
-	// 		if (!error) {
-	// 			mainStore.config.enableCustomListenerV6 = value;
-	// 		}
-	// 	} else {
-	// 		mainStore.config.enableCustomListenerV6 = value;
-	// 	}
-	// };
+	const handleFinishInputPortForward = async () => {
+		portForwardDialogData.visible = false;
+	};
 
 	const mainStore = useMainStore();
 	const data = ["trace", "debug", "info", "warn", "error", "off"];

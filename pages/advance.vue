@@ -146,6 +146,9 @@
 					配置
 				</ElButton>
 			</ElTooltip>
+			<ElTooltip content="将本地端口转发到虚拟网络中的远程端口.如：udp://0.0.0.0:12345/10.126.126.1:23456,表示将本地UDP端口12345转发到虚拟网络中的10.126.126.1:23456.可以指定多个">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
 			<CoreVersionWarning version="2.3.0" />
 			<ElDialog
 				width="95%"

@@ -54,9 +54,11 @@
 					prop="lat_ms"
 					width="100"
 					label="延迟/ms"
+					:sort-method="sortLatMs"
+					:sort-orders="['ascending', 'descending', null]"
 				>
 					<template #default="{ row }">
-						{{ row.lat_ms && !isNaN(Number(row.lat_ms)) ? Number(row.lat_ms).toFixed(0) : row.lat_ms || "-" }}
+						{{ formatLatency(row.lat_ms) }}
 					</template>
 				</ElTableColumn>
 				<ElTableColumn
@@ -143,6 +145,51 @@
 	const data = reactive<{ member: { hostname: string; cost: string; ipv4: string; lat_msg: string; loss_rate: string; nat_type: string }[] }>({
 		member: []
 	});
+
+	// 延迟排序函数
+	const sortLatMs = (a: any, b: any): number => {
+		const getLatencyValue = (row: any): number => {
+			const latMs = row.lat_ms;
+
+			if (latMs === null || latMs === undefined || latMs === "") {
+				return Infinity;
+			}
+
+			const num = Number(latMs);
+			if (isNaN(num) || num < 0) {
+				return Infinity;
+			}
+
+			return Math.floor(num);
+		};
+
+		const valueA = getLatencyValue(a);
+		const valueB = getLatencyValue(b);
+
+		if (valueA === Infinity && valueB === Infinity) {
+			return 0;
+		}
+
+		return valueA - valueB;
+	};
+
+	// 格式化延迟显示
+	const formatLatency = (latMs: any): string => {
+		if (latMs === null || latMs === undefined || latMs === "") {
+			return "-";
+		}
+
+		const num = Number(latMs);
+		if (isNaN(num)) {
+			return "-";
+		}
+
+		if (num < 0) {
+			return "-";
+		}
+
+		return num.toFixed(0);
+	};
 
 	const _showTableHeader = [
 		["hostname", "主机名"],

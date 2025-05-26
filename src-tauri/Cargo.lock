@@ -1253,11 +1253,10 @@ checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "easytier-game"
-version = "1.4.4"
+version = "1.4.5"
 dependencies = [
  "hashbrown 0.15.2",
  "log",
- "planif",
  "rand 0.9.0",
  "reqwest",
  "serde",
@@ -3495,14 +3494,6 @@ name = "pkg-config"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
-
-[[package]]
-name = "planif"
-version = "1.0.0"
-source = "git+https://github.com/mattrobineau/planif?tag=1.0.1#90e228e2bc0f142b16a0ba415ec242e1c836cc35"
-dependencies = [
- "windows 0.48.0",
-]
 
 [[package]]
 name = "plist"
@@ -5997,15 +5988,6 @@ dependencies = [
  "raw-window-handle",
  "windows-sys 0.59.0",
  "windows-version",
-]
-
-[[package]]
-name = "windows"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e686886bc078bc1b0b600cac0147aadb815089b6e4da64016cbd754b6342700f"
-dependencies = [
- "windows-targets 0.48.5",
 ]
 
 [[package]]

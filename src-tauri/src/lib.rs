@@ -13,7 +13,7 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
-use windows::core::{BSTR, VARIANT};
+use windows::core::{Interface, BSTR, VARIANT};
 use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::NetworkManagement::IpHelper::{
     GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, IP_ADAPTER_ADDRESSES_LH,
@@ -738,29 +738,62 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
                 &VARIANT::default(),
                 &VARIANT::default(),
             )?;
-
+        
             let folder_path = BSTR::from("\\easytierGame");
             let task_name = BSTR::from("auto start");
-
-            // 使用优化的文件夹处理函数
-            let task_folder = ensure_task_folder_and_cleanup(&task_service, &folder_path, &task_name)?;
-
-            // 创建任务定义...
+        
             let task_definition = task_service.NewTask(0)?;
-            // ... existing task creation logic ...
+        
+            // 设置任务信息
+            let registration_info = task_definition.RegistrationInfo()?;
+            registration_info.SetDescription(&BSTR::from("EasytierGame auto start task"))?;
+            registration_info.SetAuthor(&BSTR::from("EasytierGame"))?;
+        
+            // 改为用户登录触发
+            let triggers = task_definition.Triggers()?;
+            let trigger = triggers.Create(TASK_TRIGGER_LOGON)?;
+            let logon_trigger: ILogonTrigger = trigger.cast()?;
+            logon_trigger.SetEnabled(VARIANT_BOOL::from(true))?;
+        
+            // 设置动作
+            let actions = task_definition.Actions()?;
+            let action = actions.Create(TASK_ACTION_EXEC)?;
+            let exec_action: IExecAction = action.cast()?;
+            let exe = std::env::current_exe()?;
+            let exe_path: &str = exe.to_str().unwrap();
+            exec_action.SetPath(&BSTR::from(exe_path))?;
+            exec_action.SetArguments(&BSTR::from("--task-auto-start"))?;
+        
+            // 使用当前用户运行
+            let principal = task_definition.Principal()?;
+            principal.SetUserId(&BSTR::from(whoami::username().as_str()))?;
+            principal.SetLogonType(TASK_LOGON_INTERACTIVE_TOKEN)?;
+            principal.SetRunLevel(TASK_RUNLEVEL_HIGHEST)?;
 
-            // 注册任务
+
+            // 设置任务设置
+            let settings = task_definition.Settings()?;
+            settings.SetEnabled(VARIANT_BOOL::from(true))?;
+            settings.SetCompatibility(TASK_COMPATIBILITY_V2)?; // Windows 7
+            settings.SetStartWhenAvailable(VARIANT_BOOL::from(true))?;
+            // settings.SetHidden(VARIANT_BOOL::from(true))?; // 注释掉让任务可见
+            settings.SetExecutionTimeLimit(&BSTR::from("PT0S"))?;
+
+            
+        
+            // 获取文件夹并注册任务
+            let task_folder = ensure_task_folder_and_cleanup(&task_service, &folder_path, &task_name)?;
+        
             let _auto_task = task_folder.RegisterTaskDefinition(
                 &task_name,
                 &task_definition,
                 TASK_CREATE_OR_UPDATE.0,
                 &VARIANT::default(),
                 &VARIANT::default(),
-                TASK_LOGON_SERVICE_ACCOUNT,
+                TASK_LOGON_INTERACTIVE_TOKEN,
                 &VARIANT::default()
             )?;
-
-            println!("任务注册成功");
+        
             CoUninitialize();
         }
     }

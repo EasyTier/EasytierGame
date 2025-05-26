@@ -504,6 +504,7 @@
 		data.pingIp = mainStore.config.ipv4;
 		initStartWinIpBroadcast();
 		getGuids();
-		dataSubscribe();
 	});
+	
+	dataSubscribe();
 </script>

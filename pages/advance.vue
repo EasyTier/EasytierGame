@@ -59,6 +59,13 @@
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.acceptDNS">魔法DNS</ElCheckbox>
+			<ElTooltip content="您可以使用域名访问其他节点，例如：<hostname>.et.net。魔法DNS将修改您的系统DNS设置，请谨慎启用">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.3.0" />
+		</div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>

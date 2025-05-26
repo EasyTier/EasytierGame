@@ -2,7 +2,7 @@
 	<ElForm
 		size="small"
 		label-position="top"
-		:model="config"
+		:model="mainStore.config"
 	>
 		<ElFormItem
 			label="服务器"
@@ -70,18 +70,18 @@
 				filterable
 				placeholder="请选择服务器地址"
 				default-first-option
-				v-model="config.serverUrl"
+				v-model="mainStore.config.serverUrl"
 				no-data-text="无服务器地址"
 				@change="handleServerUrlChange"
 			>
 				<template #prefix>
-					<div :class="config.protocol && config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
+					<div :class="mainStore.config.protocol && mainStore.config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
 						<ElSelect
 							placeholder="协议"
 							multiple
 							collapse-tags
 							@click.stop
-							v-model="config.protocol"
+							v-model="mainStore.config.protocol"
 							@change="handleServerUrlChange"
 						>
 							<ElOption
@@ -98,7 +98,7 @@
 						<ElLink
 							type="primary"
 							size="small"
-							:underline="false"
+							underline="never"
 							@click.stop="open(publicPeersLink)"
 						>
 							其他公共服务器
@@ -161,7 +161,7 @@
 					<ElInput
 						maxlength="100"
 						placeholder="请输入房间名"
-						v-model="config.networkName"
+						v-model="mainStore.config.networkName"
 					></ElInput>
 				</ElFormItem>
 			</div>
@@ -179,7 +179,7 @@
 						show-password
 						maxlength="100"
 						placeholder="请输入房间密码"
-						v-model="config.networkPassword"
+						v-model="mainStore.config.networkPassword"
 						type="password"
 					></ElInput>
 				</ElFormItem>
@@ -198,7 +198,7 @@
 				<ElInput
 					maxlength="100"
 					placeholder="例如: Player1"
-					v-model="config.hostname"
+					v-model="mainStore.config.hostname"
 				></ElInput>
 			</ElFormItem>
 			<ElFormItem
@@ -217,7 +217,7 @@
 							:icon="CopyDocument"
 						></ElButton>
 						<ElSwitch
-							v-model="config.dhcp"
+							v-model="mainStore.config.dhcp"
 							inline-prompt
 							inactive-text="固定IP"
 							active-text="动态获取"
@@ -230,21 +230,21 @@
 				</template>
 				<ElInput
 					maxlength="100"
-					:readonly="config.dhcp"
-					:placeholder="data.isStart && config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
-					v-model="config.ipv4"
+					:readonly="mainStore.config.dhcp"
+					:placeholder="data.isStart && mainStore.config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
+					v-model="mainStore.config.ipv4"
 				>
 					<template #prefix>
 						<ElTooltip
 							class="!text-[10px]"
 							placement="top-end"
-							:content="config.dhcp ? '动态获取无法手动填写' : '固定IP可以手动填写'"
+							:content="mainStore.config.dhcp ? '动态获取无法手动填写' : '固定IP可以手动填写'"
 						>
 							<ElTag
 								size="small"
-								:type="config.dhcp ? 'info' : 'success'"
+								:type="mainStore.config.dhcp ? 'info' : 'success'"
 							>
-								{{ config.dhcp ? "只读" : "可填" }}
+								{{ mainStore.config.dhcp ? "只读" : "可填" }}
 							</ElTag>
 						</ElTooltip>
 					</template>
@@ -363,7 +363,7 @@
 		</div>
 		<div class="ml-auto">
 			<ElCheckbox
-				v-model="config.disbleP2p"
+				v-model="mainStore.config.disbleP2p"
 				size="small"
 			>
 				强制中转
@@ -374,7 +374,7 @@
 			>
 				<ElCheckbox
 					@change="handleAutoStartByTask"
-					:model-value="config.autoStart"
+					:model-value="mainStore.config.autoStart"
 					size="small"
 				>
 					开机自启
@@ -419,7 +419,7 @@
 					<ElLink
 						class="ml-[8px] truncate pb-[2px] !text-[9px]"
 						type="info"
-						:underline="false"
+						underline="never"
 						@click="open('https://github.com/EasyTier/EasytierGame')"
 					>
 						EasytierGame主页
@@ -724,11 +724,11 @@
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows, { dataSubscribe } from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile, remove as removeFile } from "@tauri-apps/plugin-fs";
-	import { updateConfigJson } from "~/composables/configJson";
+	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile, remove as removeFile, stat } from "@tauri-apps/plugin-fs";
+	import { updateConfigJson, updateConfigJsonBounce } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { bounce, addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName } from "~/utils";
+	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 
@@ -750,8 +750,7 @@
 	);
 
 	const mainStore = useMainStore();
-	const config = mainStore.config;
-	// console.error(config);
+
 	const protocols = supportProtocols();
 	const data = reactive({
 		//easytierGame有没有新版
@@ -816,8 +815,8 @@
 	};
 
 	const handleCopyIp = async () => {
-		if (!config.ipv4?.trim()) return;
-		if (data.isStart || !config.dhcp) {
+		if (!mainStore.config.ipv4?.trim()) return;
+		if (data.isStart || !mainStore.config.dhcp) {
 			await copyText(mainStore.config.ipv4);
 		} else {
 			await copyText(mainStore.config.ipv4, "复制成功,联机后IP可能会变化");
@@ -842,8 +841,8 @@
 		const newBasePeers = [...mainStore.basePeers];
 		const idx = newBasePeers.indexOf(url);
 		if (idx >= 0) {
-			if (config.serverUrl === url) {
-				config.serverUrl = "";
+			if (mainStore.config.serverUrl === url) {
+				mainStore.config.serverUrl = "";
 			}
 			newBasePeers.splice(idx, 1);
 		}
@@ -856,7 +855,7 @@
 	const handleServerUrlChange = () => {
 		let inputProtocols: string | null = null;
 		for (const p of protocols) {
-			if (config.serverUrl.toLowerCase().startsWith(`${p}://`)) {
+			if (mainStore.config.serverUrl.toLowerCase().startsWith(`${p}://`)) {
 				inputProtocols = p;
 				break;
 			}
@@ -1096,9 +1095,9 @@
 
 	const handleAutoStartByTask = async () => {
 		if (import.meta.env.DEV) return ElMessage.warning("开发环境不支持开机自启");
-		await invoke("spawn_autostart", { enabled: !config.autoStart });
+		await invoke("spawn_autostart", { enabled: !mainStore.config.autoStart });
 		const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-		config.autoStart = is_enable_by_task;
+		mainStore.config.autoStart = is_enable_by_task;
 	};
 
 	const compatibleInitAutoStart = async () => {
@@ -1111,37 +1110,37 @@
 				await invoke("spawn_autostart", { enabled: true });
 			}
 			is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-			config.autoStart = is_enable_by_task;
+			mainStore.config.autoStart = is_enable_by_task;
 		} catch (err) {
 			console.error(err);
 			await invoke("spawn_autostart", { enabled: false });
 			const is_enable_by_task = (await invoke("autostart_is_enabled")) as boolean;
-			config.autoStart = is_enable_by_task;
+			mainStore.config.autoStart = is_enable_by_task;
 		}
 	};
 
 	const compatibleIpv6Listener = async () => {
 		// ipv6监听在后续版本合并到customListenner里了，这里做兼容处理
-		if (config.enableCustomListenerV6 && config.customListenerV6Data) {
-			const customListener = config.customListenerV6Data.trim();
+		if (mainStore.config.enableCustomListenerV6 && mainStore.config.customListenerV6Data) {
+			const customListener = mainStore.config.customListenerV6Data.trim();
 			if (customListener) {
-				const customListenerV4 = config.customListenerData
+				const customListenerV4 = mainStore.config.customListenerData
 					.trim()
 					.split("\n")
 					.map(el => el.trim())
 					.filter(el => el);
 				if (!customListenerV4.includes(customListener)) {
-					config.customListenerData += `\n${customListener}`;
+					mainStore.config.customListenerData += `\n${customListener}`;
 				}
 			}
 		}
-		if (config.enableCustomListenerV6) {
-			config.enableCustomListenerV6 = false;
+		if (mainStore.config.enableCustomListenerV6) {
+			mainStore.config.enableCustomListenerV6 = false;
 		}
 	};
 
 	const initConnectAfterStart = async () => {
-		if (config.connectAfterStart && data.coreVersion) {
+		if (mainStore.config.connectAfterStart && data.coreVersion) {
 			await reset();
 			await handleConnection();
 		}
@@ -1231,7 +1230,6 @@
 	let serverLogsTimer: NodeJS.Timeout | null = null;
 	let cidrTimer: NodeJS.Timeout | null = null;
 
-	const b = bounce(600);
 	onMounted(async () => {
 		await initGuiJson();
 		await compatibleInitAutoStart();
@@ -1248,15 +1246,21 @@
 		initPreventSleep();
 		mountedShow(); // 不需要await
 		closePrevent();
-		dataSubscribe(async () => {
-			if (mainStore.createConfigInEasytier) {
-				b(async () => {
-					await updateConfigJson(data.configJsonSeverUrl);
-				});
-			}
-		});
-		getReleaseList();
-		checkNewVersion();
+		if (import.meta.env.PROD) {
+			getReleaseList();
+			checkNewVersion();
+		}
+		await storageDialog();
+	});
+
+	// storageEventEmitter.addEventListener("localStorageChange", () => {
+	// 	if(mainStore.createConfigInEasytier) {
+	// 		updateConfigJsonBounce(data.configJsonSeverUrl)
+	// 	}
+	// })
+
+	dataSubscribe(null, () => {
+		return data.configJsonSeverUrl;
 	});
 
 	onBeforeUnmount(() => {
@@ -1267,6 +1271,7 @@
 		serverLogsTimer && clearInterval(serverLogsTimer);
 		cidrTimer && clearInterval(cidrTimer);
 		stopPreventSleep();
+		// unListenStorage && unListenStorage();
 	});
 
 	const getArgs = async () => {
@@ -1299,42 +1304,42 @@
 			}
 		}
 
-		if (config.dhcp) {
+		if (mainStore.config.dhcp) {
 			args.push("-d");
 		}
-		if (config.hostname) {
-			args.push("--hostname", config.hostname);
+		if (mainStore.config.hostname) {
+			args.push("--hostname", mainStore.config.hostname);
 		}
-		if (config.networkName) {
-			args.push("--network-name", config.networkName);
+		if (mainStore.config.networkName) {
+			args.push("--network-name", mainStore.config.networkName);
 		}
-		if (config.networkPassword) {
-			args.push("--network-secret", config.networkPassword);
+		if (mainStore.config.networkPassword) {
+			args.push("--network-secret", mainStore.config.networkPassword);
 		}
-		if (config.ipv4) {
-			args.push("--ipv4", config.ipv4.trim());
+		if (mainStore.config.ipv4) {
+			args.push("--ipv4", mainStore.config.ipv4.trim());
 		}
-		if (config.serverUrl) {
-			const formatUrl = config.serverUrl.replace(/\\/g, "/");
-			args.push("--peers", ...config.protocol.map(protocol => `${protocol}://${formatUrl}`));
+		if (mainStore.config.serverUrl) {
+			const formatUrl = mainStore.config.serverUrl.replace(/\\/g, "/");
+			args.push("--peers", ...mainStore.config.protocol.map(protocol => `${protocol}://${formatUrl}`));
 		}
-		if (config.enableCustomProtocol) {
-			const includes = config.protocol.includes(config.customProtocol);
+		if (mainStore.config.enableCustomProtocol) {
+			const includes = mainStore.config.protocol.includes(mainStore.config.customProtocol);
 			if (includes) {
-				args.push("--default-protocol", config.customProtocol);
+				args.push("--default-protocol", mainStore.config.customProtocol);
 			}
 		}
-		if (config.disbleP2p) {
+		if (mainStore.config.disbleP2p) {
 			args.push("--disable-p2p");
 		}
-		if (config.disableIpv6) {
+		if (mainStore.config.disableIpv6) {
 			args.push("--disable-ipv6");
 		}
-		if (config.disbleListenner) {
+		if (mainStore.config.disbleListenner) {
 			args.push("--no-listener");
 		}
-		if (!config.disbleListenner && config.enableCustomListener && config.customListenerData) {
-			const customListener = config.customListenerData
+		if (!mainStore.config.disbleListenner && mainStore.config.enableCustomListener && mainStore.config.customListenerData) {
+			const customListener = mainStore.config.customListenerData
 				.trim()
 				.split("\n")
 				.map(el => el.trim())
@@ -1343,14 +1348,14 @@
 				args.push("-l", ...customListener);
 			}
 		}
-		if (!config.disbleListenner && config.enableCustomListenerV6 && config.customListenerV6Data) {
-			args.push("--ipv6-listener", config.customListenerV6Data);
+		if (!mainStore.config.disbleListenner && mainStore.config.enableCustomListenerV6 && mainStore.config.customListenerV6Data) {
+			args.push("--ipv6-listener", mainStore.config.customListenerV6Data);
 		}
-		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
-			args.push("-l", config.port);
+		if (!mainStore.config.disbleListenner && !mainStore.config.enableCustomListener && mainStore.config.port) {
+			args.push("-l", mainStore.config.port);
 		}
-		if (mainStore.cidrEnable && config.proxyNetworks) {
-			let formatProxyNetworks = config.proxyNetworks.trim().split("\n");
+		if (mainStore.cidrEnable && mainStore.config.proxyNetworks) {
+			let formatProxyNetworks = mainStore.config.proxyNetworks.trim().split("\n");
 			const newformatProxyNetworks = formatProxyNetworks
 				.map(el => el.trim())
 				.filter(cidr => {
@@ -1359,52 +1364,55 @@
 			if (newformatProxyNetworks.length > 0) {
 				args.push("--proxy-networks", ...newformatProxyNetworks);
 			}
-			config.proxyNetworks = formatProxyNetworks.join("\n");
+			mainStore.config.proxyNetworks = formatProxyNetworks.join("\n");
 		}
-		if (config.disableEncryption) {
+		if (mainStore.config.disableEncryption) {
 			args.push("--disable-encryption");
 		}
-		if (config.multiThread) {
+		if (mainStore.config.multiThread) {
 			args.push("--multi-thread");
 		}
-		if (config.enablExitNode) {
+		if (mainStore.config.enablExitNode) {
 			args.push("--enable-exit-node");
 		}
-		if (config.noTun) {
+		if (mainStore.config.noTun) {
 			args.push("--no-tun");
 		}
-		if (config.latencyfirst) {
+		if (mainStore.config.latencyfirst) {
 			args.push("--latency-first");
 		}
-		if (config.useSmoltcp) {
+		if (mainStore.config.useSmoltcp) {
 			args.push("--use-smoltcp");
 		}
-		if (config.disableUdpHolePunching) {
+		if (mainStore.config.disableUdpHolePunching) {
 			args.push("--disable-udp-hole-punching");
 		}
-		if (config.relayAllPeerrpc) {
+		if (mainStore.config.relayAllPeerrpc) {
 			args.push("--relay-all-peer-rpc");
 		}
-		if (config.saveErrorLog) {
-			args.push("--file-log-level", config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
+		if (mainStore.config.saveErrorLog) {
+			args.push("--file-log-level", mainStore.config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
 		}
-		if (config.devName && config.devNameValue) {
-			args.push("--dev-name", config.devNameValue);
+		if (mainStore.config.devName && mainStore.config.devNameValue) {
+			args.push("--dev-name", mainStore.config.devNameValue);
 		}
-		if (config.compression && config.compression != "none") {
-			args.push("--compression", config.compression);
+		if (mainStore.config.compression && mainStore.config.compression != "none") {
+			args.push("--compression", mainStore.config.compression);
 		}
-		if (config.enableKcpProxy) {
+		if (mainStore.config.enableKcpProxy) {
 			args.push("--enable-kcp-proxy");
 		}
-		if (config.disableKcpInput) {
+		if (mainStore.config.disableKcpInput) {
 			args.push("--disable-kcp-input");
 		}
-		if (config.bindDeviceEnable) {
+		if (mainStore.config.bindDeviceEnable) {
 			args.push("--bind-device", "true");
 		}
 		if (mainStore.proxyForwardBySystem) {
 			args.push("--proxy-forward-by-system");
+		}
+		if(mainStore.config.acceptDNS) {
+			args.push("--accept-dns")
 		}
 		return args;
 	};
@@ -1412,8 +1420,8 @@
 	const reset = async () => {
 		data.isStart = false;
 		data.isSuccessGetIp = false;
-		if (config.dhcp) {
-			config.ipv4 = "";
+		if (mainStore.config.dhcp) {
+			mainStore.config.ipv4 = "";
 		}
 		const memberDialog = await getAllWebviewWindows();
 		const memberDialogs = memberDialog.filter(item => item.label === "member");
@@ -1718,7 +1726,7 @@
 		});
 		if (!err) {
 			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
-			payload.config.serverUrl = payload?.config?.serverUrl?.trim() || config.serverUrl;
+			payload.config.serverUrl = payload?.config?.serverUrl?.trim() || mainStore.config.serverUrl;
 			mainStore.$patch({
 				config: {
 					...mainStore.config,
@@ -1727,7 +1735,7 @@
 			});
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
-			mainStore.basePeers = uniq([config.serverUrl, ...mainStore.basePeers].filter(el => el.trim()));
+			mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers].filter(el => el.trim()));
 		} else {
 			console.error(err);
 			if (err !== "cancel") {
@@ -1901,5 +1909,19 @@
 				data.serverVisible = false;
 			}
 		);
+	};
+
+	const storageDialog = async () => {
+		await etWindows("storage-listener", {
+			title: "自建服务器",
+			minWidth: 1,
+			minHeight: 1,
+			width: 1,
+			height: 1,
+			x: 9999,
+			y: 9999,
+			resizable: false,
+			url: "#/storage-listener"
+		});
 	};
 </script>

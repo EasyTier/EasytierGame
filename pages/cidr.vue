@@ -113,8 +113,9 @@
 
 	onMounted(async () => {
 		unlistenStart = await listenStart();
-		dataSubscribe();
 	});
+
+	dataSubscribe();
 
 	onBeforeUnmount(() => {
 		unlistenStart && unlistenStart();

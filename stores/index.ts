@@ -1,4 +1,7 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
+
+
+
 const store = defineStore("main", {
 	state() {
 		return {
@@ -42,6 +45,7 @@ const store = defineStore("main", {
 				enableKcpProxy: true, //启用kcp代理  默认开启
 				disableKcpInput: false, //禁用kcp输入
 				bindDeviceEnable: false, //是否绑定设备
+				acceptDNS: false, //魔法dns
 			},
 			serverConfig: {
 				enableWhiteList: true, // 是否启用白名单
@@ -120,6 +124,8 @@ const store = defineStore("main", {
 			"config.disableKcpInput",
 
 			"config.bindDeviceEnable",
+
+			"config.acceptDNS",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',

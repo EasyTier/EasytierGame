@@ -4,14 +4,11 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type { WebviewLabel, WebviewOptions } from "@tauri-apps/api/webview";
 import useMainStore from "@/stores/index";
 import { onBeforeUnmount } from "vue";
+import { updateConfigJsonBounce, type ConfigServerUrlType } from "./configJson";
 
 const _listenersMaps: { [key: string]: [UnlistenFn | null] } = {};
 
-const dealCloseListener = async (
-	dialog: WebviewWindow,
-	label: string,
-	beforeCloseFunc?: () => void | null
-) => {
+const dealCloseListener = async (dialog: WebviewWindow, label: string, beforeCloseFunc?: () => void | null) => {
 	const unlistenFnList: [UnlistenFn | null] = _listenersMaps[label] || [null];
 	let [unListenlogClose] = unlistenFnList;
 
@@ -20,7 +17,7 @@ const dealCloseListener = async (
 	unListenlogClose = await dialog.onCloseRequested(async () => {
 		beforeCloseFunc && (await beforeCloseFunc());
 		unListenlogClose && (await unListenlogClose());
-		console.log("close")
+		console.log("close");
 	});
 };
 export default async (
@@ -44,20 +41,21 @@ export default async (
 		};
 		const appWindow = getCurrentWindow();
 		if (appWindow) {
-			const appSize = await appWindow.outerSize();
-			const factor = await appWindow.scaleFactor();
-			const appPosition = await appWindow.outerPosition();
-			const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
 			defaultOpts.parent = appWindow;
 			// console.error(logicalPosition);
-			defaultOpts.x = logicalPosition.x;
-			defaultOpts.y = logicalPosition.y;
+			if (defaultOpts.x == 0 && defaultOpts.y == 0) {
+				const appSize = await appWindow.outerSize();
+				const factor = await appWindow.scaleFactor();
+				const appPosition = await appWindow.outerPosition();
+				const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
+				defaultOpts.x = logicalPosition.x;
+				defaultOpts.y = logicalPosition.y;
+			}
 		}
 		dialog = new WebviewWindow(label, { ...defaultOpts, ...options });
 		await dealCloseListener(dialog, label, beforeCloseFunc);
 		afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 		await dialog.show();
-
 	} else {
 		const visible = await dialog.isVisible();
 		if (visible) {
@@ -71,14 +69,17 @@ export default async (
 	}
 };
 
-export const dataSubscribe = async (cb?: (...args: any) => any) => {
-	if (!cb) return;
+export const dataSubscribe = async (cb?: any, getconfigServerUrl?: () => ConfigServerUrlType) => {
 	const mainStore = useMainStore();
 	const abort = new AbortController();
+
 	window.addEventListener(
 		"storage",
 		async () => {
+			// console.log("触发", {dhcp:mainStore.config.dhcp, c: mainStore.createConfigInEasytier})
 			mainStore.$hydrate();
+			const configServerUrl = getconfigServerUrl && getconfigServerUrl instanceof Function ? getconfigServerUrl() : null;
+			updateConfigJsonBounce(configServerUrl);
 			if (cb && cb instanceof Function) {
 				await cb();
 			}
@@ -88,6 +89,7 @@ export const dataSubscribe = async (cb?: (...args: any) => any) => {
 		}
 	);
 	onBeforeUnmount(() => {
+		console.log("取消监听");
 		abort?.abort();
 	});
 };

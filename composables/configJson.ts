@@ -2,7 +2,21 @@ import { BaseDirectory, writeTextFile } from "@tauri-apps/plugin-fs";
 import useMainStore from "@/stores/index";
 import { ElMessage } from "element-plus";
 import { uniq, intersection, isNil } from "lodash-es";
-export const updateConfigJson = async (configJsonSeverUrl: Array<string> | string | null | undefined) => {
+import { bounce } from "~/utils";
+
+const b = bounce(600);
+export type ConfigServerUrlType = Array<string> | string | null | undefined | null;
+
+export const updateConfigJsonBounce = (configJsonSeverUrl?: ConfigServerUrlType) => {
+	b(async () => {
+		const mainStore = useMainStore();
+		if (mainStore.createConfigInEasytier) {
+			await updateConfigJson(configJsonSeverUrl);
+		}
+	});
+};
+
+export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType) => {
 	const mainStore = useMainStore();
 	const path = import.meta.env.VITE_CONFIG_FILE_NAME;
 	if (isNil(configJsonSeverUrl)) {
@@ -20,6 +34,7 @@ export const updateConfigJson = async (configJsonSeverUrl: Array<string> | strin
 			enableCustomListener,
 			customListenerData,
 			bindDeviceEnable,
+			acceptDNS,
 			...otherConfig
 		} = mainStore.config;
 		let writeServerUrl: Array<string> | string = serverUrl;

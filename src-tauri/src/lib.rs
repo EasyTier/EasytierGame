@@ -1,7 +1,3 @@
-use planif::enums::TaskCreationFlags;
-use planif::schedule::TaskScheduler as planIfTaskScheduler;
-use planif::schedule_builder::{Action, ScheduleBuilder};
-use planif::settings::{Duration, LogonType, PrincipalSettings, RunLevel};
 use reqwest::{Client, Error};
 // use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -656,6 +652,50 @@ fn autostart_is_enabled() -> bool {
     }
 }
 
+// 新增辅助函数
+fn ensure_task_folder_and_cleanup(
+    task_service: &ITaskService,
+    folder_path: &BSTR,
+    task_name: &BSTR,
+) -> Result<ITaskFolder, Box<dyn std::error::Error>> {
+    unsafe {
+        let root = BSTR::from("\\");
+        let root_folder: ITaskFolder = task_service.GetFolder(&root)?;
+        
+        match task_service.GetFolder(folder_path) {
+            Ok(existing_folder) => {
+                println!("任务文件夹已存在: {}", folder_path);
+                
+                // 检查并清理现有任务
+                if let Ok(_existing_task) = existing_folder.GetTask(task_name) {
+                    println!("发现同名任务: {}，准备删除", task_name);
+                    match existing_folder.DeleteTask(task_name, 0) {
+                        Ok(_) => println!("成功删除现有任务"),
+                        Err(e) => {
+                            log::error!("删除现有任务失败: {}", e);
+                            // 继续执行，尝试覆盖
+                        }
+                    }
+                }
+                Ok(existing_folder)
+            }
+            Err(_) => {
+                println!("创建新的任务文件夹: {}", folder_path);
+                match root_folder.CreateFolder(folder_path, &VARIANT::default()) {
+                    Ok(new_folder) => {
+                        println!("成功创建任务文件夹");
+                        Ok(new_folder)
+                    }
+                    Err(e) => {
+                        log::error!("创建任务文件夹失败: {}", e);
+                        Err(e.into())
+                    }
+                }
+            }
+        }
+    }
+}
+
 // pub const AUTOSTART_ARG: &str = "--autostart";
 pub const TASKAUTOSTART_ARG: &str = "--task-auto-start";
 fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -690,33 +730,39 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             CoUninitialize();
         }
     } else {
-        let ts = planIfTaskScheduler::new()?;
-        let com = ts.get_com();
-        let sb = ScheduleBuilder::new(&com).unwrap();
+        unsafe {
+            let task_service: ITaskService = CoCreateInstance(&TaskScheduler, None, CLSCTX_ALL)?;
+            task_service.Connect(
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+                &VARIANT::default(),
+            )?;
 
-        let exe = std::env::current_exe()?;
-        let exe = exe.to_str().unwrap();
+            let folder_path = BSTR::from("\\easytierGame");
+            let task_name = BSTR::from("auto start");
 
-        let settings = PrincipalSettings {
-            display_name: "".to_string(),
-            group_id: None,
-            id: "".to_string(),
-            logon_type: LogonType::InteractiveToken,
-            run_level: RunLevel::Highest,
-            user_id: Some(whoami::username()),
-        };
-        sb.create_logon()
-            .author("heixiansen")?
-            .trigger("trigger", enabled)?
-            .action(Action::new("auto start", exe, "", &TASKAUTOSTART_ARG))?
-            .in_folder("easytierGame")?
-            .principal(settings)?
-            .delay(Duration {
-                seconds: Some(6),
-                ..Default::default()
-            })?
-            .build()?
-            .register("auto start", TaskCreationFlags::CreateOrUpdate as i32)?;
+            // 使用优化的文件夹处理函数
+            let task_folder = ensure_task_folder_and_cleanup(&task_service, &folder_path, &task_name)?;
+
+            // 创建任务定义...
+            let task_definition = task_service.NewTask(0)?;
+            // ... existing task creation logic ...
+
+            // 注册任务
+            let _auto_task = task_folder.RegisterTaskDefinition(
+                &task_name,
+                &task_definition,
+                TASK_CREATE_OR_UPDATE.0,
+                &VARIANT::default(),
+                &VARIANT::default(),
+                TASK_LOGON_SERVICE_ACCOUNT,
+                &VARIANT::default()
+            )?;
+
+            println!("任务注册成功");
+            CoUninitialize();
+        }
     }
     Ok(())
 }

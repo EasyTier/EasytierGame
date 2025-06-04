@@ -1923,14 +1923,22 @@
 	const storageDialog = async () => {
 		await etWindows("storage-listener", {
 			title: "自建服务器",
-			minWidth: 1,
-			minHeight: 1,
-			width: 1,
-			height: 1,
+			minWidth: 0,
+			minHeight: 0,
+			width: 0,
+			height: 0,
 			x: 9999,
 			y: 9999,
 			resizable: false,
+			transparent: true,
+			hiddenTitle: true,
+			alwaysOnBottom: true,
 			url: "#/storage-listener"
-		});
+		},
+			(dialog) => {
+				dialog.hide();
+			},
+
+		);
 	};
 </script>

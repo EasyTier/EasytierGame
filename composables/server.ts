@@ -20,5 +20,8 @@ export const getServerArgs = () => {
 	if (!whiteList && mainStore.serverConfig.enableWhiteList) {
 		args.push("--relay-network-whitelist");
 	}
+	if (mainStore.serverConfig.privateMode) {
+		args.push("--private-mode");
+	}
 	return args;
 };

@@ -57,7 +57,8 @@ const store = defineStore("main", {
 				serverWhiteList: "", // 服务器流量转发白名单
 				// enableListener: true, // 是否启用监听
 				autoStart: false, //随软件自启
-				port: "11010" // 服务器端口
+				port: "11010", // 服务器端口
+				privateMode: false, //是否启用私有模式
 			},
 			cidrEnable: false,
 			proxyForwardBySystem: false, // 是否通过系统内核转发子网代理数据包，禁用内置NAT
@@ -142,6 +143,7 @@ const store = defineStore("main", {
 			"serverConfig.relayAllPeerrpc",
 			"serverConfig.serverWhiteList",
 			"serverConfig.port",
+			"serverConfig.privateMode",
 
 			"cidrEnable",
 			"proxyForwardBySystem",

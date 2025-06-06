@@ -29,6 +29,12 @@
 							</ElTooltip>
 							<ElTooltip
 								placement="top"
+								content="启用后，不允许使用了与本网络不同的房间名和密码的节点通过本节点进行握手或中转"
+							>
+								<ElCheckbox v-model="mainStore.serverConfig.privateMode">私有模式</ElCheckbox>
+							</ElTooltip>
+							<ElTooltip
+								placement="top"
 								content="帮助其他虚拟网建立P2P链接"
 							>
 								<ElCheckbox v-model="mainStore.serverConfig.relayAllPeerrpc">转发所有对等节点的RPC数据包</ElCheckbox>

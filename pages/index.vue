@@ -273,21 +273,6 @@
 					<template #dropdown>
 						<ElDropdownMenu>
 							<ElDropdownItem
-								command="import_config"
-								:icon="Link"
-							>
-								导入联机配置
-							</ElDropdownItem>
-							<ElDropdownItem
-								command="share_config"
-								:icon="Share"
-							>
-								分享联机配置
-							</ElDropdownItem>
-							<ElDropdownItem disabled>
-								<ElDivider class="!m-0 !h-[2px]" />
-							</ElDropdownItem>
-							<ElDropdownItem
 								:icon="SetUp"
 								command="create_server"
 							>
@@ -327,6 +312,27 @@
 								:icon="SwitchFilled"
 							>
 								本地游戏列表
+							</ElDropdownItem>
+							<ElDropdownItem disabled>
+								<ElDivider class="!m-0 !h-[2px]" />
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="import_config"
+								:icon="Link"
+							>
+								导入联机配置
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="share_config"
+								:icon="Share"
+							>
+								分享联机配置
+							</ElDropdownItem>
+							<ElDropdownItem
+								command="reconnect"
+								:icon="RefreshRight"
+							>
+								重新联机
 							</ElDropdownItem>
 						</ElDropdownMenu>
 					</template>
@@ -1423,7 +1429,7 @@
 				});
 			}
 		}
-		if(mainStore.config.privateMode) {
+		if (mainStore.config.privateMode) {
 			args.push("--private-mode", "true");
 		}
 		return args;
@@ -1688,6 +1694,21 @@
 				}
 			);
 		}
+
+		if (command === "reconnect") {
+			if (data.isStart) {
+				ElMessage.info({
+					message: "正在重新联机...",
+					duration: 2200
+				});
+				await handleConnection();
+				setTimeout(() => {
+					handleConnection();
+				}, 2000);
+			}else {
+				handleConnection();
+			}
+		}
 	};
 
 	const handleDeleteAdminConfig = async () => {
@@ -1926,24 +1947,25 @@
 	};
 
 	const storageDialog = async () => {
-		await etWindows("storage-listener", {
-			title: "自建服务器",
-			minWidth: 0,
-			minHeight: 0,
-			width: 0,
-			height: 0,
-			x: 9999,
-			y: 9999,
-			resizable: false,
-			transparent: true,
-			hiddenTitle: true,
-			alwaysOnBottom: true,
-			url: "#/storage-listener"
-		},
-			(dialog) => {
-				dialog.hide();
+		await etWindows(
+			"storage-listener",
+			{
+				title: "自建服务器",
+				minWidth: 0,
+				minHeight: 0,
+				width: 0,
+				height: 0,
+				x: 9999,
+				y: 9999,
+				resizable: false,
+				transparent: true,
+				hiddenTitle: true,
+				alwaysOnBottom: true,
+				url: "#/storage-listener"
 			},
-
+			dialog => {
+				dialog.hide();
+			}
 		);
 	};
 </script>

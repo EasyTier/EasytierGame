@@ -1412,7 +1412,7 @@
 			args.push("--proxy-forward-by-system");
 		}
 		if (mainStore.config.acceptDNS) {
-			args.push("--accept-dns");
+			args.push("--accept-dns", "true");
 		}
 		if (mainStore.config.enablePortForward) {
 			let formatPortForward = mainStore.config.portForwardData.trim().split("\n");
@@ -1424,7 +1424,7 @@
 			}
 		}
 		if(mainStore.config.privateMode) {
-			args.push("--private-mode");
+			args.push("--private-mode", "true");
 		}
 		return args;
 	};

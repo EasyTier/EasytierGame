@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.4.5"
+version = "1.4.6"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"

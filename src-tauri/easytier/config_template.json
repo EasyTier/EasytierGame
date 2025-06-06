@@ -36,5 +36,6 @@
     "enablePreventSleep": false, // 启用防止睡眠
     "compression": "none", // 压缩算法
     "enableKcpProxy": true, // 启用kcp代理
-    "disableKcpInput": false //     禁用kcp输入
+    "disableKcpInput": false, //     禁用kcp输入
+    "privateMode": false // 启用私有模式
 }

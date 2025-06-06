@@ -66,6 +66,13 @@
 			</ElTooltip>
 			<CoreVersionWarning version="2.3.0" />
 		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.privateMode">启用私有模式</ElCheckbox>
+			<ElTooltip content="启用后，不允许使用了与本网络不同的房间名和密码的节点通过本节点进行握手或中转">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.3.1" />
+		</div>
 		<ElDivider />
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>

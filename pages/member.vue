@@ -48,6 +48,8 @@
 					width="120"
 					prop="ipv4"
 					label="虚拟网IP"
+					:sort-method="sortIpv4"
+					:sort-orders="['ascending', 'descending', null]"
 				></ElTableColumn>
 				<ElTableColumn
 					sortable
@@ -98,11 +100,15 @@
 					width="90"
 					prop="rx_bytes"
 					label="接收"
+					:sort-method="sortBytes"
+					:sort-orders="['ascending', 'descending', null]"
 				></ElTableColumn>
 				<ElTableColumn
 					sortable
 					prop="tx_bytes"
 					label="传输"
+					:sort-method="(a, b) => sortBytes(a, b, 'tx_bytes')"
+					:sort-orders="['ascending', 'descending', null]"
 				></ElTableColumn>
 			</ElTable>
 		</div>
@@ -171,6 +177,101 @@
 		}
 
 		return valueA - valueB;
+	};
+
+	// IP地址排序函数
+	const sortIpv4 = (a: any, b: any): number => {
+		const ipToNumber = (ip: string): number => {
+			if (!ip || ip === "-" || ip === "") {
+				return 0;
+			}
+
+			// 处理可能包含端口号或子网掩码的情况
+			const cleanIp = ip.split("/")[0].split(":")[0];
+			const parts = cleanIp.split(".");
+
+			if (parts.length !== 4) {
+				return 0;
+			}
+
+			try {
+				const nums = parts.map(part => {
+					const num = parseInt(part, 10);
+					return isNaN(num) || num < 0 || num > 255 ? 0 : num;
+				});
+
+				// 将IP地址转换为32位数字进行比较
+				return (nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3];
+			} catch {
+				return 0;
+			}
+		};
+
+		const numA = ipToNumber(a.ipv4);
+		const numB = ipToNumber(b.ipv4);
+
+		return numA - numB;
+	};
+
+	// 字节数据排序函数
+	const sortBytes = (a: any, b: any, field: string = 'rx_bytes'): number => {
+		const parseBytes = (bytesStr: string): number => {
+			if (!bytesStr || bytesStr === "-" || bytesStr === "") {
+				return 0;
+			}
+
+			// 统一转换为小写并去除空格
+			const cleanStr = bytesStr.toLowerCase().trim();
+			
+			// 使用正则表达式匹配数字和单位
+			const match = cleanStr.match(/^(\d+(?:\.\d+)?)\s*([a-z]*)$/);
+			if (!match) {
+				return 0;
+			}
+
+			const value = parseFloat(match[1]);
+			const unit = match[2];
+
+			if (isNaN(value)) {
+				return 0;
+			}
+
+			// 根据单位转换为字节数
+			switch (unit) {
+				case 'b':
+				case 'byte':
+				case 'bytes':
+				case '':
+					return value;
+				case 'k':
+				case 'kb':
+				case 'kib':
+					return value * 1024;
+				case 'm':
+				case 'mb':
+				case 'mib':
+					return value * 1024 * 1024;
+				case 'g':
+				case 'gb':
+				case 'gib':
+					return value * 1024 * 1024 * 1024;
+				case 't':
+				case 'tb':
+				case 'tib':
+					return value * 1024 * 1024 * 1024 * 1024;
+				case 'p':
+				case 'pb':
+				case 'pib':
+					return value * 1024 * 1024 * 1024 * 1024 * 1024;
+				default:
+					return value; // 未知单位当作字节处理
+			}
+		};
+
+		const bytesA = parseBytes(a[field]);
+		const bytesB = parseBytes(b[field]);
+
+		return bytesA - bytesB;
 	};
 
 	// 格式化延迟显示

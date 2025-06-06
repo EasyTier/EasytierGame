@@ -46,6 +46,7 @@ const store = defineStore("main", {
 				disableKcpInput: false, //禁用kcp输入
 				bindDeviceEnable: false, //是否绑定设备
 				acceptDNS: false, //魔法dns
+				privateMode: false, //是否启用私有模式
 
 				enablePortForward: false, //是否启用端口转发
 				portForwardData: "", //端口转发数据
@@ -132,6 +133,8 @@ const store = defineStore("main", {
 			"config.bindDeviceEnable",
 
 			"config.acceptDNS",
+
+			"config.privateMode",
 
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',

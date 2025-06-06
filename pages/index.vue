@@ -1423,6 +1423,9 @@
 				});
 			}
 		}
+		if(mainStore.config.privateMode) {
+			args.push("--private-mode");
+		}
 		return args;
 	};
 
@@ -1531,7 +1534,8 @@
 					compression,
 					enablePreventSleep,
 					enableKcpProxy,
-					disableKcpInput
+					disableKcpInput,
+					privateMode
 				} = mainStore.config;
 				const WT = btoa(
 					encodeURIComponent(
@@ -1564,7 +1568,8 @@
 								compression,
 								enablePreventSleep,
 								enableKcpProxy,
-								disableKcpInput
+								disableKcpInput,
+								privateMode
 							}
 						})
 					)

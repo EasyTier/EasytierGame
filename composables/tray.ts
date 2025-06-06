@@ -22,7 +22,7 @@ async function toggleVisibility() {
 	}
 }
 
-export async function useTray(init: boolean = false, beforExit: Function, handleConnection: Function) {
+export async function useTray(init: boolean = false, beforExit: Function, handleConnection: Function, handleReconnect: Function) {
 	let tray;
 	try {
 		tray = await TrayIcon.getById(DEFAULT_TRAY_NAME);
@@ -31,7 +31,7 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 				tooltip: `EasyTierGame\n${pkg.version}`,
 				title: `EasyTierGame\n${pkg.version}`,
 				id: DEFAULT_TRAY_NAME,
-				menu: await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection) }),
+				menu: await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect) }),
 				action: async e => {
 					toggleVisibility();
 				}
@@ -45,22 +45,33 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 	if (init) {
 		tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 		tray.setShowMenuOnLeftClick(false);
-		tray.setMenu(await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection) }));
+		tray.setMenu(await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect) }));
 	}
 
 	return tray;
 }
 
-export async function generateMenuItem(beforExit: Function, handleConnection: Function) {
+export async function generateMenuItem(beforExit: Function, handleConnection: Function, handleReconnect: Function) {
 	return [
 		await MenuItemShow("显示 / 隐藏"),
 		await MenuItemExchangeConnection("联机 / 断开", handleConnection),
+		await MenuItemReconnect("重新联机", handleReconnect),
 		await MenuItemTheme(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemPublicPeers(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemExit("退出", beforExit)
 	];
+}
+
+export async function MenuItemReconnect(text: string, handleReconnect: Function) {
+	return await MenuItem.new({
+		id: "reconnect",
+		text,
+		action: async () => {
+			await handleReconnect();
+		}
+	});
 }
 
 export async function MenuItemExit(text: string, beforExit: Function) {

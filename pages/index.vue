@@ -752,6 +752,9 @@
 		async () => {
 			await handleConnection();
 			return data.isStart;
+		},
+		async () => {
+			await handleReconnect();
 		}
 	);
 
@@ -1696,7 +1699,12 @@
 		}
 
 		if (command === "reconnect") {
-			if (data.isStart) {
+			handleReconnect();
+		}
+	};
+
+	const handleReconnect = async () => {
+		if (data.isStart) {
 				ElMessage.info({
 					message: "正在重新联机...",
 					duration: 2200
@@ -1708,8 +1716,7 @@
 			}else {
 				handleConnection();
 			}
-		}
-	};
+	}
 
 	const handleDeleteAdminConfig = async () => {
 		const path = configAdminData.fileName;

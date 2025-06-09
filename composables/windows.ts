@@ -1,5 +1,5 @@
 import { type UnlistenFn } from "@tauri-apps/api/event";
-import { getCurrentWindow, PhysicalPosition, type WindowOptions, Window, currentMonitor } from "@tauri-apps/api/window";
+import { getCurrentWindow, PhysicalPosition, type WindowOptions, Window, currentMonitor, PhysicalSize } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type { WebviewLabel, WebviewOptions } from "@tauri-apps/api/webview";
 import useMainStore from "@/stores/index";
@@ -44,18 +44,21 @@ export default async (
 			defaultOpts.parent = appWindow;
 			// console.error(logicalPosition);
 			if (defaultOpts.x == 0 && defaultOpts.y == 0) {
-				const appSize = await appWindow.outerSize();
+				const logicalAppSize = {
+					width: 340,
+					height: 305
+				}
 				const factor = await appWindow.scaleFactor();
 				const appPosition = await appWindow.outerPosition();
-				const logicalPosition = new PhysicalPosition(appPosition.x + appSize.width, appPosition.y).toLogical(factor);
+				const logicalPosition = new PhysicalPosition(appPosition.x + Math.ceil((logicalAppSize.width + 5) * factor), appPosition.y).toLogical(factor);
 				defaultOpts.x = logicalPosition.x;
 				defaultOpts.y = logicalPosition.y;
 			}
 		}
 		dialog = new WebviewWindow(label, { ...defaultOpts, ...options });
 		await dealCloseListener(dialog, label, beforeCloseFunc);
-		afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 		await dialog.show();
+		afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 	} else {
 		const visible = await dialog.isVisible();
 		if (visible) {
@@ -63,8 +66,8 @@ export default async (
 		} else {
 			const appWindow = getCurrentWindow();
 			await dealCloseListener(dialog, label, beforeCloseFunc);
-			afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 			await dialog.show();
+			afterCreatedFunc && (await afterCreatedFunc(dialog, appWindow));
 		}
 	}
 };

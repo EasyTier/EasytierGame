@@ -26,6 +26,7 @@
 		"core:tray:allow-get-by-id",
 		"core:tray:allow-set-icon",
 		"core:tray:allow-new",
+		"core:window:allow-set-size",
 		{
 			"identifier": "shell:allow-spawn",
 			"allow": [

@@ -726,7 +726,7 @@
 	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox, ElTooltip } from "element-plus";
-	import { getCurrentWindow, type Window } from "@tauri-apps/api/window";
+	import { getCurrentWindow, PhysicalSize, type Window } from "@tauri-apps/api/window";
 	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 	import etWindows, { dataSubscribe } from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
@@ -1233,6 +1233,18 @@
 			await appWindow.show();
 			await appWindow.setFocus();
 		}
+		const appWindow = getCurrentWindow();
+		const logicalAppSize = {
+			width: 340,
+			height: 305
+		}
+		const scaleFactor = await appWindow.scaleFactor();
+		const size = new PhysicalSize(Math.ceil(logicalAppSize.width * scaleFactor), Math.ceil(logicalAppSize.height * scaleFactor));
+		appWindow.setSize(size);
+		appWindow.onScaleChanged(({ payload: { scaleFactor } }) => {
+			console.log("scaleFactor", scaleFactor);
+			appWindow.setSize(new PhysicalSize(Math.ceil(logicalAppSize.width * scaleFactor), Math.ceil(logicalAppSize.height * scaleFactor)));
+		});
 	};
 
 	let logsTimer: NodeJS.Timeout | null = null;
@@ -1705,18 +1717,18 @@
 
 	const handleReconnect = async () => {
 		if (data.isStart) {
-				ElMessage.info({
-					message: "正在重新联机...",
-					duration: 2200
-				});
-				await handleConnection();
-				setTimeout(() => {
-					handleConnection();
-				}, 2000);
-			}else {
+			ElMessage.info({
+				message: "正在重新联机...",
+				duration: 2200
+			});
+			await handleConnection();
+			setTimeout(() => {
 				handleConnection();
-			}
-	}
+			}, 2000);
+		} else {
+			handleConnection();
+		}
+	};
 
 	const handleDeleteAdminConfig = async () => {
 		const path = configAdminData.fileName;
@@ -1957,7 +1969,7 @@
 		await etWindows(
 			"storage-listener",
 			{
-				title: "自建服务器",
+				title: "存储监听",
 				minWidth: 0,
 				minHeight: 0,
 				width: 0,
@@ -1968,6 +1980,7 @@
 				transparent: true,
 				hiddenTitle: true,
 				alwaysOnBottom: true,
+				visible: false,
 				url: "#/storage-listener"
 			},
 			dialog => {

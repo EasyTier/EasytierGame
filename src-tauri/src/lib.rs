@@ -322,7 +322,11 @@ async fn get_route_by_cli() -> String {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn download_easytier_zip(app_handle: tauri::AppHandle ,download_url: String, file_name: String) {
+async fn download_easytier_zip(
+    app_handle: tauri::AppHandle,
+    download_url: String,
+    file_name: String,
+) {
     let cache_dir_path = get_tool_exe_path("\\easytier\\cache");
     let cache_file_name = format!("{}\\{}", cache_dir_path, file_name);
     let cache_file_name_path = path::Path::new(&cache_file_name);
@@ -355,14 +359,18 @@ async fn download_easytier_zip(app_handle: tauri::AppHandle ,download_url: Strin
     while let Some(item) = response.chunk().await.unwrap() {
         match file.write_all(&item) {
             Ok(_) => {
-                app_handle.emit("download_core_progress", [item.len() as u64, context_size]).expect("error to emit download_core_progress");
-            },Err(why) => {
+                app_handle
+                    .emit("download_core_progress", [item.len() as u64, context_size])
+                    .expect("error to emit download_core_progress");
+            }
+            Err(why) => {
                 log::error!("error to write file: {}", why);
-                app_handle.emit("download_core_progress_error", why.to_string()).expect("error to emit download_core_progress_error");
-                return
+                app_handle
+                    .emit("download_core_progress_error", why.to_string())
+                    .expect("error to emit download_core_progress_error");
+                return;
             }
         };
-        
     }
     println!("下载完成");
     unzip(path);
@@ -661,11 +669,11 @@ fn ensure_task_folder_and_cleanup(
     unsafe {
         let root = BSTR::from("\\");
         let root_folder: ITaskFolder = task_service.GetFolder(&root)?;
-        
+
         match task_service.GetFolder(folder_path) {
             Ok(existing_folder) => {
                 println!("任务文件夹已存在: {}", folder_path);
-                
+
                 // 检查并清理现有任务
                 if let Ok(_existing_task) = existing_folder.GetTask(task_name) {
                     println!("发现同名任务: {}，准备删除", task_name);
@@ -738,23 +746,23 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
                 &VARIANT::default(),
                 &VARIANT::default(),
             )?;
-        
+
             let folder_path = BSTR::from("\\easytierGame");
             let task_name = BSTR::from("auto start");
-        
+
             let task_definition = task_service.NewTask(0)?;
-        
+
             // 设置任务信息
             let registration_info = task_definition.RegistrationInfo()?;
             registration_info.SetDescription(&BSTR::from("EasytierGame auto start task"))?;
             registration_info.SetAuthor(&BSTR::from("EasytierGame"))?;
-        
+
             // 改为用户登录触发
             let triggers = task_definition.Triggers()?;
             let trigger = triggers.Create(TASK_TRIGGER_LOGON)?;
             let logon_trigger: ILogonTrigger = trigger.cast()?;
             logon_trigger.SetEnabled(VARIANT_BOOL::from(true))?;
-        
+
             // 设置动作
             let actions = task_definition.Actions()?;
             let action = actions.Create(TASK_ACTION_EXEC)?;
@@ -763,13 +771,12 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             let exe_path: &str = exe.to_str().unwrap();
             exec_action.SetPath(&BSTR::from(exe_path))?;
             exec_action.SetArguments(&BSTR::from("--task-auto-start"))?;
-        
+
             // 使用当前用户运行
             let principal = task_definition.Principal()?;
             principal.SetUserId(&BSTR::from(whoami::username().as_str()))?;
             principal.SetLogonType(TASK_LOGON_INTERACTIVE_TOKEN)?;
             principal.SetRunLevel(TASK_RUNLEVEL_HIGHEST)?;
-
 
             // 设置任务设置
             let settings = task_definition.Settings()?;
@@ -778,12 +785,12 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             settings.SetStartWhenAvailable(VARIANT_BOOL::from(true))?;
             // settings.SetHidden(VARIANT_BOOL::from(true))?; // 注释掉让任务可见
             settings.SetExecutionTimeLimit(&BSTR::from("PT0S"))?;
+            settings.SetDisallowStartIfOnBatteries(VARIANT_BOOL(0))?; // 允许在电池供电时启动
 
-            
-        
             // 获取文件夹并注册任务
-            let task_folder = ensure_task_folder_and_cleanup(&task_service, &folder_path, &task_name)?;
-        
+            let task_folder =
+                ensure_task_folder_and_cleanup(&task_service, &folder_path, &task_name)?;
+
             let _auto_task = task_folder.RegisterTaskDefinition(
                 &task_name,
                 &task_definition,
@@ -791,9 +798,9 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
                 &VARIANT::default(),
                 &VARIANT::default(),
                 TASK_LOGON_INTERACTIVE_TOKEN,
-                &VARIANT::default()
+                &VARIANT::default(),
             )?;
-        
+
             CoUninitialize();
         }
     }

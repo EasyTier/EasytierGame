@@ -1255,7 +1255,7 @@
 		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();
-		await initStartWinIpBroadcast();
+		// await initStartWinIpBroadcast();  // 对于三层tun而言，winipbroadcast没有作用，先禁用
 		await compatibleIpv6Listener();
 		await getCoreVersion();
 		await listenObj.listenThreadId();

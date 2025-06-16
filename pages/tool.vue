@@ -10,7 +10,7 @@
 				name="netcard"
 				class="flex h-full flex-col"
 			>
-				<div>
+				<!-- <div>
 					<div>
 						<ElTooltip
 							content="找不到游戏房间时，就开启它后再尝试搜索房间(默认开启)
@@ -39,13 +39,13 @@
 						active-text="已开启"
 						inactive-text="已关闭"
 					></ElSwitch>
-				</div>
+				</div> -->
 				<div>
 					<ElTooltip
 						content="使用ForceBindIP启动应用 (强制绑定IP或者网卡)，如果还没有启动联机，请先启动联机，联机成功后，点击刷新获取easytier生成的网卡"
 					>
 						<ElText>
-							方案2
+							方案1
 							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
 						</ElText>
 					</ElTooltip>
@@ -131,7 +131,7 @@
 				<div>
 					<ElTooltip content="设置网卡的跃点，提升网卡优先级，尝试将您联机使用的网卡跃点设置为最小，请先查询网卡信息">
 						<ElText>
-							方案3
+							方案2
 							<ElIcon class="ml-[3px]"><QuestionFilled /></ElIcon>
 						</ElText>
 					</ElTooltip>
@@ -502,7 +502,7 @@
 
 	onMounted(() => {
 		data.pingIp = mainStore.config.ipv4;
-		initStartWinIpBroadcast();
+		// initStartWinIpBroadcast();
 		getGuids();
 	});
 	

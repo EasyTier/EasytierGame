@@ -1094,8 +1094,8 @@
 		const list = await invoke<string[][][]>("fetch_easytier_list");
 		data.releaseList = [
 			...list.flat().filter(el => {
-				// console.log(el, el[0], el[2]);
-				return el && el[0] && el[2] && !el[2].includes("gui");
+				// console.log(el, el[0], el[2], el[3]); // el[3] 是prerelease bool值
+				return el && el[0] && el[2] && !el[2].includes("gui") && (el[3] != 'true' || !el[3]);
 			})
 		] as any;
 		coreManagementData.loading = false;

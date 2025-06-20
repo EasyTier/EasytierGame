@@ -520,18 +520,19 @@ fn stop_command(child_id: u32) {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn fetch_easytier_list() -> Vec<Vec<[String; 3]>> {
+async fn fetch_easytier_list() -> Vec<Vec<[String; 4]>> {
     // 获取release列表
     if let Ok(release) = fetch_releases().await {
-        let mut release_list = Vec::new();
+        let mut release_list: Vec<Vec<[String; 4]>> = Vec::new();
         for re in release {
-            let mut assets_list = Vec::new();
+            let mut assets_list: Vec<[String; 4]> = Vec::new();
             for asset in re.assets {
                 if asset.name.contains("windows-x86_64") {
                     assets_list.push([
                         re.tag_name.clone(),
                         asset.name.clone(),
                         asset.browser_download_url.clone(),
+                        re.prerelease.to_string(),
                     ]);
                 }
             }

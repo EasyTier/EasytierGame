@@ -1183,6 +1183,10 @@
 						saveServerUrl = mainStore.basePeers.length > 0 ? mainStore.basePeers[0] || "" : "";
 					}
 					data.configJsonSeverUrl = guiJson.serverUrl;
+					if(guiJson.enableKcpProxy && guiJson.enableQuicProxy) {
+						// 如果同时开启kcp代理和quic代理，则禁用quic代理
+						guiJson.enableQuicProxy = false;
+					}
 					mainStore.$patch({
 						config: {
 							...mainStore.config,
@@ -1421,10 +1425,16 @@
 			args.push("--compression", mainStore.config.compression);
 		}
 		if (mainStore.config.enableKcpProxy) {
-			args.push("--enable-kcp-proxy");
+			args.push("--enable-kcp-proxy", 'true');
 		}
 		if (mainStore.config.disableKcpInput) {
-			args.push("--disable-kcp-input");
+			args.push("--disable-kcp-input", 'true');
+		}
+		if (mainStore.config.enableQuicProxy) {
+			args.push("--enable-quic-proxy", 'true');
+		}
+		if (mainStore.config.disableQuicInput) {
+			args.push("--disable-quic-input", 'true');
 		}
 		if (mainStore.config.bindDeviceEnable) {
 			args.push("--bind-device", "true");
@@ -1556,6 +1566,8 @@
 					enablePreventSleep,
 					enableKcpProxy,
 					disableKcpInput,
+					enableQuicProxy,
+					disableQuicInput,
 					privateMode
 				} = mainStore.config;
 				const WT = btoa(
@@ -1590,6 +1602,8 @@
 								enablePreventSleep,
 								enableKcpProxy,
 								disableKcpInput,
+								enableQuicProxy,
+								disableQuicInput,
 								privateMode
 							}
 						})

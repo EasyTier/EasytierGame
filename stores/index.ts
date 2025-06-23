@@ -44,6 +44,8 @@ const store = defineStore("main", {
 				compression: "none", //加密算法
 				enableKcpProxy: true, //启用kcp代理  默认开启
 				disableKcpInput: false, //禁用kcp输入
+				enableQuicProxy: false, //启用quic代理  默认开启
+				disableQuicInput: false, //禁用quic输入
 				bindDeviceEnable: false, //是否绑定设备
 				acceptDNS: false, //魔法dns
 				privateMode: false, //是否启用私有模式
@@ -130,6 +132,9 @@ const store = defineStore("main", {
 
 			"config.enableKcpProxy",
 			"config.disableKcpInput",
+			"config.enableQuicProxy",
+			"config.disableQuicInput",
+
 
 			"config.bindDeviceEnable",
 

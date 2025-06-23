@@ -44,18 +44,42 @@
 			</ElTooltip>
 		</div>
 		<div class="flex flex-nowrap items-center gap-[5px]">
-			<ElCheckbox v-model="mainStore.config.enableKcpProxy">启用KCP代理</ElCheckbox>
-			<ElTooltip content="将TCP流量转为KCP流量，降低传输延迟，提升传输速度">
+			<ElCheckbox
+				@change="handleKcpProxyChange"
+				v-model="mainStore.config.enableKcpProxy"
+			>
+				启用KCP代理
+			</ElCheckbox>
+			<ElTooltip content="（不可与QUIC代理同时开启）将TCP流量转为KCP流量，降低传输延迟，提升传输速度">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 			<CoreVersionWarning version="2.2.0" />
 		</div>
 		<div class="flex flex-nowrap items-center gap-[5px]">
 			<ElCheckbox v-model="mainStore.config.disableKcpInput">禁用KCP输入</ElCheckbox>
-			<ElTooltip content="禁用KCP入站流量，其他开启KCP代理的节点无法连接到本节点">
+			<ElTooltip content="不允许其他节点使用 KCP 代理 TCP 流到此节点。开启 KCP 代理的节点访问此节点时，依然使用原始 TCP 连接">
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 			<CoreVersionWarning version="2.2.0" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox
+				@change="handleQuicProxyChange"
+				v-model="mainStore.config.enableQuicProxy"
+			>
+				启用QUIC代理
+			</ElCheckbox>
+			<ElTooltip content="（不可与KCP代理同时开启）使用 QUIC 代理 TCP 流，提高在 UDP 丢包网络上的延迟和吞吐量">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.3.2" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.disableQuicInput">禁用QUIC输入</ElCheckbox>
+			<ElTooltip content="不允许其他节点使用 QUIC 代理 TCP 流到此节点。开启 QUIC 代理的节点访问此节点时，依然使用原始 TCP 连接">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.3.2" />
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.disableUdpHolePunching">禁用UDP打洞功能</ElCheckbox></div>
 		<div><ElCheckbox v-model="mainStore.config.disableIpv6">不使用IPv6</ElCheckbox></div>
@@ -153,7 +177,9 @@
 					配置
 				</ElButton>
 			</ElTooltip>
-			<ElTooltip content="将本地端口转发到虚拟网络中的远程端口.如：udp://0.0.0.0:12345/10.126.126.1:23456,表示将本地UDP端口12345转发到虚拟网络中的10.126.126.1:23456.可以指定多个">
+			<ElTooltip
+				content="将本地端口转发到虚拟网络中的远程端口.如：udp://0.0.0.0:12345/10.126.126.1:23456,表示将本地UDP端口12345转发到虚拟网络中的10.126.126.1:23456.可以指定多个"
+			>
 				<ElIcon><QuestionFilled /></ElIcon>
 			</ElTooltip>
 			<CoreVersionWarning version="2.3.0" />
@@ -383,6 +409,24 @@
 			await Command.create("explorer", [easytierDir]).execute();
 		} else {
 			ElMessage.error("config.json的目录不存在");
+		}
+	};
+
+	const handleKcpProxyChange = () => {
+		if (mainStore.config.enableKcpProxy) {
+			if (mainStore.config.enableQuicProxy) {
+				ElMessage.warning("KCP代理和QUIC代理不能同时开启");
+			}
+			mainStore.config.enableQuicProxy = false;
+		}
+	};
+
+	const handleQuicProxyChange = () => {
+		if (mainStore.config.enableQuicProxy) {
+			if (mainStore.config.enableKcpProxy) {
+				ElMessage.warning("KCP代理和QUIC代理不能同时开启");
+			}
+			mainStore.config.enableKcpProxy = false;
 		}
 	};
 

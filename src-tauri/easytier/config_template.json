@@ -35,7 +35,9 @@
     "netCardMetricValue": 1, // 网卡跃点
     "enablePreventSleep": false, // 启用防止睡眠
     "compression": "none", // 压缩算法
-    "enableKcpProxy": true, // 启用kcp代理
+    "enableKcpProxy": true, // 启用kcp代理，就不能启用quic代理
     "disableKcpInput": false, //     禁用kcp输入
+    "enableQuicProxy": false, // 启用quic代理，就不能启用kcp代理
+    "disableQuicInput": false, // 禁用quic输入
     "privateMode": false // 启用私有模式
 }

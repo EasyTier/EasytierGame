@@ -13,7 +13,8 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
-use windows::core::{Interface, BSTR, VARIANT};
+use windows::Win32::System::Variant::VARIANT;
+use windows::core::{Interface, BSTR};
 use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::NetworkManagement::IpHelper::{
     GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, IP_ADAPTER_ADDRESSES_LH,

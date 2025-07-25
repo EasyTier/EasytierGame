@@ -23,5 +23,14 @@ export const getServerArgs = () => {
 	if (mainStore.serverConfig.privateMode) {
 		args.push("--private-mode", "true");
 	}
+	const networkName = mainStore.serverConfig.privateNetworkName.trim();
+	if (networkName) {
+		args.push("--network-name", networkName);
+	}
+	const networkSecret = mainStore.serverConfig.privateNetworkPassword.trim();
+	if (networkSecret) {
+		args.push("--network-secret", networkSecret);
+	}
+
 	return args;
 };

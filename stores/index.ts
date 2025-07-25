@@ -61,6 +61,8 @@ const store = defineStore("main", {
 				autoStart: false, //随软件自启
 				port: "11010", // 服务器端口
 				privateMode: false, //是否启用私有模式
+				privateNetworkName: "", // 私有模式房间名
+				privateNetworkPassword: "", // 私有模式密码
 			},
 			cidrEnable: false,
 			proxyForwardBySystem: false, // 是否通过系统内核转发子网代理数据包，禁用内置NAT
@@ -149,6 +151,8 @@ const store = defineStore("main", {
 			"serverConfig.serverWhiteList",
 			"serverConfig.port",
 			"serverConfig.privateMode",
+			"serverConfig.privateNetworkName",
+			"serverConfig.privateNetworkPassword",
 
 			"cidrEnable",
 			"proxyForwardBySystem",

@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col gap-[10px] h-full">
+	<div class="flex h-full flex-col gap-[10px]">
 		<ElForm
 			size="small"
 			label-position="top"
@@ -8,7 +8,7 @@
 			<ElFormItem
 				label="白名单"
 				prop="ServerWhiteList"
-				class="full-label full-content overflow-hidden !flex flex-col h-full !mb-[0]"
+				class="full-label full-content !mb-[0] !flex h-full flex-col overflow-hidden"
 			>
 				<template #label>
 					<div class="flex items-center gap-[10px]">
@@ -31,7 +31,12 @@
 								placement="top"
 								content="启用后，不允许使用了与本网络不同的房间名和密码的节点通过本节点进行握手或中转"
 							>
-								<ElCheckbox v-model="mainStore.serverConfig.privateMode">私有模式</ElCheckbox>
+								<ElCheckbox
+									@click.stop="handlePrivateModeClick"
+									:model-value="mainStore.serverConfig.privateMode"
+								>
+									私有模式
+								</ElCheckbox>
 							</ElTooltip>
 							<ElTooltip
 								placement="top"
@@ -42,7 +47,7 @@
 						</div>
 					</div>
 				</template>
-				<div class="h-full w-full flex flex-col overflow-hidden">
+				<div class="flex h-full w-full flex-col overflow-hidden">
 					<div class="flex-1 overflow-auto">
 						<ElInput
 							:disabled="!mainStore.serverConfig.enableWhiteList"
@@ -76,6 +81,58 @@
 			</ElButton>
 		</div>
 
+		<ElDialog
+			v-model="privateModeDialogData.visible"
+			:close-on-click-modal="false"
+			:close-on-press-escape="false"
+			title="私有模式"
+			:show-close="false"
+			width="300px"
+		>
+			<ElAlert
+				type="primary"
+				:closable="false"
+			>
+				建议为服务器设置一个房间名和密码
+			</ElAlert>
+			<div class="h-[15px]"></div>
+			<ElForm
+				:model="mainStore.serverConfig"
+				label-position="top"
+			>
+				<ElFormItem
+					label="房间名"
+					prop="privateNetworkName"
+				>
+					<ElInput
+						clearable
+						placeholder="请输入房间名 (默认为default)"
+						v-model="mainStore.serverConfig.privateNetworkName"
+					></ElInput>
+				</ElFormItem>
+				<ElFormItem
+					label="密码"
+					prop="privateNetworkPassword"
+				>
+					<ElInput
+						clearable
+						type="password"
+						show-password
+						placeholder="请输入密码 (可选)"
+						v-model="mainStore.serverConfig.privateNetworkPassword"
+					></ElInput>
+				</ElFormItem>
+			</ElForm>
+			<template #footer>
+				<ElButton
+					type="primary"
+					@click="handlePrivateModeDialogConfirm"
+				>
+					继续启用
+				</ElButton>
+			</template>
+		</ElDialog>
+
 		<ElInput
 			placeholder="服务器日志"
 			:model-value="data.log"
@@ -87,13 +144,14 @@
 </template>
 <script setup lang="ts">
 	import useMainStore from "@/stores/index";
-	import { reactive, onMounted, onBeforeUnmount } from "vue";
+	import { reactive, onMounted, onBeforeUnmount, useTemplateRef, nextTick } from "vue";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 	import { getServerArgs } from "@/composables/server";
 	import { dataSubscribe } from "@/composables/windows";
+	import { ElMessage, type FormInstance } from "element-plus";
 
-    const appWindow = getCurrentWindow();
+	const appWindow = getCurrentWindow();
 	const mainStore = useMainStore();
 	const data = reactive({
 		log: "",
@@ -125,10 +183,30 @@
 
 	const hanldeClickStart = async () => {
 		data.loading = true;
-        const args = getServerArgs();
+		const args = getServerArgs();
 		await appWindow.emitTo("main", "startStopServer", { args });
 	};
 
-	dataSubscribe();
+	// const privateModeDialogFormEl = useTemplateRef<FormInstance>("privateModeDialogFormRef");
 
+	const privateModeDialogData = reactive({
+		visible: false
+	});
+
+
+	const handlePrivateModeClick = async () => {
+		if (mainStore.serverConfig.privateMode) {
+			mainStore.serverConfig.privateMode = false;
+			return;
+		}
+		privateModeDialogData.visible = true;
+	};
+
+	const handlePrivateModeDialogConfirm = async () => {
+		privateModeDialogData.visible = false;
+		mainStore.serverConfig.privateMode = true;
+		
+	};
+
+	dataSubscribe();
 </script>

@@ -1128,25 +1128,23 @@
 		}
 	};
 
-	const compatibleIpv6Listener = async () => {
-		// ipv6监听在后续版本合并到customListenner里了，这里做兼容处理
-		if (mainStore.config.enableCustomListenerV6 && mainStore.config.customListenerV6Data) {
-			const customListener = mainStore.config.customListenerV6Data.trim();
-			if (customListener) {
-				const customListenerV4 = mainStore.config.customListenerData
-					.trim()
-					.split("\n")
-					.map(el => el.trim())
-					.filter(el => el);
-				if (!customListenerV4.includes(customListener)) {
-					mainStore.config.customListenerData += `\n${customListener}`;
-				}
-			}
-		}
-		if (mainStore.config.enableCustomListenerV6) {
-			mainStore.config.enableCustomListenerV6 = false;
-		}
-	};
+	// const compatibleIpv6Listener = async () => {
+	// 	// ipv6监听在后续版本合并到customListenner里了，这里做兼容处理，去掉IPV6监听
+	// 	const customListenerV4 = mainStore.config.customListenerData
+	// 				.trim()
+	// 				.split("\n")
+	// 				.map(el => el.trim())
+	// 				.filter(el => el);
+	// 	const udpv6 = customListenerV4.indexOf("udp://[::]:11010")
+	// 	const tcpv6 = customListenerV4.indexOf("tcp://[::]:11010")
+	// 	if (udpv6 != -1) {
+	// 		customListenerV4.splice(udpv6, 1);
+	// 	}
+	// 	if (tcpv6 != -1) {
+	// 		customListenerV4.splice(tcpv6, 1);
+	// 	}
+	// 	mainStore.config.customListenerData = customListenerV4.join("\n");
+	// };
 
 	const initConnectAfterStart = async () => {
 		if (mainStore.config.connectAfterStart && data.coreVersion) {
@@ -1260,7 +1258,6 @@
 		await compatibleInitAutoStart();
 		// await initAutoStart();
 		// await initStartWinIpBroadcast();  // 对于三层tun而言，winipbroadcast没有作用，先禁用
-		await compatibleIpv6Listener();
 		await getCoreVersion();
 		await listenObj.listenThreadId();
 		await listenObj.listenServerThreadId();
@@ -1373,9 +1370,7 @@
 				args.push("-l", ...customListener);
 			}
 		}
-		if (!mainStore.config.disbleListenner && mainStore.config.enableCustomListenerV6 && mainStore.config.customListenerV6Data) {
-			args.push("--ipv6-listener", mainStore.config.customListenerV6Data);
-		}
+
 		if (!mainStore.config.disbleListenner && !mainStore.config.enableCustomListener && mainStore.config.port) {
 			args.push("-l", mainStore.config.port);
 		}
@@ -1551,8 +1546,6 @@
 					port,
 					enableCustomListener,
 					customListenerData,
-					enableCustomListenerV6,
-					customListenerV6Data,
 					devName,
 					devNameValue,
 					enableNetCardMetric,
@@ -1587,8 +1580,6 @@
 								port,
 								enableCustomListener,
 								customListenerData,
-								enableCustomListenerV6,
-								customListenerV6Data,
 								devName,
 								devNameValue,
 								enableNetCardMetric,

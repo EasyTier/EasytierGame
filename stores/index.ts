@@ -18,9 +18,7 @@ const store = defineStore("main", {
 				disableIpv6: false, // 是否禁用IPv6
 				port: "11010", // 监听端口号
 				enableCustomListener: true, // 是否自定义监听
-				enableCustomListenerV6: true, // 是否自定义IPV6监听
-				customListenerV6Data: "udp://[::]:11010", //自定义ipv6监
-				customListenerData: "tcp://0.0.0.0:11010\nudp://0.0.0.0:11010\ntcp://[::]:11010", // 自定义监听地址
+				customListenerData: "tcp://0.0.0.0:11010\nudp://0.0.0.0:11010", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听
 				disableEncryption: false, // 是否禁用加密
 				multiThread: false, //使用多线程
@@ -124,8 +122,6 @@ const store = defineStore("main", {
 			"config.disbleListenner",
 			"config.enableCustomListener",
 			"config.customListenerData",
-			"config.enableCustomListenerV6",
-			"config.customListenerV6Data",
 
 			"config.enableCustomProtocol",
 			"config.customProtocol",

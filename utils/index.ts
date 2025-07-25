@@ -67,7 +67,7 @@ export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefi
 		});
 };
 
-const _supportProtocols = ["tcp", "udp", "ws", "wss", "quic"];
+const _supportProtocols = ["tcp", "udp", "ws", "wss"];
 
 export const supportProtocols = () => {
 	return _supportProtocols.slice();

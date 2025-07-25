@@ -9,16 +9,13 @@
     "enableCustomListener": true,
     "customListenerData": [
         "tcp://0.0.0.0:11010",
-        "udp://0.0.0.0:11010",
-        "tcp://[::]:11010"
+        "udp://0.0.0.0:11010"
     ],
     "networkName": "",  //房间名
     "networkPassword": "", //房间密码
     "hostname": "", //主机名
     "ipv4": "", // 虚拟IP地址
     "disableIpv6": false,  // 禁用ipv6
-    "enableCustomListenerV6": true, // 启用ipv6监听
-    "customListenerV6Data": "udp://[::]:11010",  // ipv6监听地址
     "disbleListenner": false, //    禁用监听
     "disableEncryption": false, // 禁用加密
     "enablExitNode": false, // 启用出口节点

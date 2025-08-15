@@ -12,14 +12,11 @@
 		@scroll="handleScroll"
 		class="overflow-auto"
 	>
-		<div v-if="!data.log || data.log.length <= 0">
-			<ElAlert
-				type="info"
-				title="等待日志中，请先'启动联机'..."
-				:closable="false"
-			/>
+		<div v-if="!data.log || data.log.length <= 0" class="p-[5px]">
+			<ElText type="info">等待日志中，请先'启动联机'...</ElText>
 		</div>
 		<div
+			v-else
 			v-for="item in data.log"
 			:key="item.id"
 			class="p-[5px]"
@@ -102,8 +99,10 @@
 
 	const listenStart = async () => {
 		const unListen = await listen<string>("logs", async event => {
-			data.originLog = event.payload || "";
-			data.log = (event.payload || "")
+			const payload = event.payload || "";
+			if (data.originLog === payload) return;
+			data.originLog = payload;
+			data.log = payload
 				.split("\n")
 				.filter(text => text.trim())
 				.map((text, idx) => {

@@ -1545,11 +1545,11 @@
 			args.push("--ipv6", mainStore.config.ipv6.trim());
 		}
 		const tcpWhitelist = mainStore.config.tcpWhitelist.trim();
-		if (tcpWhitelist) {
+		if (mainStore.config.tcpWhitelistEnable && tcpWhitelist) {
 			args.push("--tcp-whitelist", tcpWhitelist);
 		}
 		const udpWhitelist = mainStore.config.udpWhitelist.trim();
-		if (udpWhitelist) {
+		if (mainStore.config.udpWhitelistEnable && udpWhitelist) {
 			args.push("--udp-whitelist", udpWhitelist);
 		}
 		return args;

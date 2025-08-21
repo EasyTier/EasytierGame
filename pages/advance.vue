@@ -99,12 +99,12 @@
 		</div>
 		<ElDivider />
 		<div class="flex w-full flex-nowrap items-center gap-[5px] mb-[3px]">
-			<ElCheckbox v-model="mainStore.config.tcpWhitelist">TCP端口白名单</ElCheckbox>
+			<ElCheckbox v-model="mainStore.config.tcpWhitelistEnable">TCP端口白名单</ElCheckbox>
 			<ElInput class="flex-1" v-model="mainStore.config.tcpWhitelist" placeholder="支持单个端口（80）和范围（8000-9000）" />
 			<CoreVersionWarning version="2.4.2" />
 		</div>
 		<div class="flex w-full flex-nowrap items-center gap-[5px]">
-			<ElCheckbox v-model="mainStore.config.udpWhitelist">UDP端口白名单</ElCheckbox>
+			<ElCheckbox v-model="mainStore.config.udpWhitelistEnable">UDP端口白名单</ElCheckbox>
 			<ElInput class="flex-1" v-model="mainStore.config.udpWhitelist" placeholder="支持单个端口（53）和范围（5000-6000）" />
 			<CoreVersionWarning version="2.4.2" />
 		</div>

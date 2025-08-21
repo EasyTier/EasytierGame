@@ -13,6 +13,8 @@ const store = defineStore("main", {
 				hostname: "",
 				ipv4: "",
 				ipv6:"",
+				tcpWhitelistEnable: false, // tcp端口白名单
+				udpWhitelistEnable: false, // udp端口白名单
 				tcpWhitelist: "", // tcp端口白名单
 				udpWhitelist: "", // udp端口白名单
 				proxyNetworks: "", // 子网代理
@@ -98,8 +100,6 @@ const store = defineStore("main", {
 			"config.hostname",
 			"config.ipv4",
 			"config.ipv6",
-			"config.tcpWhitelist",
-			"config.udpWhitelist",
 			"config.proxyNetworks",
 			"config.autoStart",
 			"config.connectAfterStart",
@@ -123,6 +123,8 @@ const store = defineStore("main", {
 			"config.port",
 			"config.tcpWhitelist",
 			"config.udpWhitelist",
+			"config.tcpWhitelistEnable",
+			"config.udpWhitelistEnable",
 
 			"config.enablePortForward",
 			"config.portForwardData",

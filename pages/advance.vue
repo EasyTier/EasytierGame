@@ -98,6 +98,16 @@
 			<CoreVersionWarning version="2.3.1" />
 		</div>
 		<ElDivider />
+		<div class="flex w-full flex-nowrap items-center gap-[5px] mb-[3px]">
+			<ElCheckbox v-model="mainStore.config.tcpWhitelist">TCP端口白名单</ElCheckbox>
+			<ElInput class="flex-1" v-model="mainStore.config.tcpWhitelist" placeholder="支持单个端口（80）和范围（8000-9000）" />
+			<CoreVersionWarning version="2.4.2" />
+		</div>
+		<div class="flex w-full flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.udpWhitelist">UDP端口白名单</ElCheckbox>
+			<ElInput class="flex-1" v-model="mainStore.config.udpWhitelist" placeholder="支持单个端口（53）和范围（5000-6000）" />
+			<CoreVersionWarning version="2.4.2" />
+		</div>
 		<div class="flex items-center gap-[10px]">
 			<ElCheckbox v-model="mainStore.config.disbleListenner">不监听任何端口，只连接到对等节点</ElCheckbox>
 			<ElTooltip content="无法联机时，可以尝试开启这个选项">

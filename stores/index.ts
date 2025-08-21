@@ -12,6 +12,9 @@ const store = defineStore("main", {
 				networkPassword: "",
 				hostname: "",
 				ipv4: "",
+				ipv6:"",
+				tcpWhitelist: "", // tcp端口白名单
+				udpWhitelist: "", // udp端口白名单
 				proxyNetworks: "", // 子网代理
 				autoStart: false, // 是否自动启动
 				connectAfterStart: false, //软件打开后，是否自动连接
@@ -94,6 +97,9 @@ const store = defineStore("main", {
 			"config.networkPassword",
 			"config.hostname",
 			"config.ipv4",
+			"config.ipv6",
+			"config.tcpWhitelist",
+			"config.udpWhitelist",
 			"config.proxyNetworks",
 			"config.autoStart",
 			"config.connectAfterStart",
@@ -115,6 +121,8 @@ const store = defineStore("main", {
 			"config.enableNetCardMetric",
 			"config.netCardMetricValue",
 			"config.port",
+			"config.tcpWhitelist",
+			"config.udpWhitelist",
 
 			"config.enablePortForward",
 			"config.portForwardData",

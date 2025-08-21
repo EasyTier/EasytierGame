@@ -206,23 +206,40 @@
 				label="局域网IP"
 			>
 				<template #label>
-					<div class="flex h-[20px] items-center gap-[3px]">
-						虚拟网IP
+					<div class="flex h-[22px] items-center gap-[3px]">
+						<div class="mr-[8px]">IP</div>
+						<ElSwitch
+							v-model="mainStore.config.dhcp"
+							inline-prompt
+							inactive-text="固定V4"
+							active-text="动态V4"
+							size="small"
+						></ElSwitch>
+						<ElTooltip>
+							<template #content>
+								<div>选填V6地址，可与IPv4一起使用以进行双栈操作</div>
+								<div>----------------------------------------</div>
+								<div>当前V6地址: {{ mainStore.config.ipv6 || "-" }}</div>
+							</template>
+							<ElButton
+								text
+								size="small"
+								class="cursor-pointer"
+								@click="handleDealIpv6"
+								:type="mainStore.config.ipv6 ? 'success' : 'info'"
+							>
+								V6
+							</ElButton>
+						</ElTooltip>
+						<ElDivider direction="vertical" />
 						<ElButton
 							@click.stop="handleCopyIp"
 							type="primary"
 							text
 							size="small"
-							title="复制IP"
+							title="复制V4"
 							:icon="CopyDocument"
 						></ElButton>
-						<ElSwitch
-							v-model="mainStore.config.dhcp"
-							inline-prompt
-							inactive-text="固定IP"
-							active-text="动态获取"
-							size="small"
-						></ElSwitch>
 						<!-- <ElTooltip content="对应命令行参数 --ipv4">
 							<ElIcon><QuestionFilled /></ElIcon>
 						</ElTooltip> -->
@@ -698,6 +715,35 @@
 			</div>
 		</template>
 	</ElDialog>
+	<ElDialog
+		width="95%"
+		top="30px"
+		append-to-body
+		:z-index="10"
+		class="!mb-0"
+		title="IPV6地址填写"
+		:close-on-press-escape="false"
+		:close-on-click-modal="false"
+		:show-close="false"
+		v-model="ipv6InputDialog.visible"
+	>
+		<ElInput
+			v-model="mainStore.config.ipv6"
+			clearable
+			placeholder="请输入IPV6地址"
+		></ElInput>
+		<template #footer>
+			<div class="text-right">
+				<ElButton
+					type="primary"
+					size="small"
+					@click="handleValidateIpv6"
+				>
+					确定
+				</ElButton>
+			</div>
+		</template>
+	</ElDialog>
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
@@ -737,6 +783,7 @@
 	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
+	import { isIPv6 } from "is-ip";
 
 	let is_close = false;
 	const publicPeersLink = import.meta.env.VITE_PUBLIC_PEERS_URL;
@@ -823,12 +870,54 @@
 		}
 	};
 
+	const ipv6InputDialog = reactive<{ visible: boolean; [key: string]: any }>({
+		visible: false
+	});
+
+	const handleDealIpv6 = async () => {
+		ipv6InputDialog.visible = true;
+	};
+
+	const handleValidateIpv6 = () => {
+		mainStore.config.ipv6 = mainStore.config.ipv6?.trim() || "";
+		if (mainStore.config.ipv6 && !isIPv6(mainStore.config.ipv6)) {
+			ElMessage.error("请输入正确的IPV6地址");
+			return;
+		}
+		ipv6InputDialog.visible = false;
+	};
+
 	const handleCopyIp = async () => {
-		if (!mainStore.config.ipv4?.trim()) return;
-		if (data.isStart || !mainStore.config.dhcp) {
-			await copyText(mainStore.config.ipv4);
+		const v6 = mainStore.config.ipv6?.trim();
+		const v4 = mainStore.config.ipv4?.trim();
+		if (v6) {
+			const [err] = await ElConfirmPrimary("检测到您填写了IPV6地址，是否复制IPV6地址？", "提示", {
+				confirmButtonText: "复制IPV6",
+				cancelButtonText: "复制IPV4"
+			});
+			if (!err) {
+				await copyText(v6);
+			} else {
+				if (!v4) {
+					ElMessage.error("没有IPV4地址，无法复制");
+					return;
+				}
+				if (data.isStart || !mainStore.config.dhcp) {
+					await copyText(v4);
+				} else {
+					await copyText(v4, "复制成功,联机后IP可能会变化");
+				}
+			}
 		} else {
-			await copyText(mainStore.config.ipv4, "复制成功,联机后IP可能会变化");
+			if (!v4) {
+				ElMessage.error("没有IPV4地址，无法复制");
+				return;
+			}
+			if (data.isStart || !mainStore.config.dhcp) {
+				await copyText(v4);
+			} else {
+				await copyText(v4, "复制成功,联机后IP可能会变化");
+			}
 		}
 	};
 
@@ -1095,7 +1184,7 @@
 		data.releaseList = [
 			...list.flat().filter(el => {
 				// console.log(el, el[0], el[2], el[3]); // el[3] 是prerelease bool值
-				return el && el[0] && el[2] && !el[2].includes("gui") && (el[3] != 'true' || !el[3]);
+				return el && el[0] && el[2] && !el[2].includes("gui") && (el[3] != "true" || !el[3]);
 			})
 		] as any;
 		coreManagementData.loading = false;
@@ -1181,7 +1270,7 @@
 						saveServerUrl = mainStore.basePeers.length > 0 ? mainStore.basePeers[0] || "" : "";
 					}
 					data.configJsonSeverUrl = guiJson.serverUrl;
-					if(guiJson.enableKcpProxy && guiJson.enableQuicProxy) {
+					if (guiJson.enableKcpProxy && guiJson.enableQuicProxy) {
 						// 如果同时开启kcp代理和quic代理，则禁用quic代理
 						guiJson.enableQuicProxy = false;
 					}
@@ -1239,7 +1328,7 @@
 		const logicalAppSize = {
 			width: 340,
 			height: 305
-		}
+		};
 		const scaleFactor = await appWindow.scaleFactor();
 		const size = new PhysicalSize(Math.ceil(logicalAppSize.width * scaleFactor), Math.ceil(logicalAppSize.height * scaleFactor));
 		appWindow.setSize(size);
@@ -1420,16 +1509,16 @@
 			args.push("--compression", mainStore.config.compression);
 		}
 		if (mainStore.config.enableKcpProxy) {
-			args.push("--enable-kcp-proxy", 'true');
+			args.push("--enable-kcp-proxy", "true");
 		}
 		if (mainStore.config.disableKcpInput) {
-			args.push("--disable-kcp-input", 'true');
+			args.push("--disable-kcp-input", "true");
 		}
 		if (mainStore.config.enableQuicProxy) {
-			args.push("--enable-quic-proxy", 'true');
+			args.push("--enable-quic-proxy", "true");
 		}
 		if (mainStore.config.disableQuicInput) {
-			args.push("--disable-quic-input", 'true');
+			args.push("--disable-quic-input", "true");
 		}
 		if (mainStore.config.bindDeviceEnable) {
 			args.push("--bind-device", "true");
@@ -1451,6 +1540,17 @@
 		}
 		if (mainStore.config.privateMode) {
 			args.push("--private-mode", "true");
+		}
+		if (mainStore.config.ipv6 && !mainStore.config.disableIpv6) {
+			args.push("--ipv6", mainStore.config.ipv6.trim());
+		}
+		const tcpWhitelist = mainStore.config.tcpWhitelist.trim();
+		if (tcpWhitelist) {
+			args.push("--tcp-whitelist", tcpWhitelist);
+		}
+		const udpWhitelist = mainStore.config.udpWhitelist.trim();
+		if (udpWhitelist) {
+			args.push("--udp-whitelist", udpWhitelist);
 		}
 		return args;
 	};

@@ -21,7 +21,7 @@ const store = defineStore("main", {
 				autoStart: false, // 是否自动启动
 				connectAfterStart: false, //软件打开后，是否自动连接
 				disableIpv6: false, // 是否禁用IPv6
-				port: "11010", // 监听端口号
+				port: "0", // 监听端口号
 				enableCustomListener: true, // 是否自定义监听
 				customListenerData: "tcp://0.0.0.0:11010\nudp://0.0.0.0:11010", // 自定义监听地址
 				disbleListenner: false, // 是否禁用监听

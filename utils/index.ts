@@ -2,11 +2,17 @@ import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-shell";
 import { ElMessage } from "element-plus";
+import { flatMap, map } from "lodash-es";
+
 export const ENV = import.meta.env;
+
+export const mixedArray = (a: Array<string>, b: Array<string>, split:string="") => {
+	return flatMap(a, protocol => map(b, port => `${protocol}${split}${port}`));
+};
 
 //防抖
 export const bounce = (time = 3000) => {
-	let bounceTimer: NodeJS.Timeout | null = null;
+	let bounceTimer: number | null = null;
 	return (cb: Function) => {
 		bounceTimer && clearTimeout(bounceTimer);
 		bounceTimer = setTimeout(() => {
@@ -73,7 +79,7 @@ export const supportProtocols = () => {
 	return _supportProtocols.slice();
 };
 
-let _prevent_timer: NodeJS.Timeout | null = null;
+let _prevent_timer: number | null = null;
 let _prevent_timer_count = 15; // 秒
 export const preventSleep = () => {
 	_prevent_timer && clearInterval(_prevent_timer);
@@ -127,17 +133,35 @@ export const parseCliInfo = (content: string) => {
 };
 
 export function isValidWindowsFileName(name: string) {
-	if(name.length > 255) return false;
+	if (name.length > 255) return false;
 	const reserved_names = [
-        "CON", "PRN", "AUX", "NUL",
-        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+		"CON",
+		"PRN",
+		"AUX",
+		"NUL",
+		"COM1",
+		"COM2",
+		"COM3",
+		"COM4",
+		"COM5",
+		"COM6",
+		"COM7",
+		"COM8",
+		"COM9",
+		"LPT1",
+		"LPT2",
+		"LPT3",
+		"LPT4",
+		"LPT5",
+		"LPT6",
+		"LPT7",
+		"LPT8",
+		"LPT9"
 	];
-	if(reserved_names.includes(name.toUpperCase())) {
+	if (reserved_names.includes(name.toUpperCase())) {
 		return false;
 	}
 	return /^[^<>:"/\\|?*\x00-\x1F]+[^<>:"/\\|?*\x00-\x1F .]$/g.test(name);
-	
 }
 
 export const addQQGroup = () => {

@@ -13,7 +13,6 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Emitter;
 use tauri::Manager;
-use windows::Win32::System::Variant::VARIANT;
 use windows::core::{Interface, BSTR};
 use windows::Win32::Foundation::VARIANT_BOOL;
 use windows::Win32::NetworkManagement::IpHelper::{
@@ -22,6 +21,7 @@ use windows::Win32::NetworkManagement::IpHelper::{
 use windows::Win32::Networking::WinSock::AF_UNSPEC;
 use windows::Win32::System::Com::*;
 use windows::Win32::System::TaskScheduler::*;
+use windows::Win32::System::Variant::VARIANT;
 // use std::ffi::CStr;
 
 use windows::Win32::System::Power::SetThreadExecutionState;
@@ -273,6 +273,8 @@ struct MyResponse {
 async fn get_members_by_cli() -> String {
     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
     match tokioCommand::new(&cli_path)
+        .arg("-o")
+        .arg("json")
         .arg("peer")
         .arg("list")
         .creation_flags(0x08000000)
@@ -351,6 +353,12 @@ async fn download_easytier_zip(
 
     let path = path::Path::new(&file_path);
     println!("download easytier to {}", path.display());
+    if path.exists() {
+        match fs::remove_file(path) {
+            Ok(_) => println!("删除上次下载的Zip文件成功"),
+            Err(_) => log::error!("删除上次下载Zip的文件失败"),
+        }
+    }
 
     let mut file = match File::create(&path) {
         Err(why) => panic!("couldn't create {}", why),

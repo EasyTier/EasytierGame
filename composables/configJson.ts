@@ -5,7 +5,7 @@ import { uniq, intersection, isNil } from "lodash-es";
 import { bounce } from "~/utils";
 
 const b = bounce(600);
-export type ConfigServerUrlType = Array<string> | string | null | undefined | null;
+export type ConfigServerUrlType = Array<string>;
 
 export const updateConfigJsonBounce = (configJsonSeverUrl?: ConfigServerUrlType) => {
 	b(async () => {
@@ -22,8 +22,10 @@ export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType)
 	if (isNil(configJsonSeverUrl)) {
 		configJsonSeverUrl = [];
 	}
-	const isArray = Array.isArray(configJsonSeverUrl);
-	const isString = typeof configJsonSeverUrl === "string";
+	if(typeof(configJsonSeverUrl) == 'string') {
+		configJsonSeverUrl = [configJsonSeverUrl];
+	}
+	configJsonSeverUrl = configJsonSeverUrl || [];
 	try {
 		const {
 			proxyNetworks,
@@ -43,20 +45,14 @@ export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType)
 			udpWhitelistEnable,
 			...otherConfig
 		} = mainStore.config;
-		let writeServerUrl: Array<string> | string = serverUrl;
+		let writeServerUrl: Array<string> = serverUrl;
 		let writeCustomListenerData: Array<string> = (customListenerData || "").split("\n");
-		if (isArray) {
-			writeServerUrl = intersection(
-				uniq([serverUrl, ...configJsonSeverUrl]).filter(boolean => boolean),
-				mainStore.basePeers
-			);
-		}
-		if (isString && configJsonSeverUrl) {
-			writeServerUrl = intersection(
-				uniq([serverUrl, ...(configJsonSeverUrl as string).split(",")]).filter(boolean => boolean),
-				mainStore.basePeers
-			).join(",");
-		}
+
+		writeServerUrl = intersection(
+			uniq([...serverUrl, ...configJsonSeverUrl]).filter(boolean => boolean),
+			mainStore.basePeers
+		);
+
 		await writeTextFile(
 			path,
 			JSON.stringify({ serverUrl: writeServerUrl, enableCustomListener, customListenerData: writeCustomListenerData, ...otherConfig }, null, 4),

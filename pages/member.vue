@@ -214,7 +214,7 @@
 	};
 
 	// 字节数据排序函数
-	const sortBytes = (a: any, b: any, field: string = 'rx_bytes'): number => {
+	const sortBytes = (a: any, b: any, field: string = "rx_bytes"): number => {
 		const parseBytes = (bytesStr: string): number => {
 			if (!bytesStr || bytesStr === "-" || bytesStr === "") {
 				return 0;
@@ -222,7 +222,7 @@
 
 			// 统一转换为小写并去除空格
 			const cleanStr = bytesStr.toLowerCase().trim();
-			
+
 			// 使用正则表达式匹配数字和单位
 			const match = cleanStr.match(/^(\d+(?:\.\d+)?)\s*([a-z]*)$/);
 			if (!match) {
@@ -238,30 +238,30 @@
 
 			// 根据单位转换为字节数
 			switch (unit) {
-				case 'b':
-				case 'byte':
-				case 'bytes':
-				case '':
+				case "b":
+				case "byte":
+				case "bytes":
+				case "":
 					return value;
-				case 'k':
-				case 'kb':
-				case 'kib':
+				case "k":
+				case "kb":
+				case "kib":
 					return value * 1024;
-				case 'm':
-				case 'mb':
-				case 'mib':
+				case "m":
+				case "mb":
+				case "mib":
 					return value * 1024 * 1024;
-				case 'g':
-				case 'gb':
-				case 'gib':
+				case "g":
+				case "gb":
+				case "gib":
 					return value * 1024 * 1024 * 1024;
-				case 't':
-				case 'tb':
-				case 'tib':
+				case "t":
+				case "tb":
+				case "tib":
 					return value * 1024 * 1024 * 1024 * 1024;
-				case 'p':
-				case 'pb':
-				case 'pib':
+				case "p":
+				case "pb":
+				case "pib":
 					return value * 1024 * 1024 * 1024 * 1024 * 1024;
 				default:
 					return value; // 未知单位当作字节处理
@@ -305,11 +305,10 @@
 		["tx_bytes", "传输"]
 	];
 
-	let timer: NodeJS.Timeout | null = null;
+	let timer: number | null = null;
 
 	const listenOutput = async () => {
 		const [error, member] = await ATJ(invoke<string>("get_members_by_cli"));
-		// if(!member) return;
 		if (error) {
 			data.member = [];
 			return "";
@@ -329,17 +328,18 @@
 			}
 			return;
 		}
-		const peerInfo = parseCliInfo(member);
-		peerInfo.forEach(value => {
-			if (value.cost === "Local") {
-				value.cost = "本机";
-			}
-			if (value.ipv4 && value.ipv4.includes("/")) {
-				value.ipv4 = value.ipv4.split("/")[0];
-			}
-		});
-		// console.log(peerInfo)
-		data.member = peerInfo;
+		// const peerInfo = parseCliInfo(member);
+		// peerInfo.forEach(value => {
+		// 	if (value.cost === "Local") {
+		// 		value.cost = "本机";
+		// 	}
+		// 	if (value.ipv4 && value.ipv4.includes("/")) {
+		// 		value.ipv4 = value.ipv4.split("/")[0];
+		// 	}
+		// });
+		// data.member = peerInfo;
+
+		data.member = JSON.parse(member);
 		startTimer();
 	};
 

@@ -39,7 +39,7 @@ html.dark body {
 }
 
 .full-label .el-form-item__label {
-	width: 100%;
+	width: 100%!important;
 	padding-right: 0;
 }
 
@@ -48,6 +48,13 @@ html.dark body {
 	align-items: flex-start;
 	overflow: auto;
 	flex: 1;
+}
+
+.el-select__selection {
+	/* display: none!important; */
+	min-height: 20px!important;
+	flex-wrap: nowrap!important;
+	overflow: hidden!important;
 }
 
 .el-table {

@@ -12,7 +12,10 @@
 		@scroll="handleScroll"
 		class="overflow-auto"
 	>
-		<div v-if="!data.log || data.log.length <= 0" class="p-[5px]">
+		<div
+			v-if="!data.log || data.log.length <= 0"
+			class="p-[5px]"
+		>
 			<ElText type="info">等待日志中，请先'启动联机'...</ElText>
 		</div>
 		<div
@@ -106,6 +109,9 @@
 				.split("\n")
 				.filter(text => text.trim())
 				.map((text, idx) => {
+					if (idx === 0) {
+						return { id: `${text}-${idx}`, text, type: "primary" };
+					}
 					const toLowerCaseText = text.toLocaleLowerCase();
 					return {
 						id: `${text}-${idx}`,

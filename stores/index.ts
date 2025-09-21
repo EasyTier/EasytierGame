@@ -7,7 +7,7 @@ const store = defineStore("main", {
 		return {
 			config: {
 				protocol: ["tcp"], // 网络协议
-				serverUrl: "public.easytier.top:11010",
+				serverUrl: ["public.easytier.top:11010"],
 				networkName: "",
 				networkPassword: "",
 				hostname: "",

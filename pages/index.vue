@@ -45,7 +45,7 @@
 					</div>
 					<ElTooltip content="请先停止自建服务和联机后再使用，否则内核被占用的情况下，无法进行内核更换">
 						<ElBadge
-							badge-class="!text-[9px] cursor-pointer"
+							badge-class="!text-[9px] cursor-pointer ml-auto"
 							:hidden="!haveNewCoreVersion"
 							:offset="[-5, 6]"
 							@click.stop="handleCoreManagement"
@@ -68,6 +68,9 @@
 			<ElSelect
 				allow-create
 				filterable
+				multiple
+				collapse-tags
+				collapse-tags-tooltip
 				placeholder="请选择服务器地址"
 				default-first-option
 				v-model="mainStore.config.serverUrl"
@@ -75,14 +78,13 @@
 				@change="handleServerUrlChange"
 			>
 				<template #prefix>
-					<div :class="mainStore.config.protocol && mainStore.config.protocol.length > 1 ? 'w-[120px]' : 'w-[80px]'">
+					<div :class="mainStore.config.protocol && mainStore.config.protocol.length > 1 ? 'w-[110px]' : 'w-[80px]'">
 						<ElSelect
 							placeholder="协议"
 							multiple
 							collapse-tags
 							@click.stop
 							v-model="mainStore.config.protocol"
-							@change="handleServerUrlChange"
 						>
 							<ElOption
 								v-for="item in protocols"
@@ -780,7 +782,7 @@
 	import { updateConfigJson, updateConfigJsonBounce } from "~/composables/configJson";
 	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
 	import { sortedUniq, uniq } from "lodash-es";
-	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName } from "~/utils";
+	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName, mixedArray } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 	import { isIPv6 } from "is-ip";
@@ -828,7 +830,7 @@
 		startLoading: false,
 		isStart: false,
 		connectionSuccess: false,
-		configJsonSeverUrl: "" // 本地保存一次，用于回填config.json
+		configJsonSeverUrl: [] // 本地保存一次，用于回填config.json
 	});
 
 	const configStart = reactive<{ list: Array<{ path: string; name: string }>; [key: string]: any }>({
@@ -939,30 +941,40 @@
 		const newBasePeers = [...mainStore.basePeers];
 		const idx = newBasePeers.indexOf(url);
 		if (idx >= 0) {
-			if (mainStore.config.serverUrl === url) {
-				mainStore.config.serverUrl = "";
+			const selectIdx = mainStore.config.serverUrl.indexOf(url);
+			if (selectIdx >= 0) {
+				mainStore.config.serverUrl.splice(selectIdx, 1);
 			}
 			newBasePeers.splice(idx, 1);
 		}
 		mainStore.basePeers = uniq([...newBasePeers]);
-		if (mainStore.basePeers.length > 0) {
-			mainStore.config.serverUrl = mainStore.basePeers[0];
+		if (mainStore.basePeers.length > 0 && mainStore.config.serverUrl.length <= 0) {
+			mainStore.config.serverUrl = [mainStore.basePeers[0]];
 		}
 	};
 
 	const handleServerUrlChange = () => {
-		let inputProtocols: string | null = null;
+		let inputProtocols: string[] = [];
+		// console.log(mainStore.config.serverUrl);
 		for (const p of protocols) {
-			if (mainStore.config.serverUrl.toLowerCase().startsWith(`${p}://`)) {
-				inputProtocols = p;
-				break;
+			for (const url of mainStore.config.serverUrl) {
+				if (url.toLowerCase().startsWith(`${p}://`)) {
+					inputProtocols.push(p);
+				}
 			}
 		}
 		if (inputProtocols) {
-			mainStore.config.protocol = [inputProtocols];
-			mainStore.config.serverUrl = mainStore.config.serverUrl.slice(inputProtocols.length + 3);
+			mainStore.config.protocol = uniq([...mainStore.config.protocol, ...inputProtocols]);
+			mainStore.config.serverUrl = (mainStore.config.serverUrl || []).map(url => {
+				for (const p of protocols) {
+					if (url.toLowerCase().startsWith(`${p}://`)) {
+						return url.slice(inputProtocols.length + 3);
+					}
+				}
+				return url;
+			});
 		}
-		mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers]);
+		mainStore.basePeers = uniq([...mainStore.config.serverUrl, ...mainStore.basePeers]);
 	};
 
 	const listenObj: { [key: string]: any } = {
@@ -1242,6 +1254,13 @@
 		}
 	};
 
+	// 多选serverUrl兼容
+	const compatibleInitServerUrl = async () => {
+		if (typeof mainStore.config.serverUrl == "string") {
+			mainStore.config.serverUrl = [mainStore.config.serverUrl || ""];
+		}
+	};
+
 	const initGuiJson = async () => {
 		const path = import.meta.env.VITE_CONFIG_FILE_NAME;
 		const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
@@ -1257,19 +1276,21 @@
 					// const resultStr = guiJsonStr.replace(regex, "").replace(regex2, "$1");
 					// console.log(resultStr);
 					const guiJson = JSON.parse(guiJsonStr);
-					let saveServerUrl = "";
+					let saveServerUrl = [];
 					if (guiJson.serverUrl) {
 						if (Array.isArray(guiJson.serverUrl)) {
 							mainStore.basePeers = uniq([...guiJson.serverUrl, ...mainStore.basePeers]);
+							saveServerUrl = uniq([...guiJson.serverUrl]);
 						}
 						if (typeof guiJson.serverUrl === "string") {
 							mainStore.basePeers = uniq([...guiJson.serverUrl.split(","), ...mainStore.basePeers]);
+							saveServerUrl = [mainStore.basePeers[0] || ""];
+							guiJson.serverUrl = guiJson.serverUrl ? guiJson.serverUrl.split(",") : [];
 						}
-						saveServerUrl = mainStore.basePeers[0] || "";
 					} else {
-						saveServerUrl = mainStore.basePeers.length > 0 ? mainStore.basePeers[0] || "" : "";
+						saveServerUrl = [mainStore.basePeers.length > 0 ? mainStore.basePeers[0] || "" : ""];
 					}
-					data.configJsonSeverUrl = guiJson.serverUrl;
+					data.configJsonSeverUrl = [...guiJson.serverUrl] as any;
 					if (guiJson.enableKcpProxy && guiJson.enableQuicProxy) {
 						// 如果同时开启kcp代理和quic代理，则禁用quic代理
 						guiJson.enableQuicProxy = false;
@@ -1338,11 +1359,12 @@
 		});
 	};
 
-	let logsTimer: NodeJS.Timeout | null = null;
-	let serverLogsTimer: NodeJS.Timeout | null = null;
-	let cidrTimer: NodeJS.Timeout | null = null;
+	let logsTimer: number | null = null;
+	let serverLogsTimer: number | null = null;
+	let cidrTimer: number | null = null;
 
 	onMounted(async () => {
+		await compatibleInitServerUrl();
 		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();
@@ -1414,7 +1436,16 @@
 				return [];
 			}
 		}
-
+		if (mainStore.config.serverUrl?.length <= 0) {
+			ElMessage.warning(`请至少选择一个服务器`);
+			return [];
+		}
+		// 		lodash-es 如何将两个数组的值混合  比如["tcp","udp"] [1,2]
+		// 混合后["tcp1","tcp2","udp1","udp2"]
+		if (mainStore.config.protocol?.length <= 0) {
+			ElMessage.warning(`请至少选择一个协议`);
+			return [];
+		}
 		if (mainStore.config.dhcp) {
 			args.push("-d");
 		}
@@ -1431,8 +1462,8 @@
 			args.push("--ipv4", mainStore.config.ipv4.trim());
 		}
 		if (mainStore.config.serverUrl) {
-			const formatUrl = mainStore.config.serverUrl.replace(/\\/g, "/");
-			args.push("--peers", ...mainStore.config.protocol.map(protocol => `${protocol}://${formatUrl}`));
+			const formatUrlArr = mainStore.config.serverUrl.map((url: string) => url.replace(/\\/g, "/"));
+			args.push("--peers", ...mixedArray(mainStore.config.protocol, formatUrlArr, "://"));
 		}
 		if (mainStore.config.enableCustomProtocol) {
 			const includes = mainStore.config.protocol.includes(mainStore.config.customProtocol);
@@ -1885,7 +1916,13 @@
 		});
 		if (!err) {
 			const payload = JSON.parse(decodeURIComponent(atob(importConfigData.data)));
-			payload.config.serverUrl = payload?.config?.serverUrl?.trim() || mainStore.config.serverUrl;
+			payload.config.serverUrl = Array.isArray(payload?.config?.serverUrl)
+				? payload?.config?.serverUrl
+				: typeof payload?.config?.serverUrl == "string"
+					? [payload?.config?.serverUrl.split(",")]
+					: typeof mainStore.config.serverUrl == "string"
+						? [mainStore.config.serverUrl]
+						: [];
 			mainStore.$patch({
 				config: {
 					...mainStore.config,
@@ -1894,7 +1931,7 @@
 			});
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
-			mainStore.basePeers = uniq([mainStore.config.serverUrl, ...mainStore.basePeers].filter(el => el.trim()));
+			mainStore.basePeers = uniq([...(mainStore.config.serverUrl || []), ...mainStore.basePeers].filter(el => el.trim()));
 		} else {
 			console.error(err);
 			if (err !== "cancel") {

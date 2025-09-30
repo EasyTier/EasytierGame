@@ -70,7 +70,13 @@
 					label="丢包率"
 				>
 					<template #default="{ row }">
-						{{ row.loss_rate && row.loss_rate != "-" ? Number(row.loss_rate * 100).toFixed(2) + "%" : row.loss_rate }}
+						{{
+							row.loss_rate && row.loss_rate != "-"
+								? row.loss_rate.endsWith("%")
+									? row.loss_rate
+									: Number(row.loss_rate * 100).toFixed(2) + "%"
+								: row.loss_rate
+						}}
 					</template>
 				</ElTableColumn>
 				<ElTableColumn
@@ -120,7 +126,7 @@
 	import { ATJ, parseCliInfo } from "@/utils";
 	import { ElConfirmDanger } from "~/utils/element";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
-	import { isNaN } from "lodash-es";
+	import { endsWith, isNaN } from "lodash-es";
 	// 	enum NatType {
 	//   // has NAT; but own a single public IP, port is not changed
 	//   Unknown = 0;

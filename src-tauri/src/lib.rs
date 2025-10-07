@@ -269,6 +269,7 @@ struct MyResponse {
     response: PeerRoute,
 }
 
+
 #[tauri::command(rename_all = "snake_case")]
 async fn get_members_by_cli() -> String {
     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
@@ -320,6 +321,39 @@ async fn get_route_by_cli() -> String {
         Err(_e) => {
             log::error!("get route list error");
             return "".to_string();
+        }
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+async fn fetch_nodes_list(page: u64, limit: u64) -> String {
+    let client = Client::new();
+    let url = format!("https://uptime.easytier.cn/api/nodes?page={}&per_page={}", page, limit);
+    let user_agent = generate_random_user_agent();
+    
+    match client
+        .get(url)
+        .header("User-Agent", user_agent)
+        .send()
+        .await
+    {
+        Ok(response) => {
+            if response.status().is_success() {
+                match response.text().await {
+                    Ok(text) => text,
+                    Err(e) => {
+                        log::error!("Failed to get response text: {}", e);
+                        format!("_EasytierGameFetchNodesError_: {}", e)
+                    }
+                }
+            } else {
+                log::error!("HTTP request failed with status: {}", response.status());
+                format!("_EasytierGameFetchNodesError_: HTTP request failed with status: {}", response.status())
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to fetch nodes list: {}", e);
+            format!("_EasytierGameFetchNodesError_: {}", e)
         }
     }
 }
@@ -896,6 +930,7 @@ pub fn run() {
             download_easytier_zip,
             get_members_by_cli,
             get_route_by_cli,
+            fetch_nodes_list,
             search_pid_by_pname,
             get_exe_directory,
             spawn_autostart,

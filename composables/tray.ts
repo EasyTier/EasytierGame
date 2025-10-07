@@ -22,7 +22,7 @@ async function toggleVisibility() {
 	}
 }
 
-export async function useTray(init: boolean = false, beforExit: Function, handleConnection: Function, handleReconnect: Function) {
+export async function useTray(init: boolean = false, beforExit: Function, handleConnection: Function, handleReconnect: Function, handleNodesList: Function) {
 	let tray;
 	try {
 		tray = await TrayIcon.getById(DEFAULT_TRAY_NAME);
@@ -31,7 +31,7 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 				tooltip: `EasyTierGame\n${pkg.version}`,
 				title: `EasyTierGame\n${pkg.version}`,
 				id: DEFAULT_TRAY_NAME,
-				menu: await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect) }),
+				menu: await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect, handleNodesList) }),
 				action: async e => {
 					toggleVisibility();
 				}
@@ -45,20 +45,20 @@ export async function useTray(init: boolean = false, beforExit: Function, handle
 	if (init) {
 		tray.setTooltip(`EasyTierGame\n${pkg.version}`);
 		tray.setShowMenuOnLeftClick(false);
-		tray.setMenu(await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect) }));
+		tray.setMenu(await Menu.new({ id: "main", items: await generateMenuItem(beforExit, handleConnection, handleReconnect, handleNodesList) }));
 	}
 
 	return tray;
 }
 
-export async function generateMenuItem(beforExit: Function, handleConnection: Function, handleReconnect: Function) {
+export async function generateMenuItem(beforExit: Function, handleConnection: Function, handleReconnect: Function, handleNodesList: Function) {
 	return [
 		await MenuItemShow("显示 / 隐藏"),
 		await MenuItemExchangeConnection("联机 / 断开", handleConnection),
 		await MenuItemReconnect("重新联机", handleReconnect),
 		await MenuItemTheme(),
 		await PredefinedMenuItem.new({ item: "Separator" }),
-		await MenuItemPublicPeers(),
+		await MenuItemPublicPeers(handleNodesList),
 		await PredefinedMenuItem.new({ item: "Separator" }),
 		await MenuItemExit("退出", beforExit)
 	];
@@ -87,12 +87,12 @@ export async function MenuItemExit(text: string, beforExit: Function) {
 	});
 }
 
-export async function MenuItemPublicPeers() {
+export async function MenuItemPublicPeers(handleNodesList: Function) {
 	return await MenuItem.new({
 		id: "publicPeers",
 		text: "公共节点",
 		action: async () => {
-			await open(import.meta.env.VITE_PUBLIC_PEERS_URL);
+			await handleNodesList();
 		}
 	});
 }

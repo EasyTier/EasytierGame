@@ -101,7 +101,7 @@
 							type="primary"
 							size="small"
 							underline="never"
-							@click.stop="open(publicPeersLink)"
+							@click.stop="handleShowPublicServersDialog"
 						>
 							其他公共服务器
 						</ElLink>
@@ -804,6 +804,9 @@
 		},
 		async () => {
 			await handleReconnect();
+		},
+		async () => {
+			await handleShowPublicServersDialog();
 		}
 	);
 
@@ -817,6 +820,7 @@
 		advanceVisible: false,
 		toolVisible: false,
 		gameListVisible: false,
+		nodesListVisible: false,
 		serverVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
 		winipBcStart: false,
@@ -1146,6 +1150,28 @@
 		// await getReleaseList();
 	};
 
+	const handleShowPublicServersDialog = async () => {
+		await etWindows(
+			"nodesList",
+			{
+				title: "公共服务器节点",
+				width: 1000,
+				height: 600,
+				minWidth: 800,
+				minHeight: 500,
+				resizable: true,
+				url: "#/nodesList"
+			},
+			(_, appWindow) => {
+				data.nodesListVisible = true;
+			},
+			() => {
+				data.nodesListVisible = false;
+			}
+		);
+	};
+
+
 	let unlistenDownload: UnlistenFn | null = null;
 	let unlistenDownloadError: UnlistenFn | null = null;
 	let progress = ref<number>(0);
@@ -1359,12 +1385,154 @@
 		});
 	};
 
+	// 节点参数含义解析：
+	// - is_active: 节点是否激活运行
+	// - is_approved: 节点是否被管理员批准
+	// - allow_relay: 是否允许中继转发
+	// - current_health_status: 当前健康状态 ("healthy", "unhealthy", "unknown")
+	// - usage_percentage: 使用率百分比 (0-100)
+	// - health_percentage_24h: 24小时健康率 (0-100)
+	// - last_response_time: 最后响应时间(毫秒)，越小越好
+	// - current_connections: 当前连接数
+	// - max_connections: 最大连接数
+	// - protocol: 协议类型 ("tcp", "udp", "quic" 等)
+
+	const initNodesList = async () => {
+		let nodesList = await invoke<string>("fetch_nodes_list", { page: 1, limit: 1000 });
+		if (nodesList === "_EasytierGameFetchNodesError_") {
+			nodesList = "";
+		}
+		try {
+			const nodesListData: NodesResponse = JSON.parse(nodesList);
+			console.log("节点数据:", nodesListData);
+
+			if (nodesListData.success && nodesListData.data.items) {
+				// 过滤可用节点
+				const availableNodes = filterAvailableNodes(nodesListData.data.items);
+				console.log(`总节点数: ${nodesListData.data.items.length}, 可用节点数: ${availableNodes.length}`);
+
+				// 按优先级排序
+				const sortedNodes = sortNodesByPriority(availableNodes);
+
+				// 处理过滤后的节点数据
+				sortedNodes.forEach((node, index) => {
+					console.log(`${index + 1}. ${node.name} (${node.protocol}) - ${node.address}`);
+					console.log(
+						`   状态: ${node.current_health_status}, 使用率: ${node.usage_percentage.toFixed(1)}%, 响应时间: ${node.last_response_time}ms`
+					);
+					console.log(`   连接: ${node.current_connections}/${node.max_connections}, 24h健康率: ${node.health_percentage_24h}%`);
+				});
+
+				// 将可用节点添加到服务器列表
+				// addNodesToServerList(sortedNodes);
+			}
+		} catch (err) {
+			console.error("解析节点数据失败:", err);
+		}
+	};
+
+	// 过滤可用节点的函数
+	const filterAvailableNodes = (nodes: NodeItem[]): NodeItem[] => {
+		return nodes.filter(node => {
+			// 基本条件：节点必须激活且被批准
+			if (!node.is_active || !node.is_approved) {
+				return false;
+			}
+
+			// 健康状态检查
+			if (node.current_health_status !== "healthy") {
+				return false;
+			}
+
+			// 使用率检查：使用率不能超过95%
+			if (node.usage_percentage > 95) {
+				return false;
+			}
+
+			// 24小时健康率检查：必须大于90%
+			if (node.health_percentage_24h < 90) {
+				return false;
+			}
+
+			// 响应时间检查：响应时间不能超过60秒
+			if (node.last_response_time > 60000) {
+				return false;
+			}
+
+			// 连接数检查：当前连接数不能超过最大连接数的90%
+			if (node.current_connections > node.max_connections * 0.9) {
+				return false;
+			}
+
+			// 必须有有效的地址
+			if (!node.address || !node.host || !node.port) {
+				return false;
+			}
+
+			return true;
+		});
+	};
+
+	// 按优先级排序节点的函数
+	const sortNodesByPriority = (nodes: NodeItem[]): NodeItem[] => {
+		return nodes.sort((a, b) => {
+			// 优先级排序规则：
+			// 1. 响应时间越短越好
+			// 2. 使用率越低越好
+			// 3. 24小时健康率越高越好
+			// 4. 当前连接数越少越好
+
+			// 响应时间权重最高
+			const responseTimeDiff = a.last_response_time - b.last_response_time;
+			if (Math.abs(responseTimeDiff) > 1000) {
+				// 如果响应时间差异超过1秒
+				return responseTimeDiff;
+			}
+
+			// 使用率权重次之
+			const usageDiff = a.usage_percentage - b.usage_percentage;
+			if (Math.abs(usageDiff) > 5) {
+				// 如果使用率差异超过5%
+				return usageDiff;
+			}
+
+			// 24小时健康率
+			const healthDiff = b.health_percentage_24h - a.health_percentage_24h;
+			if (Math.abs(healthDiff) > 1) {
+				// 如果健康率差异超过1%
+				return healthDiff;
+			}
+
+			// 当前连接数
+			return a.current_connections - b.current_connections;
+		});
+	};
+
+	// 将节点添加到服务器列表的函数
+	const addNodesToServerList = (nodes: NodeItem[]) => {
+		// 提取服务器地址
+		const serverAddresses = nodes.map(node => node.address.replace(`${node.protocol}://`, ""));
+
+		// 去重并添加到基础服务器列表
+		const uniqueAddresses = uniq([...serverAddresses, ...mainStore.basePeers]);
+		mainStore.basePeers = uniqueAddresses;
+
+		// 如果当前没有选择服务器，自动选择第一个最佳节点
+		if (mainStore.config.serverUrl.length === 0 && serverAddresses.length > 0) {
+			mainStore.config.serverUrl = [serverAddresses[0]];
+			console.log(`自动选择最佳服务器: ${serverAddresses[0]}`);
+		}
+
+		console.log(`已添加 ${serverAddresses.length} 个可用服务器到列表`);
+	};
+
 	let logsTimer: number | null = null;
 	let serverLogsTimer: number | null = null;
 	let cidrTimer: number | null = null;
 
 	onMounted(async () => {
 		await compatibleInitServerUrl();
+		initNodesList();
 		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();
@@ -1384,6 +1552,7 @@
 			checkNewVersion();
 		}
 		await storageDialog();
+		
 	});
 
 	// storageEventEmitter.addEventListener("localStorageChange", () => {
@@ -1396,6 +1565,7 @@
 		return data.configJsonSeverUrl;
 	});
 
+
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
@@ -1405,6 +1575,7 @@
 		cidrTimer && clearInterval(cidrTimer);
 		stopPreventSleep();
 		// unListenStorage && unListenStorage();
+		
 	});
 
 	const getArgs = async () => {

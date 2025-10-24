@@ -113,7 +113,7 @@
 					sortable
 					prop="tx_bytes"
 					label="传输"
-					:sort-method="(a, b) => sortBytes(a, b, 'tx_bytes')"
+					:sort-method="(a: any, b: any) => sortBytes(a, b, 'tx_bytes')"
 					:sort-orders="['ascending', 'descending', null]"
 				></ElTableColumn>
 			</ElTable>

@@ -1,6 +1,6 @@
 [package]
 name = "easytier-game"
-version = "1.5.0"
+version = "1.5.1"
 homepage = "https://github.com/EasyTier/EasyTier"
 repository = "https://github.com/EasyTier/EasytierGame"
 description = "A simple network initiator based on Easytier"
@@ -18,7 +18,7 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.3.1", features = [] }
+tauri-build = { version = "2.5.1", features = [] }
 # prost-build = "0.13.2"
 
 [target.x86_64-pc-windows-msvc.build-dependencies]
@@ -28,24 +28,24 @@ thunk-rs = { git = "https://github.com/easytier/thunk.git", default-features = f
 serde_json = "1.0.137"
 serde = { version = "1.0.217", features = ["derive"] }
 log = "0.4.26"
-tauri = { version = "2.7.0", features = [ "protocol-asset",
+tauri = { version = "2.9.1", features = [ "protocol-asset",
     "tray-icon",
     "image-png",
     "image-ico"
 ] }
 
-tauri-plugin-log = "2.6.0"
-tauri-plugin-shell = "2.3.0"
+tauri-plugin-log = "2.7.0"
+tauri-plugin-shell = "2.3.1"
 reqwest = { version = "0.12.12", features = ["json"] }
 zip = "2.2.3"
 sysinfo = '0.33.1'
 # planif = { git = "https://github.com/mattrobineau/planif", tag = "1.0.1" }
 whoami = "1.5.2"
-tauri-plugin-fs = "2.4.1"
+tauri-plugin-fs = "2.4.2"
 tauri-plugin-clipboard-manager = "2.3.0"
 rand = "0.9.0"
 tokio = { version = "1.45.1", features = ["process"] }
-tauri-plugin-dialog = "2.3.1"
+tauri-plugin-dialog = "2.4.0"
 # prost = "0.13"
 # prost-types = "0.13"
 hashbrown = "0.15.2"
@@ -57,5 +57,5 @@ features = ["Win32_System_TaskScheduler", "Win32_System_Com", "Win32_System_Powe
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2.4.0"
-tauri-plugin-single-instance = "2.3.2"
+tauri-plugin-single-instance = "2.3.4"
 tauri-plugin-window-state = "2.4.0"

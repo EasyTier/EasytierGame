@@ -303,6 +303,8 @@ async fn get_members_by_cli() -> String {
 async fn get_route_by_cli() -> String {
     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
     match tokioCommand::new(&cli_path)
+        .arg("-o")
+        .arg("json")
         .arg("route")
         .creation_flags(0x08000000)
         .output()
@@ -816,10 +818,10 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             exec_action.SetPath(&BSTR::from(exe_path))?;
             exec_action.SetArguments(&BSTR::from("--task-auto-start"))?;
 
-            // 使用当前用户运行
+            // 使用管理员权限运行，用户账户无法修改
             let principal = task_definition.Principal()?;
-            principal.SetUserId(&BSTR::from(whoami::username().as_str()))?;
-            principal.SetLogonType(TASK_LOGON_INTERACTIVE_TOKEN)?;
+            principal.SetUserId(&BSTR::from("SYSTEM"))?;
+            principal.SetLogonType(TASK_LOGON_SERVICE_ACCOUNT)?;
             principal.SetRunLevel(TASK_RUNLEVEL_HIGHEST)?;
 
             // 设置任务设置
@@ -841,7 +843,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
                 TASK_CREATE_OR_UPDATE.0,
                 &VARIANT::default(),
                 &VARIANT::default(),
-                TASK_LOGON_INTERACTIVE_TOKEN,
+                TASK_LOGON_SERVICE_ACCOUNT,
                 &VARIANT::default(),
             )?;
 

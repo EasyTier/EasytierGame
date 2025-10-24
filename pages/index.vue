@@ -67,6 +67,7 @@
 			</template>
 			<ElSelect
 				allow-create
+				:reserve-keyword="false"
 				filterable
 				multiple
 				collapse-tags
@@ -962,7 +963,7 @@
 		// console.log(mainStore.config.serverUrl);
 		for (const p of protocols) {
 			for (const url of mainStore.config.serverUrl) {
-				if (url.toLowerCase().startsWith(`${p}://`)) {
+				if (url.replace(/\\/g, "/").toLowerCase().startsWith(`${p}://`)) {
 					inputProtocols.push(p);
 				}
 			}
@@ -971,8 +972,8 @@
 			mainStore.config.protocol = uniq([...mainStore.config.protocol, ...inputProtocols]);
 			mainStore.config.serverUrl = (mainStore.config.serverUrl || []).map(url => {
 				for (const p of protocols) {
-					if (url.toLowerCase().startsWith(`${p}://`)) {
-						return url.slice(inputProtocols.length + 3);
+					if (url.replace(/\\/g, "/").toLowerCase().startsWith(`${p}://`)) {
+						return url.slice(p.length + 3);
 					}
 				}
 				return url;
@@ -1385,52 +1386,6 @@
 		});
 	};
 
-	// 节点参数含义解析：
-	// - is_active: 节点是否激活运行
-	// - is_approved: 节点是否被管理员批准
-	// - allow_relay: 是否允许中继转发
-	// - current_health_status: 当前健康状态 ("healthy", "unhealthy", "unknown")
-	// - usage_percentage: 使用率百分比 (0-100)
-	// - health_percentage_24h: 24小时健康率 (0-100)
-	// - last_response_time: 最后响应时间(毫秒)，越小越好
-	// - current_connections: 当前连接数
-	// - max_connections: 最大连接数
-	// - protocol: 协议类型 ("tcp", "udp", "quic" 等)
-
-	const initNodesList = async () => {
-		let nodesList = await invoke<string>("fetch_nodes_list", { page: 1, limit: 1000 });
-		if (nodesList === "_EasytierGameFetchNodesError_") {
-			nodesList = "";
-		}
-		try {
-			const nodesListData: NodesResponse = JSON.parse(nodesList);
-			console.log("节点数据:", nodesListData);
-
-			if (nodesListData.success && nodesListData.data.items) {
-				// 过滤可用节点
-				const availableNodes = filterAvailableNodes(nodesListData.data.items);
-				console.log(`总节点数: ${nodesListData.data.items.length}, 可用节点数: ${availableNodes.length}`);
-
-				// 按优先级排序
-				const sortedNodes = sortNodesByPriority(availableNodes);
-
-				// 处理过滤后的节点数据
-				sortedNodes.forEach((node, index) => {
-					console.log(`${index + 1}. ${node.name} (${node.protocol}) - ${node.address}`);
-					console.log(
-						`   状态: ${node.current_health_status}, 使用率: ${node.usage_percentage.toFixed(1)}%, 响应时间: ${node.last_response_time}ms`
-					);
-					console.log(`   连接: ${node.current_connections}/${node.max_connections}, 24h健康率: ${node.health_percentage_24h}%`);
-				});
-
-				// 将可用节点添加到服务器列表
-				// addNodesToServerList(sortedNodes);
-			}
-		} catch (err) {
-			console.error("解析节点数据失败:", err);
-		}
-	};
-
 	// 过滤可用节点的函数
 	const filterAvailableNodes = (nodes: NodeItem[]): NodeItem[] => {
 		return nodes.filter(node => {
@@ -1532,7 +1487,6 @@
 
 	onMounted(async () => {
 		await compatibleInitServerUrl();
-		initNodesList();
 		await initGuiJson();
 		await compatibleInitAutoStart();
 		// await initAutoStart();

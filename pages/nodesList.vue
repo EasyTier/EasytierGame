@@ -87,7 +87,7 @@
 							:type="getResponseTimeType(row.last_response_time)"
 							size="small"
 						>
-							{{ row.last_response_time }}ms
+							{{ Number(row.last_response_time / 1000).toFixed(2) }}ms
 						</ElTag>
 					</template>
 				</ElTableColumn>
@@ -176,8 +176,8 @@ import { uniq } from "lodash-es";
 
 	// 获取响应时间类型
 	const getResponseTimeType = (responseTime: number) => {
-		if (responseTime < 1000) return "success";
-		if (responseTime < 5000) return "warning";
+		if (responseTime < 60 * 1000) return "success";
+		if (responseTime < 100 * 1000) return "warning";
 		return "danger";
 	};
 
@@ -196,9 +196,9 @@ import { uniq } from "lodash-es";
 			if (nodesList === "_EasytierGameFetchNodesError_") {
 				nodesList = "";
 			}
-
 			if (nodesList) {
 				const nodesListData: NodesResponse = JSON.parse(nodesList);
+				console.log(nodesListData);
 				if (nodesListData.success && nodesListData.data.items) {
 					// 过滤可用节点
 					const availableNodes = filterAvailableNodes(nodesListData.data.items);

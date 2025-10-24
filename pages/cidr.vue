@@ -69,7 +69,7 @@
 		data.isRunning = true;
 		const [error, member] = await ATJ(invoke<string>("get_route_by_cli"));
 		data.isRunning = false;
-		// if(!member) return;
+		if(!member) return;
 		if (error) {
 			data.route = [];
 			return "";
@@ -79,16 +79,7 @@
 			await listenOutput();
 			return;
 		}
-		const routeInfo = parseCliInfo(member);
-		routeInfo.forEach(value => {
-			if (value.cost === "Local") {
-				value.cost = "本机";
-			}
-			if (value.ipv4 && value.ipv4.includes("/")) {
-				value.ipv4 = value.ipv4.split("/")[0];
-			}
-		});
-		data.route = routeInfo;
+		data.route = JSON.parse(member);
 	};
 
 	const listenStart = async () => {

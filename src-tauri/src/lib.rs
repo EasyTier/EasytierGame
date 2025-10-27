@@ -696,11 +696,11 @@ fn autostart_enabled() -> Result<bool, Box<dyn std::error::Error>> {
 fn autostart_is_enabled() -> bool {
     match autostart_enabled() {
         Ok(enabled) => {
-            println!("autostart enabled: {}", enabled);
+            // println!("autostart enabled: {}", enabled);
             return enabled;
         }
-        Err(e) => {
-            log::error!("autostart enabled: false -> {}", e);
+        Err(_e) => {
+            // log::error!("autostart enabled: false -> {}", e);
             return false;
         }
     }
@@ -818,10 +818,9 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             exec_action.SetPath(&BSTR::from(exe_path))?;
             exec_action.SetArguments(&BSTR::from("--task-auto-start"))?;
 
-            // 使用管理员权限运行，用户账户无法修改
             let principal = task_definition.Principal()?;
-            principal.SetUserId(&BSTR::from("SYSTEM"))?;
-            principal.SetLogonType(TASK_LOGON_SERVICE_ACCOUNT)?;
+            principal.SetUserId(&BSTR::from(whoami::username().as_str()))?;
+            principal.SetLogonType(TASK_LOGON_INTERACTIVE_TOKEN)?;
             principal.SetRunLevel(TASK_RUNLEVEL_HIGHEST)?;
 
             // 设置任务设置
@@ -843,7 +842,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
                 TASK_CREATE_OR_UPDATE.0,
                 &VARIANT::default(),
                 &VARIANT::default(),
-                TASK_LOGON_SERVICE_ACCOUNT,
+                TASK_LOGON_INTERACTIVE_TOKEN,
                 &VARIANT::default(),
             )?;
 

@@ -15,16 +15,31 @@
 			>
 				<ElTableColumn
 					sortable
-					width="140"
 					label="成员名"
 					prop="hostname"
 				>
 					<template #default="{ row }">
-						{{
-							(row.hostname || "").toLowerCase().includes("publicserver")
-								? (row.hostname || "").replace("PublicServer", "服务器")
-								: row.hostname || "-"
-						}}
+						<div class="whitespace-pre-wrap">
+							<div>
+								{{
+									(row.hostname || "").toLowerCase().includes("publicserver")
+										? (row.hostname || "").replace("PublicServer", "服务器")
+										: row.hostname || "-"
+								}}
+							</div>
+							<div
+								class="space-y-1"
+								v-if="row?.connections_addrs?.length > 0"
+							>
+								<ElTag
+									:key="url"
+									v-for="url in row.connections_addrs"
+									class="!flex !h-auto !whitespace-pre-wrap !break-all !py-[5px]"
+								>
+									{{ url }}
+								</ElTag>
+							</div>
+						</div>
 					</template>
 				</ElTableColumn>
 				<ElTableColumn
@@ -127,19 +142,61 @@
 	import { ElConfirmDanger } from "~/utils/element";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { endsWith, isNaN } from "lodash-es";
-	// 	enum NatType {
-	//   // has NAT; but own a single public IP, port is not changed
-	//   Unknown = 0;
-	//   OpenInternet = 1;
-	//   NoPAT = 2;
-	//   FullCone = 3;
-	//   Restricted = 4;
-	//   PortRestricted = 5;
-	//   Symmetric = 6;
-	//   SymUdpFirewall = 7;
-	//   SymmetricEasyInc = 8;
-	//   SymmetricEasyDec = 9;
-	// }
+
+	type Member = {
+		cidr: string;
+		ipv4: string;
+		hostname: string;
+		cost: string;
+		lat_ms: string;
+		loss_rate: string;
+		rx_bytes: string;
+		tx_bytes: string;
+		tunnel_proto: string;
+		nat_type: string;
+		id: string;
+		version: string;
+		connections_addrs: string[];
+	};
+
+	type ConnectionsType = {
+		route: {
+			peer_id: number;
+			ipv4_addr: string | null;
+			next_hop_peer_id: number;
+			cost: number;
+			path_latency: number;
+			proxy_cidrs: string[];
+			hostname: string;
+			stun_info: {
+				udp_nat_type: number;
+				tcp_nat_type: number;
+				last_update_time: number;
+				public_ip: string[];
+				min_port: number;
+				max_port: number;
+			};
+		};
+		peer: {
+			peer_id: number;
+			conns: {
+				conn_id: string;
+				my_peer_id: number;
+				peer_id: number;
+				features: string[];
+				tunnel: {
+					tunnel_type: string;
+					local_addr: {
+						url: string;
+					};
+					remote_addr: {
+						url: string;
+					};
+				};
+			}[];
+		};
+	};
+
 	const natMaps = {
 		unknown: "未知",
 		OpenInternet: "nat0-openinternet",
@@ -154,13 +211,13 @@
 	};
 	type natKyes = keyof typeof natMaps;
 
-	const data = reactive<{ member: { hostname: string; cost: string; ipv4: string; lat_msg: string; loss_rate: string; nat_type: string }[] }>({
+	const data = reactive<{ member: Member[] }>({
 		member: []
 	});
 
 	// 延迟排序函数
-	const sortLatMs = (a: any, b: any): number => {
-		const getLatencyValue = (row: any): number => {
+	const sortLatMs = (a: Member, b: Member): number => {
+		const getLatencyValue = (row: Member): number => {
 			const latMs = row.lat_ms;
 
 			if (latMs === null || latMs === undefined || latMs === "") {
@@ -298,19 +355,6 @@
 		return num.toFixed(0);
 	};
 
-	const _showTableHeader = [
-		["hostname", "主机名"],
-		["cost", "路由"],
-		["ipv4", "虚拟网IP"],
-		["lat_ms", "延迟/ms"],
-		["loss_rate", "丢包率"],
-		["nat_type", "NAT类型"],
-		["version", "版本"],
-		["tunnel_proto", "隧道协议"],
-		["rx_bytes", "接收"],
-		["tx_bytes", "传输"]
-	];
-
 	let timer: number | null = null;
 
 	const listenOutput = async () => {
@@ -334,18 +378,23 @@
 			}
 			return;
 		}
-		// const peerInfo = parseCliInfo(member);
-		// peerInfo.forEach(value => {
-		// 	if (value.cost === "Local") {
-		// 		value.cost = "本机";
-		// 	}
-		// 	if (value.ipv4 && value.ipv4.includes("/")) {
-		// 		value.ipv4 = value.ipv4.split("/")[0];
-		// 	}
-		// });
-		// data.member = peerInfo;
+		const [errorConnections, connections] = await ATJ(invoke<string>("get_members_connections_cli"));
+		const memberConnections: ConnectionsType[] = JSON.parse(connections) as ConnectionsType[];
 
-		data.member = JSON.parse(member);
+		if (errorConnections != "_EasytierGameCliFailedToGetConnections_") {
+			data.member = (JSON.parse(member) as Member[]).map(member => {
+				const connection = memberConnections.find(conn => String(conn.route.peer_id) === member.id);
+				if (connection) {
+					member.connections_addrs = connection?.peer?.conns?.map(conn => conn?.tunnel?.remote_addr?.url || "") || [];
+				} else {
+					member.connections_addrs = [];
+				}
+				return member;
+			});
+		} else {
+			data.member = JSON.parse(member) as Member[];
+		}
+		// console.log(data.member);
 		startTimer();
 	};
 

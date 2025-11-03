@@ -10,6 +10,7 @@ dist
 .idea
 .vscode
 release
+target
 
 src-tauri/easytier/logs
 src-tauri/easytier/tool/ResourcesExtract.exe

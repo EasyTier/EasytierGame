@@ -337,6 +337,12 @@
 								<ElDivider class="!m-0 !h-[2px]" />
 							</ElDropdownItem>
 							<ElDropdownItem
+								command="cidr"
+								:icon="Share"
+							>
+								子网代理
+							</ElDropdownItem>
+							<!-- <ElDropdownItem
 								command="import_config"
 								:icon="Link"
 							>
@@ -347,7 +353,7 @@
 								:icon="Share"
 							>
 								分享联机配置
-							</ElDropdownItem>
+							</ElDropdownItem> -->
 							<ElDropdownItem
 								command="reconnect"
 								:icon="RefreshRight"
@@ -406,21 +412,32 @@
 					开机自启
 				</ElCheckbox>
 			</ElTooltip>
-			<div>
-				<ElButton
-					@click="handleShowCidrDialog"
-					:icon="Share"
-					size="small"
+			<div class="flex items-center gap-[0_2px]">
+				<ElDropdown
+					@command="handleStartCommand"
+					trigger="click"
+					:show-arrow="false"
 				>
-					子网代理
-				</ElButton>
-				<ElButton
-					@click="handleShowAdvanceDialog"
-					:icon="Setting"
-					size="small"
-				>
-					高级选项
-				</ElButton>
+					<ElButton
+						:icon="Share"
+						size="small"
+					>
+						分享/导入
+					</ElButton>
+					<template #dropdown>
+						<el-dropdown-item command="share_config">分享联机配置</el-dropdown-item>
+						<el-dropdown-item command="import_config">导入联机配置</el-dropdown-item>
+					</template>
+				</ElDropdown>
+				<div>
+					<ElButton
+						@click="handleShowAdvanceDialog"
+						:icon="Setting"
+						size="small"
+					>
+						高级选项
+					</ElButton>
+				</div>
 			</div>
 			<div class="flex items-center gap-[0_5px]">
 				<div>
@@ -1172,7 +1189,6 @@
 		);
 	};
 
-
 	let unlistenDownload: UnlistenFn | null = null;
 	let unlistenDownloadError: UnlistenFn | null = null;
 	let progress = ref<number>(0);
@@ -1506,7 +1522,6 @@
 			checkNewVersion();
 		}
 		await storageDialog();
-		
 	});
 
 	// storageEventEmitter.addEventListener("localStorageChange", () => {
@@ -1519,7 +1534,6 @@
 		return data.configJsonSeverUrl;
 	});
 
-
 	onBeforeUnmount(() => {
 		unListenAll();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
@@ -1529,7 +1543,6 @@
 		cidrTimer && clearInterval(cidrTimer);
 		stopPreventSleep();
 		// unListenStorage && unListenStorage();
-		
 	});
 
 	const getArgs = async () => {
@@ -1600,7 +1613,7 @@
 			args.push("--disable-p2p");
 		}
 		if (mainStore.config.disableIpv6) {
-			args.push("--disable-ipv6");
+			args.push("--disable-ipv6", "true");
 		}
 		if (mainStore.config.disbleListenner) {
 			args.push("--no-listener");
@@ -1632,28 +1645,28 @@
 			mainStore.config.proxyNetworks = formatProxyNetworks.join("\n");
 		}
 		if (mainStore.config.disableEncryption) {
-			args.push("--disable-encryption");
+			args.push("--disable-encryption", "true");
 		}
 		if (mainStore.config.multiThread) {
-			args.push("--multi-thread");
+			args.push("--multi-thread", "true");
 		}
 		if (mainStore.config.enablExitNode) {
-			args.push("--enable-exit-node");
+			args.push("--enable-exit-node", "true");
 		}
 		if (mainStore.config.noTun) {
-			args.push("--no-tun");
+			args.push("--no-tun", "true");
 		}
 		if (mainStore.config.latencyfirst) {
-			args.push("--latency-first");
+			args.push("--latency-first", "true");
 		}
 		if (mainStore.config.useSmoltcp) {
-			args.push("--use-smoltcp");
+			args.push("--use-smoltcp", "true");
 		}
 		if (mainStore.config.disableUdpHolePunching) {
-			args.push("--disable-udp-hole-punching");
+			args.push("--disable-udp-hole-punching", "true");
 		}
 		if (mainStore.config.relayAllPeerrpc) {
-			args.push("--relay-all-peer-rpc");
+			args.push("--relay-all-peer-rpc", "true");
 		}
 		if (mainStore.config.saveErrorLog) {
 			args.push("--file-log-level", mainStore.config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
@@ -1680,7 +1693,7 @@
 			args.push("--bind-device", "true");
 		}
 		if (mainStore.proxyForwardBySystem) {
-			args.push("--proxy-forward-by-system");
+			args.push("--proxy-forward-by-system", "true");
 		}
 		if (mainStore.config.acceptDNS) {
 			args.push("--accept-dns", "true");
@@ -1878,6 +1891,9 @@
 		}
 		if (command === "create_server") {
 			await handleShowServerDialog();
+		}
+		if (command === "cidr") {
+			await handleShowCidrDialog();
 		}
 		if (command === "config_admin") {
 			configAdminData.visible = true;

@@ -49,7 +49,7 @@
 		}
 	},
 	"bundle": {
-		"active": true,
+		"active": false,
 		"targets": "all",
 		"resources": [
 			"easytier/config/",
@@ -72,7 +72,9 @@
 		"windows": {
 			"webviewInstallMode": {
 				"type": "embedBootstrapper"
-			}
+			},
+			"wix": null,
+			"nsis": null
 		},
 		"createUpdaterArtifacts": false,
 		"icon": ["icons/icon.png", "icons/icon.rgba", "icons/icon.icns", "icons/icon.ico"]

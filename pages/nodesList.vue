@@ -1,46 +1,53 @@
 <template>
 	<div class="relative flex h-full flex-col flex-wrap gap-[0] overflow-hidden">
-		<div class="flex h-[40px] w-full flex-nowrap items-center gap-[0_5px]">
-			<div class="ml-[5px] mr-auto flex flex-1">
+		<div class="flex h-[40px] w-full flex-nowrap items-center gap-[0_8px]">
+			<div class="ml-[5px] mr-auto flex">
 				<ElText class="text-lg font-semibold">公共服务器节点列表</ElText>
 			</div>
-			<div>
-				<ElButton
-					:loading="loading"
-					size="small"
-					type="primary"
-					class="mr-[5px]"
-					@click="refreshNodes"
-				>
-					刷新
-				</ElButton>
-				<ElButton
-					:disabled="selectedNodes.length === 0"
-					size="small"
-					type="success"
-					class="mr-[5px]"
-					@click="addSelectedToServerList"
-				>
-					添加选中 ({{ selectedNodes.length }})
-				</ElButton>
-				<ElTag
-					v-if="lastUpdateTime"
-					size="small"
-					type="info"
-				>
-					最后更新: {{ lastUpdateTime }}
-				</ElTag>
+			<div class="flex w-fit flex-nowrap items-center gap-[0_8px]">
+				<div>
+					<ElInput
+						placeholder="搜索名称/地址"
+						v-model="searchName"
+						clearable
+					></ElInput>
+				</div>
+				<div>
+					<ElButton
+						size="small"
+						type="primary"
+						@click="refreshNodes"
+					>
+						刷新
+					</ElButton>
+					<ElButton
+						:disabled="selectedNodes.length === 0"
+						size="small"
+						type="success"
+						class="mr-[8px]"
+						@click="addSelectedToServerList"
+					>
+						添加选中 ({{ selectedNodes.length }})
+					</ElButton>
+					<ElTag
+						size="small"
+						type="info"
+					>
+						最后更新: {{ lastUpdateTime || "00:00:00" }}
+					</ElTag>
+				</div>
 			</div>
 		</div>
 		<div class="flex w-full flex-1 flex-wrap gap-[0] overflow-auto">
 			<ElTable
-				:data="nodes"
+				:data="computedNodes"
 				stripe
 				height="100%"
 				ref="tableRef"
 				:empty-text="loading ? '加载中...' : '暂无可用服务器'"
 				:default-sort="{ prop: 'last_response_time', order: 'ascending' }"
-				@selection-change="handleSelectionChange"
+				@select-all="handleSelectChange"
+				@select="handleSelectChange"
 				@row-click="handleRowClick"
 			>
 				<ElTableColumn
@@ -151,10 +158,11 @@
 <script setup lang="ts">
 	import useMainStore from "@/stores/index";
 	import { invoke } from "@tauri-apps/api/core";
-	import { reactive, onMounted, onBeforeUnmount, ref, useTemplateRef } from "vue";
+	import { reactive, onMounted, onBeforeUnmount, ref, useTemplateRef, computed, nextTick } from "vue";
 	import { ElMessage, type TableInstance } from "element-plus";
 	import { dataSubscribe } from "~/composables/windows";
-import { uniq } from "lodash-es";
+	import { inputBounceRef } from "@/utils";
+	import { uniq } from "lodash-es";
 
 	const mainStore = useMainStore();
 	// 节点数据
@@ -162,6 +170,20 @@ import { uniq } from "lodash-es";
 	const loading = ref(false);
 	const lastUpdateTime = ref("");
 	const selectedNodes = ref<NodeItem[]>([]);
+	const searchName = ref<string>("");
+	const computedNodes = computed(() => {
+		const v = searchName.value.trim();
+		let result = nodes;
+		if (v) {
+			result = nodes.filter(node => node.name.includes(v) || node.address.includes(v));
+		}
+		nextTick(() => {
+			for (const node of selectedNodes.value) {
+				tableRef.value?.toggleRowSelection(node, true);
+			}
+		});
+		return result;
+	});
 	const tableRef = useTemplateRef<TableInstance>("tableRef");
 
 	// 定时器
@@ -191,14 +213,15 @@ import { uniq } from "lodash-es";
 	// 刷新节点数据
 	const refreshNodes = async () => {
 		loading.value = true;
+		let nodesList = await invoke<string>("fetch_nodes_list", { page: 1, limit: 1000 });
 		try {
-			let nodesList = await invoke<string>("fetch_nodes_list", { page: 1, limit: 1000 });
 			if (nodesList === "_EasytierGameFetchNodesError_") {
 				nodesList = "";
+				return;
 			}
 			if (nodesList) {
 				const nodesListData: NodesResponse = JSON.parse(nodesList);
-				console.log(nodesListData);
+				// console.log(nodesListData);
 				if (nodesListData.success && nodesListData.data.items) {
 					// 过滤可用节点
 					const availableNodes = filterAvailableNodes(nodesListData.data.items);
@@ -215,6 +238,7 @@ import { uniq } from "lodash-es";
 				}
 			}
 		} catch (err) {
+			console.log(nodesList);
 			console.error("获取节点数据失败:", err);
 			ElMessage.error("获取节点数据失败");
 		} finally {
@@ -303,7 +327,7 @@ import { uniq } from "lodash-es";
 	const startRefreshTimer = () => {
 		refreshTimer = setInterval(() => {
 			refreshNodes();
-		}, 10000); // 10秒刷新一次
+		}, 60000); // 10秒刷新一次
 	};
 
 	// 停止定时器
@@ -315,12 +339,13 @@ import { uniq } from "lodash-es";
 	};
 
 	// 处理选择变化
-	const handleSelectionChange = (selection: NodeItem[]) => {
+	const handleSelectChange = (selection: NodeItem[]) => {
 		selectedNodes.value = selection;
 	};
 
 	const handleRowClick = (row: NodeItem) => {
 		tableRef.value?.toggleRowSelection(row);
+		selectedNodes.value = tableRef.value?.getSelectionRows() || [];
 	};
 
 	// 添加选中的服务器到主页面服务器列表

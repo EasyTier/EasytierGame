@@ -300,6 +300,34 @@ async fn get_members_by_cli() -> String {
 }
 
 #[tauri::command(rename_all = "snake_case")]
+async fn get_members_proxy() -> String {
+     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
+    match tokioCommand::new(&cli_path)
+        .arg("-o")
+        .arg("json")
+        .arg("proxy")
+        .creation_flags(0x08000000)
+        .output()
+        .await
+    {
+        Ok(output) => {
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+                return output_str.trim().to_string();
+            } else {
+                let output_str = String::from_utf8_lossy(&output.stderr);
+                log::error!("{}", output_str.trim().to_string());
+                return "_EasytierGameCliFailedToGetProxy_".to_string();
+            }
+        }
+        Err(_e) => {
+            log::error!("get member list error");
+            return "".to_string();
+        }
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
 async fn get_members_connections_cli() -> String {
     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
     match tokioCommand::new(&cli_path)

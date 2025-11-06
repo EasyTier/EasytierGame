@@ -10,7 +10,7 @@
 			<ElTable
 				stripe
 				border
-				:data="data.member"
+				:data="computedMember"
 				v-else
 			>
 				<ElTableColumn
@@ -65,7 +65,23 @@
 					label="虚拟网IP"
 					:sort-method="sortIpv4"
 					:sort-orders="['ascending', 'descending', null]"
-				></ElTableColumn>
+				>
+					<template #default="{ row }">
+						<div class="space-y-[5px]">
+							<div>
+								{{ row.ipv4 || "-" }}
+							</div>
+							<div v-if="row.proxy?.[0]">
+								<ElTag
+									size="small"
+									:type="row.proxy?.[1] == 'Connected' ? 'success' : 'danger'"
+								>
+									{{ row.proxy?.[0] || "-" }}
+								</ElTag>
+							</div>
+						</div>
+					</template>
+				</ElTableColumn>
 				<ElTableColumn
 					sortable
 					prop="lat_ms"
@@ -137,7 +153,7 @@
 </template>
 <script setup lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { reactive, onMounted, onBeforeUnmount } from "vue";
+	import { reactive, onMounted, onBeforeUnmount, computed } from "vue";
 	import { ATJ, parseCliInfo } from "@/utils";
 	import { ElConfirmDanger } from "~/utils/element";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -157,6 +173,7 @@
 		id: string;
 		version: string;
 		connections_addrs: string[];
+		proxy?: [string, "Connected" | "Closed"];
 	};
 
 	type ConnectionsType = {
@@ -209,10 +226,35 @@
 		symmetriceasyinc: "nat4-easyinc",
 		symUdpfirewall: "nat4-udpfirewall"
 	};
+
+	type Proxy = {
+		src: string;
+		dst: string;
+		start_time: string;
+		state: "Connected" | "Closed";
+		transport_type: string;
+	};
+
 	type natKyes = keyof typeof natMaps;
 
-	const data = reactive<{ member: Member[] }>({
-		member: []
+	const data = reactive<{ member: Member[]; proxy: Proxy[] }>({
+		member: [],
+		proxy: []
+	});
+
+	const computedMember = computed(() => {
+		const localMember = data.member.find(member => member?.cost == "Local");
+		if (!localMember) return data.member;
+		const ipv4 = localMember.ipv4;
+		const proxyMember = data.proxy?.filter(proxy => proxy.src.startsWith(`${ipv4}:`));
+		const proxyObj: Record<string, [string, "Connected" | "Closed"]> = {};
+		for (const proxy of proxyMember) {
+			proxyObj[proxy.src.split(":")[0]] = [proxy.transport_type, proxy.state];
+		}
+		return data.member.map(m => {
+			m.proxy = proxyObj?.[m.ipv4.split(":")?.[0]] || m?.proxy || ["", "Closed"];
+			return m;
+		});
 	});
 
 	// 延迟排序函数
@@ -395,7 +437,25 @@
 			data.member = JSON.parse(member) as Member[];
 		}
 		// console.log(data.member);
+		getMembersProxy();
 		startTimer();
+	};
+
+	const getMembersProxy = async () => {
+		const [error, proxy] = await ATJ(invoke<string>("get_members_proxy"));
+		if (error) {
+			data.proxy = [];
+			return "";
+		}
+		if (proxy === "_EasytierGameCliFailedToGetProxy_") {
+			data.proxy = [];
+			return "";
+		}
+		try {
+			data.proxy = JSON.parse(proxy) as Proxy[];
+		} catch (error) {
+			data.proxy = [];
+		}
 	};
 
 	const startTimer = () => {

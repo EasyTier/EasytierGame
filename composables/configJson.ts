@@ -30,7 +30,6 @@ export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType)
 		const {
 			proxyNetworks,
 			autoStart,
-			connectAfterStart,
 			saveErrorLog,
 			serverUrl,
 			enableCustomListener,
@@ -39,10 +38,6 @@ export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType)
 			acceptDNS,
 			enablePortForward,
 			portForwardData,
-			tcpWhitelist,
-			udpWhitelist,
-			tcpWhitelistEnable,
-			udpWhitelistEnable,
 			...otherConfig
 		} = mainStore.config;
 		let writeServerUrl: Array<string> = serverUrl;

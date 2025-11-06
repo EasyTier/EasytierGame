@@ -3,10 +3,11 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-shell";
 import { ElMessage } from "element-plus";
 import { flatMap, map } from "lodash-es";
+import { customRef, ref } from "vue";
 
 export const ENV = import.meta.env;
 
-export const mixedArray = (a: Array<string>, b: Array<string>, split:string="") => {
+export const mixedArray = (a: Array<string>, b: Array<string>, split: string = "") => {
 	return flatMap(a, protocol => map(b, port => `${protocol}${split}${port}`));
 };
 
@@ -19,6 +20,26 @@ export const bounce = (time = 3000) => {
 			cb();
 		}, time);
 	};
+};
+
+export const inputBounceRef = (value: string, cb?: Function, delay = 650) => {
+	let timeout: number | null = null;
+	return customRef((track, trigger) => {
+		return {
+			get() {
+				track();
+				return value;
+			},
+			set(newValue) {
+				value = newValue;
+				trigger();
+				timeout && clearTimeout(timeout);
+				timeout = setTimeout(() => {
+					cb?.(newValue);
+				}, delay);
+			}
+		};
+	});
 };
 
 /**
@@ -73,7 +94,7 @@ export const ATJ = (promise: Promise<any>, errorExt: string | undefined = undefi
 		});
 };
 
-const _supportProtocols = ["tcp", "udp", "ws", "wss", 'srv', 'schema'];
+const _supportProtocols = ["tcp", "udp", "ws", "wss", "srv", "schema"];
 
 export const supportProtocols = () => {
 	return _supportProtocols.slice();

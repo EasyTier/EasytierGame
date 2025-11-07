@@ -875,6 +875,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             exec_action.SetPath(&BSTR::from(exe_path))?;
             exec_action.SetArguments(&BSTR::from("--task-auto-start"))?;
 
+            // 设置任务权限为当前用户
             let principal = task_definition.Principal()?;
             principal.SetUserId(&BSTR::from(whoami::username().as_str()))?;
             principal.SetLogonType(TASK_LOGON_INTERACTIVE_TOKEN)?;
@@ -883,7 +884,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
             // 设置任务设置
             let settings = task_definition.Settings()?;
             settings.SetEnabled(VARIANT_BOOL::from(true))?;
-            settings.SetCompatibility(TASK_COMPATIBILITY_V2)?; // Windows 7
+            settings.SetCompatibility(TASK_COMPATIBILITY_V2_1)?; // Windows 7
             settings.SetStartWhenAvailable(VARIANT_BOOL::from(true))?;
             // settings.SetHidden(VARIANT_BOOL::from(true))?; // 注释掉让任务可见
             settings.SetExecutionTimeLimit(&BSTR::from("PT0S"))?;

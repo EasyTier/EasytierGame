@@ -14,7 +14,13 @@
     "networkName": "",  //房间名
     "networkPassword": "", //房间密码
     "hostname": "", //主机名
-    "ipv4": "", // 虚拟IP地址
+    "ipv4": "", // 虚拟IPv4地址
+    "ipv6": "", // 虚拟IPv6地址
+    "tcpWhitelistEnable": false, // 启用TCP白名单
+    "udpWhitelistEnable": false, // 启用UDP白名单
+    "tcpWhitelist": "", // TCP端口白名单，格式为 "80" 或者 范围 "8000-9000"
+    "udpWhitelist": "", // UDP端口白名单，格式为 "53" 或者 范围 "5000-6000"
+    "connectAfterStart": false, // 启动后自动连接
     "disableIpv6": false,  // 禁用ipv6
     "disbleListenner": false, //    禁用监听
     "disableEncryption": false, // 禁用加密

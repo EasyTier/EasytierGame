@@ -143,7 +143,6 @@
 				<ElTableColumn
 					prop="description"
 					label="描述"
-					width="300"
 					sortable
 				>
 					<template #default="{ row }">
@@ -179,7 +178,8 @@
 		}
 		nextTick(() => {
 			for (const node of selectedNodes.value) {
-				tableRef.value?.toggleRowSelection(node, true);
+				const nodeItem = nodes?.find(n => n.id === node.id);
+				tableRef.value?.toggleRowSelection(nodeItem, true);
 			}
 		});
 		return result;

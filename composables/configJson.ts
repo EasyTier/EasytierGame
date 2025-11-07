@@ -7,7 +7,7 @@ import { bounce } from "~/utils";
 const b = bounce(600);
 export type ConfigServerUrlType = Array<string>;
 
-export const updateConfigJsonBounce = (configJsonSeverUrl?: ConfigServerUrlType) => {
+export const updateConfigJsonBounce = (configJsonSeverUrl?: ConfigServerUrlType | null) => {
 	b(async () => {
 		const mainStore = useMainStore();
 		if (mainStore.createConfigInEasytier) {
@@ -16,7 +16,7 @@ export const updateConfigJsonBounce = (configJsonSeverUrl?: ConfigServerUrlType)
 	});
 };
 
-export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType) => {
+export const updateConfigJson = async (configJsonSeverUrl?: ConfigServerUrlType | null) => {
 	const mainStore = useMainStore();
 	const path = import.meta.env.VITE_CONFIG_FILE_NAME;
 	if (isNil(configJsonSeverUrl)) {

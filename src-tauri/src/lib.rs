@@ -988,6 +988,7 @@ pub fn run() {
             download_easytier_zip,
             get_members_by_cli,
             get_members_connections_cli,
+            get_members_proxy,
             get_route_by_cli,
             fetch_nodes_list,
             search_pid_by_pname,

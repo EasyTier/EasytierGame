@@ -72,12 +72,14 @@
 								{{ row.ipv4 || "-" }}
 							</div>
 							<div v-if="row.proxy?.[0]">
-								<ElTag
-									size="small"
-									:type="row.proxy?.[1] == 'Connected' ? 'success' : 'danger'"
-								>
-									{{ row.proxy?.[0] || "-" }}
-								</ElTag>
+								<ElTooltip :content="row.proxy?.[1] == 'Connected' ? '已连接' : '已断开'">
+									<ElTag
+										size="small"
+										:type="row.proxy?.[1] == 'Connected' ? 'success' : 'danger'"
+									>
+										{{ row.proxy?.[0] || "-" }}代理
+									</ElTag>
+								</ElTooltip>
 							</div>
 						</div>
 					</template>
@@ -249,7 +251,7 @@
 		const proxyMember = data.proxy?.filter(proxy => proxy.src.startsWith(`${ipv4}:`));
 		const proxyObj: Record<string, [string, "Connected" | "Closed"]> = {};
 		for (const proxy of proxyMember) {
-			proxyObj[proxy.src.split(":")[0]] = [proxy.transport_type, proxy.state];
+			proxyObj[proxy.dst.split(":")[0]] = [proxy.transport_type, proxy.state];
 		}
 		return data.member.map(m => {
 			m.proxy = proxyObj?.[m.ipv4.split(":")?.[0]] || m?.proxy || ["", "Closed"];

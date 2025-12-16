@@ -1,6 +1,6 @@
 <template>
 	<div class="h-full overflow-auto">
-		<div class="w-[1200px]">
+		<div class="max-w-[2000px]">
 			<ElText
 				size="small"
 				v-if="!data.member || data.member.length <= 0"
@@ -19,7 +19,7 @@
 					prop="hostname"
 				>
 					<template #default="{ row }">
-						<div class="whitespace-pre-wrap">
+						<div :class="`whitespace-pre-wrap`">
 							<div>
 								{{
 									(row.hostname || "").toLowerCase().includes("publicserver")
@@ -44,7 +44,7 @@
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="90"
+					width="70"
 					prop="cost"
 					label="方式"
 				>
@@ -87,7 +87,7 @@
 				<ElTableColumn
 					sortable
 					prop="lat_ms"
-					width="100"
+					width="80"
 					label="延迟/ms"
 					:sort-method="sortLatMs"
 					:sort-orders="['ascending', 'descending', null]"
@@ -98,7 +98,7 @@
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="100"
+					width="70"
 					prop="loss_rate"
 					label="丢包率"
 				>
@@ -114,7 +114,7 @@
 				</ElTableColumn>
 				<ElTableColumn
 					sortable
-					width="110"
+					width="100"
 					label="NAT类型"
 					prop="nat_type"
 				>

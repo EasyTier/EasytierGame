@@ -1,7 +1,7 @@
 use reqwest::{Client, Error};
 // use futures_util::StreamExt;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde::{Deserialize};
+// use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
@@ -235,38 +235,6 @@ fn get_tool_exe_path(path: &str) -> String {
     let tool_path = format!("{}{}", cur_vec[1].as_str(), path);
     // log::error!("tool path: {}", tool_path);
     return tool_path;
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct RoutePeerInfo {
-    peer_id: u64,
-    cost: u64,
-    hostname: Option<String>,
-    udp_stun_info: String,
-    easytier_version: String,
-    network_length: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct RouteTable {
-    peer_infos: HashMap<u32, RoutePeerInfo>,
-    ipv4_peer_id_map: HashMap<String, u64>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct PeerRouteServiceImpl {
-    route_table_with_cost: RouteTable,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct PeerRoute {
-    my_peer_id: u64,
-    service_impl: PeerRouteServiceImpl,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct MyResponse {
-    response: PeerRoute,
 }
 
 

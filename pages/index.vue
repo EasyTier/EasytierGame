@@ -1013,6 +1013,12 @@
 			getMemeberTimer && clearInterval(getMemeberTimer);
 			getMemeberTimer = setInterval(async () => {
 				const [error, member] = await ATJ(invoke<string>("get_members_by_cli"));
+				if(!data.isStart) {
+					getMemeberTimer && clearInterval(getMemeberTimer);
+					getMemeberTimer = null;
+					ipReset();
+					return;
+				}
 				if (!error && member !== "_EasytierGameCliFailedToConnect_") {
 					const memberJson = JSON.parse(member) as Member[];
 					const localData = memberJson.find(member => member?.cost == "Local");
@@ -1641,7 +1647,6 @@
 
 	const reset = async () => {
 		data.isStart = false;
-		await ipReset();
 		const memberDialog = await getAllWebviewWindows();
 		const memberDialogs = memberDialog.filter(item => item.label === "member");
 		if (memberDialogs && memberDialogs.length > 0) {
@@ -1653,8 +1658,8 @@
 				}
 			}
 		}
-
 		await unListenAll();
+		await ipReset();
 	};
 
 	const handleConnection = async () => {
@@ -2021,7 +2026,7 @@
 
 	const handleShowMemberDialog = async () => {
 		if (!data.isStart) {
-			return ElMessage.warning("请先开始联机");
+			return ElMessage.warning("请先启动联机");
 		}
 		// if (!mainStore.config.ipv4) {
 		// 	return ElMessage.warning("请等待获取IP");

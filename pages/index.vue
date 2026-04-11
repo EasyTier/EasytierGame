@@ -1552,7 +1552,9 @@
 					return /^\d+\.\d+\.\d+\.\d+\/\d+$/g.test(cidr);
 				});
 			if (newformatProxyNetworks.length > 0) {
-				args.push("--proxy-networks", ...newformatProxyNetworks);
+				for(const cidr of newformatProxyNetworks) {
+					args.push(`-n ${cidr}`);
+				}
 			}
 			mainStore.config.proxyNetworks = formatProxyNetworks.join("\n");
 		}

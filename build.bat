@@ -1,7 +1,8 @@
+chcp 65001
 pnpm run build
-rustup default nightly
+@REM rustup default nightly
 
-pnpm tauri build -- -Z  build-std --target x86_64-win7-windows-msvc
+@REM pnpm tauri build -- -Z  build-std --target x86_64-win7-windows-msvc
 rustup default stable
 pnpm tauri build
 

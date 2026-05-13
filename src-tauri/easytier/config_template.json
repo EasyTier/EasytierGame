@@ -37,6 +37,11 @@
     "enableNetCardMetric": true, // 启用自定义网卡跃点
     "netCardMetricValue": 1, // 网卡跃点
     "enablePreventSleep": false, // 启用防止睡眠
+    "enableUdpBroadcastRelay": true, // Windows UDP广播中继
+    "enableUpnp": true, // UPnP端口映射
+    "ipv6PublicAddrProvider": false, // 公网IPv6地址前缀提供
+    "ipv6PublicAddrAuto": false, // 公网IPv6地址自动获取
+    "disableRelayData": false, // 禁用Relay数据转发
     "compression": "none", // 压缩算法
     "enableKcpProxy": true, // 启用kcp代理，就不能启用quic代理
     "disableKcpInput": false, //     禁用kcp输入

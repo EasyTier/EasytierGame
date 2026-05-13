@@ -44,6 +44,11 @@ const store = defineStore("main", {
 				enableNetCardMetric: true, //启用网卡自定义跃点
 				netCardMetricValue: 1, //自定义网卡跃点值
 				enablePreventSleep: false, //组织系统休眠
+				enableUdpBroadcastRelay: true, //Windows UDP广播中继
+				enableUpnp: true, //UPnP端口映射
+				ipv6PublicAddrProvider: false, //公网IPv6地址前缀提供
+				ipv6PublicAddrAuto: false, //公网IPv6地址自动获取
+				disableRelayData: false, //禁用Relay数据转发
 				compression: "none", //加密算法
 				enableKcpProxy: true, //启用kcp代理  默认开启
 				disableKcpInput: false, //禁用kcp输入
@@ -66,6 +71,8 @@ const store = defineStore("main", {
 				privateMode: false, //是否启用私有模式
 				privateNetworkName: "", // 私有模式房间名
 				privateNetworkPassword: "", // 私有模式密码
+				ipv6PublicAddrProvider: false, //公网IPv6地址前缀提供
+				disableRelayData: false, //禁用Relay数据转发
 			},
 			cidrEnable: false,
 			proxyForwardBySystem: false, // 是否通过系统内核转发子网代理数据包，禁用内置NAT

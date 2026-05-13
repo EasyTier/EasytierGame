@@ -31,6 +31,12 @@ export const getServerArgs = () => {
 	if (networkSecret) {
 		args.push("--network-secret", networkSecret);
 	}
+	if (mainStore.serverConfig.ipv6PublicAddrProvider) {
+		args.push("--ipv6-public-addr-provider", "true");
+	}
+	if (mainStore.serverConfig.disableRelayData) {
+		args.push("--disable-relay-data", "true");
+	}
 
 	return args;
 };

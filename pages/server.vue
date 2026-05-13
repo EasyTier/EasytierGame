@@ -44,6 +44,18 @@
 							>
 								<ElCheckbox v-model="mainStore.serverConfig.relayAllPeerrpc">转发所有对等节点的RPC数据包</ElCheckbox>
 							</ElTooltip>
+							<ElTooltip
+								placement="top"
+								content="持有公网 IPv6 前缀时开启，让同网络下其他节点自动获取独立公网地址"
+							>
+								<ElCheckbox v-model="mainStore.serverConfig.ipv6PublicAddrProvider">公网IPv6地址前缀提供</ElCheckbox>
+							</ElTooltip>
+							<ElTooltip
+								placement="top"
+								content="禁止节点转发 relay 数据流量而保留控制面功能，适用于不希望本节点承担中继带宽的场景"
+							>
+								<ElCheckbox v-model="mainStore.serverConfig.disableRelayData">禁用Relay数据转发</ElCheckbox>
+							</ElTooltip>
 						</div>
 					</div>
 				</template>

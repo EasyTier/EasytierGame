@@ -38,6 +38,15 @@
 		</div>
 		<div><ElCheckbox v-model="mainStore.config.enablePreventSleep">防止系统休眠(比如:屏幕会一直亮着)</ElCheckbox></div>
 		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.enableUdpBroadcastRelay">Windows UDP 广播中继</ElCheckbox>
+			<ElTooltip
+				content="开启后，虚拟网络内的其他设备可以接收到本机发出的 UDP 广播包，让依赖局域网广播的应用（如局域网游戏发现、DLNA 投屏）在虚拟网络中正常工作"
+			>
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.6.4" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
 			<ElCheckbox v-model="mainStore.config.latencyfirst">使用低延迟模式</ElCheckbox>
 			<ElTooltip content="弱网环境下可能会导致网络延迟延迟忽高忽低">
 				<ElIcon><QuestionFilled /></ElIcon>
@@ -98,14 +107,22 @@
 			<CoreVersionWarning version="2.3.1" />
 		</div>
 		<ElDivider />
-		<div class="flex w-full flex-nowrap items-center gap-[5px] mb-[3px]">
+		<div class="mb-[3px] flex w-full flex-nowrap items-center gap-[5px]">
 			<ElCheckbox v-model="mainStore.config.tcpWhitelistEnable">TCP端口白名单</ElCheckbox>
-			<ElInput class="flex-1" v-model="mainStore.config.tcpWhitelist" placeholder="支持单个端口（80）和范围（8000-9000）" />
+			<ElInput
+				class="flex-1"
+				v-model="mainStore.config.tcpWhitelist"
+				placeholder="支持单个端口（80）和范围（8000-9000）"
+			/>
 			<CoreVersionWarning version="2.4.2" />
 		</div>
 		<div class="flex w-full flex-nowrap items-center gap-[5px]">
 			<ElCheckbox v-model="mainStore.config.udpWhitelistEnable">UDP端口白名单</ElCheckbox>
-			<ElInput class="flex-1" v-model="mainStore.config.udpWhitelist" placeholder="支持单个端口（53）和范围（5000-6000）" />
+			<ElInput
+				class="flex-1"
+				v-model="mainStore.config.udpWhitelist"
+				placeholder="支持单个端口（53）和范围（5000-6000）"
+			/>
 			<CoreVersionWarning version="2.4.2" />
 		</div>
 		<div class="flex items-center gap-[10px]">
@@ -351,6 +368,35 @@
 			>
 				打开日志目录
 			</ElButton>
+		</div>
+		<ElDivider />
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.enableUpnp">UPnP 端口映射</ElCheckbox>
+			<ElTooltip content="自动向路由器请求端口映射，默认开启，启动时无需额外配置">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.6.2" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.ipv6PublicAddrProvider">公网 IPv6 地址前缀提供</ElCheckbox>
+			<ElTooltip content="持有公网 IPv6 前缀的节点可开启，让同网络下其他节点自动获取独立公网地址">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.6.2" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.ipv6PublicAddrAuto">公网 IPv6 地址自动获取</ElCheckbox>
+			<ElTooltip content="从持有公网 IPv6 前缀的提供者节点自动获取独立公网地址">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.6.2" />
+		</div>
+		<div class="flex flex-nowrap items-center gap-[5px]">
+			<ElCheckbox v-model="mainStore.config.disableRelayData">禁用 Relay 数据转发</ElCheckbox>
+			<ElTooltip content="禁止节点转发 relay 数据流量而保留控制面功能，适用于不希望本节点承担中继带宽的场景">
+				<ElIcon><QuestionFilled /></ElIcon>
+			</ElTooltip>
+			<CoreVersionWarning version="2.6.3" />
 		</div>
 	</div>
 </template>

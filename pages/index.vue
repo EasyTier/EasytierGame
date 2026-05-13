@@ -1553,7 +1553,7 @@
 				});
 			if (newformatProxyNetworks.length > 0) {
 				for(const cidr of newformatProxyNetworks) {
-					args.push(`-n ${cidr}`);
+					args.push("-n", cidr);
 				}
 			}
 			mainStore.config.proxyNetworks = formatProxyNetworks.join("\n");
@@ -1602,6 +1602,21 @@
 		}
 		if (mainStore.config.disableQuicInput) {
 			args.push("--disable-quic-input", "true");
+		}
+		if (mainStore.config.enableUdpBroadcastRelay) {
+			args.push("--enable-udp-broadcast-relay", "true");
+		}
+		if (!mainStore.config.enableUpnp) {
+			args.push("--disable-upnp", "true");
+		}
+		if (mainStore.config.ipv6PublicAddrProvider) {
+			args.push("--ipv6-public-addr-provider", "true");
+		}
+		if (mainStore.config.ipv6PublicAddrAuto) {
+			args.push("--ipv6-public-addr-auto", "true");
+		}
+		if (mainStore.config.disableRelayData) {
+			args.push("--disable-relay-data", "true");
 		}
 		if (mainStore.config.bindDeviceEnable) {
 			args.push("--bind-device", "true");

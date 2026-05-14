@@ -157,6 +157,12 @@ const store = defineStore("main", {
 
 			"config.privateMode",
 
+			"config.enableUdpBroadcastRelay",
+			"config.enableUpnp",
+			"config.ipv6PublicAddrProvider",
+			"config.ipv6PublicAddrAuto",
+			"config.disableRelayData",
+
 			"serverConfig.autoStart",
 			// 'serverConfig.enableListener',
 			"serverConfig.enableWhiteList",
@@ -166,6 +172,8 @@ const store = defineStore("main", {
 			"serverConfig.privateMode",
 			"serverConfig.privateNetworkName",
 			"serverConfig.privateNetworkPassword",
+			"serverConfig.ipv6PublicAddrProvider",
+			"serverConfig.disableRelayData",
 
 			"cidrEnable",
 			"proxyForwardBySystem",

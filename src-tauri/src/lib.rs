@@ -1,13 +1,13 @@
 use reqwest::{Client, Error};
 // use futures_util::StreamExt;
-use serde::{Deserialize};
-// use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::os::windows::process::CommandExt;
 use std::process::{Command, Stdio};
 use std::ptr;
-use std::sync::mpsc;
+use std::sync::{mpsc, Mutex, OnceLock};
 use std::{path, thread};
 use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -31,6 +31,13 @@ use windows::Win32::System::Power::{
 
 use rand::Rng;
 use tokio::process::Command as tokioCommand;
+use tokio::time::{timeout, Duration};
+
+static RUNNING_CLIENT_INSTANCES: OnceLock<Mutex<HashMap<String, RunningClientInstance>>> = OnceLock::new();
+
+fn running_client_instances() -> &'static Mutex<HashMap<String, RunningClientInstance>> {
+    RUNNING_CLIENT_INSTANCES.get_or_init(|| Mutex::new(HashMap::new()))
+}
 
 #[tauri::command(rename_all = "snake_case")]
 fn get_network_adapter_guids() -> Vec<[String; 2]> {
@@ -238,118 +245,75 @@ fn get_tool_exe_path(path: &str) -> String {
 }
 
 
-#[tauri::command(rename_all = "snake_case")]
-async fn get_members_by_cli() -> String {
+const CLI_FAILED_TO_CONNECT: &str = "_EasytierGameCliFailedToConnect_";
+const CLI_FAILED_TO_GET_PROXY: &str = "_EasytierGameCliFailedToGetProxy_";
+const CLI_FAILED_TO_GET_CONNECTIONS: &str = "_EasytierGameCliFailedToGetConnections_";
+
+async fn run_cli_json(
+    rpc_portal: u16,
+    options: &[&str],
+    command_args: &[&str],
+    failure_marker: &str,
+    operation_name: &str,
+) -> String {
     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
-    match tokioCommand::new(&cli_path)
+    let mut command = tokioCommand::new(&cli_path);
+    command
+        .arg("-p")
+        .arg(format!("127.0.0.1:{}", rpc_portal))
+        .args(options)
         .arg("-o")
         .arg("json")
-        .arg("peer")
-        .arg("list")
+        .args(command_args)
         .creation_flags(0x08000000)
-        .output()
-        .await
-    {
-        Ok(output) => {
+        .kill_on_drop(true);
+    match timeout(Duration::from_secs(5), command.output()).await {
+        Ok(Ok(output)) => {
             if output.status.success() {
                 let output_str = String::from_utf8_lossy(&output.stdout);
-                return output_str.trim().to_string();
+                output_str.trim().to_string()
             } else {
                 let output_str = String::from_utf8_lossy(&output.stderr);
-                log::error!("{}", output_str.trim().to_string());
-                return "_EasytierGameCliFailedToConnect_".to_string();
+                log::error!("{}失败: {}", operation_name, output_str.trim());
+                failure_marker.to_string()
             }
         }
-        Err(_e) => {
-            log::error!("get member list error");
-            return "".to_string();
+        Ok(Err(error)) => {
+            log::error!("{}执行失败: {}", operation_name, error);
+            String::new()
+        }
+        Err(_) => {
+            log::error!("{}超时，RPC端口: {}", operation_name, rpc_portal);
+            failure_marker.to_string()
         }
     }
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_members_proxy() -> String {
-     let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
-    match tokioCommand::new(&cli_path)
-        .arg("-o")
-        .arg("json")
-        .arg("proxy")
-        .creation_flags(0x08000000)
-        .output()
-        .await
-    {
-        Ok(output) => {
-            if output.status.success() {
-                let output_str = String::from_utf8_lossy(&output.stdout);
-                return output_str.trim().to_string();
-            } else {
-                let output_str = String::from_utf8_lossy(&output.stderr);
-                log::error!("{}", output_str.trim().to_string());
-                return "_EasytierGameCliFailedToGetProxy_".to_string();
-            }
-        }
-        Err(_e) => {
-            log::error!("get member list error");
-            return "".to_string();
-        }
-    }
+async fn get_members_by_cli(rpc_portal: u16) -> String {
+    run_cli_json(rpc_portal, &[], &["peer", "list"], CLI_FAILED_TO_CONNECT, "获取成员列表").await
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_members_connections_cli() -> String {
-    let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
-    match tokioCommand::new(&cli_path)
-        .arg("-v")
-        .arg("-o")
-        .arg("json")
-        .arg("peer")
-        .creation_flags(0x08000000)
-        .output()
-        .await
-    {
-        Ok(output) => {
-            if output.status.success() {
-                let output_str = String::from_utf8_lossy(&output.stdout);
-                return output_str.trim().to_string();
-            } else {
-                let output_str = String::from_utf8_lossy(&output.stderr);
-                log::error!("{}", output_str.trim().to_string());
-                return "_EasytierGameCliFailedToGetConnections_".to_string();
-            }
-        }
-        Err(_e) => {
-            log::error!("get member list error");
-            return "".to_string();
-        }
-    }
+async fn get_members_proxy(rpc_portal: u16) -> String {
+    run_cli_json(rpc_portal, &[], &["proxy"], CLI_FAILED_TO_GET_PROXY, "获取代理列表").await
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_route_by_cli() -> String {
-    let cli_path = get_tool_exe_path("\\easytier\\easytier-cli.exe");
-    match tokioCommand::new(&cli_path)
-        .arg("-o")
-        .arg("json")
-        .arg("route")
-        .creation_flags(0x08000000)
-        .output()
-        .await
-    {
-        Ok(output) => {
-            if output.status.success() {
-                let output_str = String::from_utf8_lossy(&output.stdout);
-                return output_str.trim().to_string();
-            } else {
-                let output_str = String::from_utf8_lossy(&output.stderr);
-                log::error!("{}", output_str.trim().to_string());
-                return "_EasytierGameCliFailedToConnect_".to_string();
-            }
-        }
-        Err(_e) => {
-            log::error!("get route list error");
-            return "".to_string();
-        }
-    }
+async fn get_members_connections_cli(rpc_portal: u16) -> String {
+    run_cli_json(
+        rpc_portal,
+        &["-v"],
+        &["peer"],
+        CLI_FAILED_TO_GET_CONNECTIONS,
+        "获取成员连接",
+    )
+    .await
+}
+
+#[tauri::command(rename_all = "snake_case")]
+async fn get_route_by_cli(rpc_portal: u16) -> String {
+    run_cli_json(rpc_portal, &[], &["route"], CLI_FAILED_TO_CONNECT, "获取路由列表").await
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -503,89 +467,262 @@ fn unzip(fname: &path::Path) {
     }
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ClientCommandEvent {
+    instance_id: String,
+    run_id: String,
+    event_type: String,
+    child_id: Option<u32>,
+    output: Option<String>,
+    exit_code: Option<i32>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RunningClientInstance {
+    child_id: u32,
+    run_id: String,
+}
+
+fn emit_client_command_event(
+    app_handle: &tauri::AppHandle,
+    instance_id: &str,
+    run_id: &str,
+    event_type: &str,
+    child_id: Option<u32>,
+    output: Option<String>,
+    exit_code: Option<i32>,
+) {
+    if let Err(error) = app_handle.emit(
+        "client-command-event",
+        ClientCommandEvent {
+            instance_id: instance_id.to_string(),
+            run_id: run_id.to_string(),
+            event_type: event_type.to_string(),
+            child_id,
+            output,
+            exit_code,
+        },
+    ) {
+        log::error!(
+            "发送 EasyTier 客户端事件失败，实例: {}，运行标识: {}，事件: {}，错误: {}",
+            instance_id,
+            run_id,
+            event_type,
+            error
+        );
+    }
+}
+
+fn sanitize_command_args(args: &[String]) -> String {
+    let mut sanitized_args = Vec::with_capacity(args.len());
+    let mut redact_next = false;
+    for arg in args {
+        if redact_next {
+            sanitized_args.push("***".to_string());
+            redact_next = false;
+            continue;
+        }
+        sanitized_args.push(arg.clone());
+        if arg == "--network-secret" {
+            redact_next = true;
+        }
+    }
+    sanitized_args.join(" ")
+}
+
 #[tauri::command(rename_all = "snake_case")]
-fn run_command(app_handle: tauri::AppHandle, args: Vec<String>, is_server: Option<bool>) {
+fn get_running_instances() -> HashMap<String, RunningClientInstance> {
+    match running_client_instances().lock() {
+        Ok(instances) => instances.clone(),
+        Err(error) => {
+            log::error!("读取 EasyTier 运行实例失败: {}", error);
+            HashMap::new()
+        }
+    }
+}
+
+fn stream_command_output<R: Read + Send + 'static>(
+    stream: R,
+    sender: mpsc::SyncSender<String>,
+) -> thread::JoinHandle<()> {
+    thread::spawn(move || {
+        let reader = BufReader::new(stream);
+        for line in reader.lines() {
+            match line {
+                Ok(line) => {
+                    if let Err(error) = sender.send(line) {
+                        log::error!("发送 EasyTier 输出失败: {}", error);
+                        break;
+                    }
+                }
+                Err(error) => {
+                    log::error!("读取 EasyTier 输出失败: {}", error);
+                    break;
+                }
+            }
+        }
+    })
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn run_command(
+    app_handle: tauri::AppHandle,
+    args: Vec<String>,
+    is_server: Option<bool>,
+    instance_id: Option<String>,
+    run_id: Option<String>,
+) {
     let is_server = is_server.unwrap_or(false);
-    let (tx, rx) = mpsc::channel();
+    let instance_id = instance_id.unwrap_or_default();
+    let run_id = run_id.unwrap_or_default();
+    // 有界队列避免内核日志突发时无限占用内存。
+    let (tx, rx) = mpsc::sync_channel::<String>(256);
 
     let app_handle1 = app_handle.clone();
     let app_handle2 = app_handle.clone();
 
-    let args2 = args.clone();
-    let mut thread_id_str = "thread-id";
-    if is_server {
-        thread_id_str = "server-thread-id";
-    }
-    let mut command_output_str = "command-output";
-    if is_server {
-        command_output_str = "server-command-output";
-    }
+    let args2 = sanitize_command_args(&args);
+    let process_instance_id = instance_id.clone();
+    let output_instance_id = instance_id.clone();
+    let process_run_id = run_id.clone();
+    let output_run_id = run_id;
     thread::spawn(move || {
         let core_path = get_tool_exe_path("\\easytier\\easytier-core.exe");
         // trace, debug, info, warn, error, off
-        let mut child = Command::new(&core_path)
+        let child_result = Command::new(&core_path)
             .args(args)
             .creation_flags(0x08000000)
             .stdout(Stdio::piped())
-            .spawn()
-            .expect("failed to execute process");
+            .stderr(Stdio::piped())
+            .spawn();
+
+        let mut child = match child_result {
+            Ok(child) => child,
+            Err(error) => {
+                log::error!("启动 EasyTier 实例失败: {}", error);
+                if !is_server {
+                    emit_client_command_event(
+                        &app_handle1,
+                        &process_instance_id,
+                        &process_run_id,
+                        "error",
+                        None,
+                        Some(error.to_string()),
+                        None,
+                    );
+                }
+                return;
+            }
+        };
 
         println!("child id: {}", child.id());
-        app_handle1
-            .emit(thread_id_str, child.id())
-            .expect("failed to emit id event");
-        app_handle1
-            .emit(command_output_str, args2.join(" "))
-            .expect("error output args");
-        let stdout = child.stdout.take().expect("failed to capture stdout");
-        let reader = BufReader::new(stdout);
-
-        for line in reader.lines() {
-            match line {
-                Ok(line) => match tx.send(line) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        log::error!("error sending line: {}", e);
-                        break;
-                    }
-                },
-                Err(e) => {
-                    log::error!("error reading line: {}", e);
-                    break;
+        let child_id = child.id();
+        if is_server {
+            let _ = app_handle1.emit("server-thread-id", child_id);
+            let _ = app_handle1.emit("server-command-output", args2.clone());
+        } else {
+            if let Ok(mut instances) = running_client_instances().lock() {
+                instances.insert(
+                    process_instance_id.clone(),
+                    RunningClientInstance {
+                        child_id,
+                        run_id: process_run_id.clone(),
+                    },
+                );
+            }
+            emit_client_command_event(
+                &app_handle1,
+                &process_instance_id,
+                &process_run_id,
+                "started",
+                Some(child_id),
+                Some(args2),
+                None,
+            );
+        }
+        let mut output_threads = Vec::new();
+        if let Some(stdout) = child.stdout.take() {
+            output_threads.push(stream_command_output(stdout, tx.clone()));
+        }
+        if let Some(stderr) = child.stderr.take() {
+            output_threads.push(stream_command_output(stderr, tx.clone()));
+        }
+        drop(tx);
+        let exit_code = child.wait().ok().and_then(|status| status.code());
+        for output_thread in output_threads {
+            let _ = output_thread.join();
+        }
+        if !is_server {
+            if let Ok(mut instances) = running_client_instances().lock() {
+                if instances
+                    .get(&process_instance_id)
+                    .map_or(false, |instance| instance.run_id == process_run_id)
+                {
+                    instances.remove(&process_instance_id);
                 }
             }
+            emit_client_command_event(
+                &app_handle1,
+                &process_instance_id,
+                &process_run_id,
+                "exited",
+                Some(child_id),
+                None,
+                exit_code,
+            );
         }
         println!("end");
     });
 
     thread::spawn(move || {
         while let Ok(line) = rx.recv() {
-            app_handle2
-                .emit(command_output_str, line)
-                .expect("failed to emit event");
+            if is_server {
+                let _ = app_handle2.emit("server-command-output", line);
+            } else {
+                emit_client_command_event(
+                    &app_handle2,
+                    &output_instance_id,
+                    &output_run_id,
+                    "output",
+                    None,
+                    Some(line),
+                    None,
+                );
+            }
         }
     });
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn stop_command(child_id: u32) {
+fn stop_command(child_id: u32) -> bool {
     if child_id != 0 {
         let output = Command::new("taskkill")
             .arg("/F")
             .arg("/PID") // 使用 -9 信号强制终止进程
             .arg(child_id.to_string())
             .creation_flags(0x08000000)
-            .output()
-            .expect("Failed to execute command");
+            .output();
 
-        // 检查命令执行的结果
-        if output.status.success() {
-            println!("Process {} terminated successfully.", child_id);
-        } else {
-            eprintln!("Failed to terminate process {}.", child_id);
+        match output {
+            Ok(output) if output.status.success() => {
+                println!("Process {} terminated successfully.", child_id);
+                true
+            }
+            Ok(output) => {
+                let error = String::from_utf8_lossy(&output.stderr);
+                log::error!("停止进程 {} 失败: {}", child_id, error.trim());
+                false
+            }
+            Err(error) => {
+                log::error!("执行进程停止命令失败: {}", error);
+                false
+            }
         }
     } else {
         println!("child id is 0");
+        true
     }
 }
 
@@ -881,7 +1018,7 @@ fn autostart(enabled: bool) -> std::result::Result<(), Box<dyn std::error::Error
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 获取命令行参数
-    let _args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
 
     let context = tauri::generate_context!();
     tauri::Builder::default()
@@ -940,17 +1077,18 @@ pub fn run() {
                 .build(app)?;
 
             // 开机自启隐藏到托盘或者显示主窗口
-            // if !args.contains(&String::from(TASKAUTOSTART_ARG)) {
-            //     let main_window = app.get_webview_window("main").unwrap();
-            //     main_window.show().expect("failed to show window");
-            //     main_window.set_focus().expect("failed to set focus");
-            // }
+            if !args.contains(&String::from(TASKAUTOSTART_ARG)) {
+                let main_window = app.get_webview_window("main").unwrap();
+                main_window.show().expect("failed to show window");
+                main_window.set_focus().expect("failed to set focus");
+            }
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             run_command,
             stop_command,
+            get_running_instances,
             get_core_version,
             fetch_easytier_list,
             fetch_game_releases,

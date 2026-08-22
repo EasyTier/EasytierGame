@@ -160,6 +160,12 @@
 	import { ElConfirmDanger } from "~/utils/element";
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import { isNaN } from "lodash-es";
+	import useMainStore from "@/stores/index";
+
+	const mainStore = useMainStore();
+	if (!mainStore.activeRoomProfile) {
+		mainStore.initializeRoomProfiles();
+	}
 
 	const natMaps = {
 		unknown: "未知",
@@ -339,7 +345,12 @@
 	let timer: number | null = null;
 
 	const listenOutput = async () => {
-		const [error, member] = await ATJ(invoke<string>("get_members_by_cli"));
+		const rpcPortal = mainStore.activeRoomProfile?.rpcPortal;
+		if (!rpcPortal) {
+			data.member = [];
+			return "";
+		}
+		const [error, member] = await ATJ(invoke<string>("get_members_by_cli", { rpc_portal: rpcPortal }));
 		if (error) {
 			data.member = [];
 			return "";
@@ -359,21 +370,31 @@
 			}
 			return;
 		}
-		const [errorConnections, connections] = await ATJ(invoke<string>("get_members_connections_cli"));
-		const memberConnections: ConnectionsType[] = JSON.parse(connections) as ConnectionsType[];
+		let memberList: Member[] = [];
+		try {
+			memberList = JSON.parse(member) as Member[];
+		} catch (error) {
+			console.error("解析当前房间成员信息失败", error);
+			data.member = [];
+			startTimer();
+			return;
+		}
+		const [errorConnections, connections] = await ATJ(invoke<string>("get_members_connections_cli", { rpc_portal: rpcPortal }));
 
-		if (errorConnections != "_EasytierGameCliFailedToGetConnections_") {
-			data.member = (JSON.parse(member) as Member[]).map(member => {
-				const connection = memberConnections.find(conn => String(conn.route.peer_id) === member.id);
-				if (connection) {
-					member.connections_addrs = connection?.peer?.conns?.map(conn => conn?.tunnel?.remote_addr?.url || "") || [];
-				} else {
-					member.connections_addrs = [];
-				}
-				return member;
-			});
+		if (!errorConnections && connections !== "_EasytierGameCliFailedToGetConnections_") {
+			try {
+				const memberConnections: ConnectionsType[] = JSON.parse(connections) as ConnectionsType[];
+				data.member = memberList.map(memberItem => {
+					const connection = memberConnections.find(conn => String(conn.route.peer_id) === memberItem.id);
+					memberItem.connections_addrs = connection?.peer?.conns?.map(conn => conn?.tunnel?.remote_addr?.url || "") || [];
+					return memberItem;
+				});
+			} catch (error) {
+				console.error("解析当前房间成员连接信息失败", error);
+				data.member = memberList;
+			}
 		} else {
-			data.member = JSON.parse(member) as Member[];
+			data.member = memberList;
 		}
 		// console.log(data.member);
 		getMembersProxy();
@@ -381,7 +402,12 @@
 	};
 
 	const getMembersProxy = async () => {
-		const [error, proxy] = await ATJ(invoke<string>("get_members_proxy"));
+		const rpcPortal = mainStore.activeRoomProfile?.rpcPortal;
+		if (!rpcPortal) {
+			data.proxy = [];
+			return "";
+		}
+		const [error, proxy] = await ATJ(invoke<string>("get_members_proxy", { rpc_portal: rpcPortal }));
 		if (error) {
 			data.proxy = [];
 			return "";

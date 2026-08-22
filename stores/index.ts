@@ -196,6 +196,15 @@ const store = defineStore("main", {
 			}
 			this.applyRoomProfile(this.activeRoomId);
 		},
+		replaceRoomProfiles(roomProfiles: RoomProfile[], preferredActiveRoomId = "") {
+			if (roomProfiles.length <= 0) return false;
+			this.roomProfiles = JSON.parse(JSON.stringify(roomProfiles));
+			this.activeRoomId = this.roomProfiles.some(room => room.id === preferredActiveRoomId)
+				? preferredActiveRoomId
+				: this.roomProfiles[0].id;
+			this.initializeRoomProfiles();
+			return true;
+		},
 		applyRoomProfile(roomId: string) {
 			const room = this.roomProfiles.find(item => item.id === roomId);
 			if (!room) return false;

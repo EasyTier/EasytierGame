@@ -873,6 +873,12 @@
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
 	import { readDir, exists, mkdir, BaseDirectory, readFile, writeFile, remove as removeFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson, updateConfigJsonBounce } from "~/composables/configJson";
+	import {
+		loadRoomGuiConfigs,
+		removeRoomGuiConfig,
+		saveRoomGuiConfig,
+		saveRoomGuiConfigs
+	} from "~/composables/guiConfig";
 	import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 	import { uniq } from "lodash-es";
 	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName, mixedArray } from "~/utils";
@@ -1093,21 +1099,56 @@
 		await updateConfigJsonBounce(data.configJsonSeverUrl);
 	};
 
+	const saveRoomProfileFile = async (room: (typeof mainStore.roomProfiles)[number]) => {
+		const roomOrder = mainStore.roomProfiles.findIndex(item => item.id === room.id);
+		return saveRoomGuiConfig(room, roomOrder);
+	};
+
 	const handleSaveRoom = async () => {
 		mainStore.saveActiveRoomProfile();
-		if (mainStore.createConfigInEasytier) {
-			await updateConfigJson(data.configJsonSeverUrl);
+		const room = mainStore.activeRoomProfile;
+		if (!room) {
+			ElMessage.error("当前房间不存在，无法保存配置");
+			return;
 		}
-		ElMessage.success(`房间“${mainStore.activeRoomProfile?.name || ""}”配置已保存`);
+		try {
+			await saveRoomProfileFile(room);
+			if (mainStore.createConfigInEasytier) {
+				await updateConfigJson(data.configJsonSeverUrl);
+			}
+			ElMessage.success(`房间“${room.name}”配置已保存到 gui_config 文件夹`);
+		} catch (error) {
+			console.error(`保存房间“${room.name}”GUI 配置失败`, error);
+			ElMessage.error(`房间“${room.name}”配置写入 gui_config 文件夹失败`);
+		}
 	};
 
 	const handleAddRoom = async () => {
 		const name = await requestRoomName("新增房间配置");
 		if (!name) return;
-		const room = mainStore.addRoomProfile(name);
-		getRoomRuntime(room.id);
-		await closeRoomDetailWindows();
-		ElMessage.success(`已创建房间“${room.name}”`);
+		mainStore.saveActiveRoomProfile();
+		const sourceRoom = mainStore.activeRoomProfile;
+		try {
+			if (sourceRoom) {
+				await saveRoomProfileFile(sourceRoom);
+			}
+			const room = mainStore.addRoomProfile(name);
+			try {
+				await saveRoomProfileFile(room);
+			} catch (error) {
+				mainStore.deleteRoomProfile(room.id);
+				if (sourceRoom) {
+					mainStore.applyRoomProfile(sourceRoom.id);
+				}
+				throw error;
+			}
+			getRoomRuntime(room.id);
+			await closeRoomDetailWindows();
+			ElMessage.success(`已创建并保存房间“${room.name}”`);
+		} catch (error) {
+			console.error(`新建房间“${name}”时保存 GUI 配置失败`, error);
+			ElMessage.error(`新建房间失败，无法写入 gui_config 文件夹`);
+		}
 	};
 
 	const handleRoomManageCommand = async (command: string | number | object) => {
@@ -1115,12 +1156,28 @@
 		if (!room) return;
 		if (command === "rename") {
 			const name = await requestRoomName("重命名房间配置", room.name, room.id);
-			if (name && mainStore.renameRoomProfile(room.id, name)) {
-				ElMessage.success("房间配置已重命名");
+			if (name) {
+				const previousName = room.name;
+				const previousUpdatedAt = room.updatedAt;
+				if (mainStore.renameRoomProfile(room.id, name)) {
+					try {
+						await saveRoomProfileFile(room);
+						ElMessage.success("房间配置已重命名");
+					} catch (error) {
+						room.name = previousName;
+						room.updatedAt = previousUpdatedAt;
+						console.error(`重命名房间“${previousName}”时保存 GUI 配置失败`, error);
+						ElMessage.error("重命名失败，无法写入 gui_config 文件夹");
+					}
+				}
 			}
 		}
 		if (command === "delete") {
 			const runtime = getRoomRuntime(room.id);
+			if (mainStore.roomProfiles.length <= 1) {
+				ElMessage.warning("至少需要保留一个房间配置");
+				return;
+			}
 			if (runtime.isStart) {
 				ElMessage.warning("请先停止当前房间");
 				return;
@@ -1131,10 +1188,16 @@
 				action: "删除"
 			});
 			if (error) return;
-			if (mainStore.deleteRoomProfile(room.id)) {
-				delete roomRuntimes[room.id];
-				await closeRoomDetailWindows();
-				ElMessage.success("房间配置已删除");
+			try {
+				await removeRoomGuiConfig(room.id);
+				if (mainStore.deleteRoomProfile(room.id)) {
+					delete roomRuntimes[room.id];
+					await closeRoomDetailWindows();
+					ElMessage.success("房间配置已删除");
+				}
+			} catch (error) {
+				console.error(`删除房间“${room.name}”GUI 配置失败`, error);
+				ElMessage.error("删除失败，无法更新 gui_config 文件夹");
 			}
 		}
 	};
@@ -1783,6 +1846,28 @@
 		mainStore.applyRoomProfile(mainStore.activeRoomId);
 	};
 
+	const initRoomGuiConfigs = async () => {
+		try {
+			const roomProfiles = await loadRoomGuiConfigs();
+			if (roomProfiles.length <= 0) return false;
+			const preferredActiveRoomId = mainStore.activeRoomId;
+			mainStore.replaceRoomProfiles(roomProfiles, preferredActiveRoomId);
+			const roomIds = new Set(mainStore.roomProfiles.map(room => room.id));
+			for (const roomId of Object.keys(roomRuntimes)) {
+				if (!roomIds.has(roomId)) {
+					delete roomRuntimes[roomId];
+				}
+			}
+			mainStore.roomProfiles.forEach(room => getRoomRuntime(room.id));
+			console.log(`已从 gui_config 文件夹加载 ${roomProfiles.length} 个房间配置`);
+			return true;
+		} catch (error) {
+			console.error("读取 gui_config 文件夹失败，回退到旧配置", error);
+			ElMessage.error("读取 gui_config 文件夹失败，已回退到旧配置");
+			return false;
+		}
+	};
+
 	const initGuiJson = async () => {
 		const path = import.meta.env.VITE_CONFIG_FILE_NAME;
 		const isExists = await exists(path, { baseDir: BaseDirectory.Resource });
@@ -1911,9 +1996,20 @@
 	let cidrTimer: number | null = null;
 
 	onMounted(async () => {
+		const loadedFromGuiConfig = await initRoomGuiConfigs();
 		await compatibleInitServerUrl();
-		await initGuiJson();
+		if (!loadedFromGuiConfig) {
+			await initGuiJson();
+		}
 		mainStore.saveActiveRoomProfile();
+		if (!loadedFromGuiConfig) {
+			try {
+				await saveRoomGuiConfigs(mainStore.roomProfiles);
+			} catch (error) {
+				console.error("迁移旧配置到 gui_config 文件夹失败", error);
+				ElMessage.error("迁移旧配置到 gui_config 文件夹失败");
+			}
+		}
 		await compatibleInitAutoStart();
 		// await initAutoStart();
 		// await initStartWinIpBroadcast();  // 对于三层tun而言，winipbroadcast没有作用，先禁用
@@ -2190,6 +2286,16 @@
 		await stopRoom(roomId);
 	};
 
+	const updateRoomConnectAfterStart = (room: (typeof mainStore.roomProfiles)[number], enabled: boolean) => {
+		room.config.connectAfterStart = enabled;
+		if (room.id === mainStore.activeRoomId) {
+			mainStore.config.connectAfterStart = enabled;
+			mainStore.saveActiveRoomProfile();
+		} else {
+			room.updatedAt = Date.now();
+		}
+	};
+
 	const handleConnection = async (roomId: string = mainStore.activeRoomId) => {
 		clearReconnectTimer(roomId);
 		if (roomId === mainStore.activeRoomId) {
@@ -2203,12 +2309,34 @@
 			return;
 		}
 		if (runtime.isStart) {
+			const previousConnectAfterStart = room.config.connectAfterStart;
+			updateRoomConnectAfterStart(room, false);
+			try {
+				// 先持久化停止意图，写入失败时不停止进程，避免下次启动仍被旧文件自动拉起。
+				await saveRoomProfileFile(room);
+			} catch (error) {
+				updateRoomConnectAfterStart(room, previousConnectAfterStart);
+				console.error(`停止房间“${room.name}”前保存自动启动状态失败`, error);
+				ElMessage.error(`房间“${room.name}”配置保存失败，已取消停止`);
+				return;
+			}
 			await reset(roomId);
 		} else {
 			runtime.error = "";
 			const args = await getArgs(roomId);
 			if (!args || args.length <= 0) {
 				await reset(roomId);
+				return;
+			}
+			const previousConnectAfterStart = room.config.connectAfterStart;
+			updateRoomConnectAfterStart(room, true);
+			try {
+				// 手动启动即代表下次仍需启动，必须在拉起进程前写入，防止软件立即重启时丢失意图。
+				await saveRoomProfileFile(room);
+			} catch (error) {
+				updateRoomConnectAfterStart(room, previousConnectAfterStart);
+				console.error(`启动房间“${room.name}”前保存自动启动状态失败`, error);
+				ElMessage.error(`房间“${room.name}”配置保存失败，已取消启动`);
 				return;
 			}
 			if (args[0] === "-c") {
@@ -2233,6 +2361,13 @@
 				runtime.startLoading = false;
 				runtime.error = "请求启动 EasyTier 内核失败";
 				appendRoomLog(room.id, `${runtime.error}: ${err}`);
+				updateRoomConnectAfterStart(room, previousConnectAfterStart);
+				try {
+					await saveRoomProfileFile(room);
+				} catch (saveError) {
+					console.error(`房间“${room.name}”启动失败后恢复自动启动状态失败`, saveError);
+					ElMessage.error(`房间“${room.name}”自动启动状态恢复失败`);
+				}
 				await updateTrayRoomStatus();
 				ElMessage.error(`房间“${room.name}”启动失败`);
 			}

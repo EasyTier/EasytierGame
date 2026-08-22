@@ -1,4 +1,76 @@
 <template>
+	<div class="mb-[4px] flex items-center gap-[5px] rounded-[5px] border border-[var(--el-border-color)] bg-[var(--el-fill-color-light)] p-[4px]">
+		<ElSelect
+			class="min-w-0 flex-1"
+			:model-value="mainStore.activeRoomId"
+			placeholder="选择房间配置"
+			@change="handleRoomSwitch"
+		>
+			<template #prefix>
+				<span
+					class="h-[7px] w-[7px] rounded-full"
+					:class="activeRoomStatus.className"
+				></span>
+			</template>
+			<ElOption
+				v-for="{ room, status } in roomOptions"
+				:key="room.id"
+				:label="room.name"
+				:value="room.id"
+			>
+				<div class="flex w-full items-center gap-[8px]">
+					<span
+						class="h-[7px] w-[7px] flex-shrink-0 rounded-full"
+						:class="status.className"
+					></span>
+					<span class="truncate">{{ room.name }}</span>
+					<ElTag
+						class="ml-auto"
+						size="small"
+						:type="status.type"
+					>
+						{{ status.text }}
+					</ElTag>
+				</div>
+			</ElOption>
+		</ElSelect>
+		<ElTooltip content="保存当前房间配置">
+			<ElButton
+				:icon="DocumentChecked"
+				@click="handleSaveRoom"
+			></ElButton>
+		</ElTooltip>
+		<ElTooltip content="新增房间配置">
+			<ElButton
+				:icon="Plus"
+				type="primary"
+				@click="handleAddRoom"
+			></ElButton>
+		</ElTooltip>
+		<ElDropdown
+			trigger="click"
+			@command="handleRoomManageCommand"
+		>
+			<ElButton :icon="MoreFilled"></ElButton>
+			<template #dropdown>
+				<ElDropdownMenu>
+					<ElDropdownItem
+						command="rename"
+						:icon="EditPen"
+					>
+						重命名当前房间
+					</ElDropdownItem>
+					<ElDropdownItem
+						command="delete"
+						:icon="Delete"
+						:disabled="mainStore.roomProfiles.length <= 1 || activeRoomRuntime.isStart"
+					>
+						删除当前房间
+					</ElDropdownItem>
+				</ElDropdownMenu>
+			</template>
+		</ElDropdown>
+	</div>
 	<ElForm
 		size="small"
 		label-position="top"
@@ -20,9 +92,9 @@
 					<div class="h-[fit-content]">-</div>
 					<ElTag
 						effect="dark"
-						:type="data.isSuccessGetIp ? 'success' : 'info'"
+						:type="activeRoomStatus.connectionType"
 					>
-						{{ data.isSuccessGetIp ? "联机成功" : data.isStart && !data.isSuccessGetIp ? "联机中" : "未联机" }}
+						{{ activeRoomStatus.connectionText }}
 					</ElTag>
 					<ElButton
 						v-if="!data.coreVersion"
@@ -53,7 +125,7 @@
 						>
 							<ElButton
 								class="ml-auto mr-[3px]"
-								:disabled="data.isStart || listenObj.server_thread_id.value"
+								:disabled="hasRunningRoom || listenObj.server_thread_id.value"
 								@click.stop="handleCoreManagement"
 								:loading="data.update"
 								type="primary"
@@ -251,7 +323,7 @@
 				<ElInput
 					maxlength="100"
 					:readonly="mainStore.config.dhcp"
-					:placeholder="data.isStart && mainStore.config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
+					:placeholder="activeRoomRuntime.isStart && mainStore.config.dhcp ? '等待动态分配IP...' : '例如: 10.126.126.1'"
 					v-model="mainStore.config.ipv4"
 				>
 					<template #prefix>
@@ -285,11 +357,11 @@
 					trigger="click"
 					size="default"
 					placement="right-end"
-					:type="!data.isStart ? 'primary' : 'danger'"
-					:disabled="data.startLoading || !data.coreVersion || data.update"
-					@click="handleConnection"
+					:type="!activeRoomRuntime.isStart ? 'primary' : 'danger'"
+					:disabled="activeRoomRuntime.startLoading || !data.coreVersion || data.update"
+					@click="handleConnection()"
 				>
-					{{ !data.isStart ? "启动联机" : "停止联机" }}
+					{{ !activeRoomRuntime.isStart ? "启动当前房间" : "停止当前房间" }}
 					<template #dropdown>
 						<ElDropdownMenu>
 							<ElDropdownItem
@@ -308,7 +380,7 @@
 							<ElDropdownItem
 								:icon="Tools"
 								command="toml"
-								:disabled="data.isStart"
+								:disabled="activeRoomRuntime.isStart"
 							>
 								使用外部配置文件
 							</ElDropdownItem>
@@ -784,41 +856,162 @@
 		Folder,
 		CopyDocument,
 		Platform,
-		SwitchFilled
+		SwitchFilled,
+		DocumentChecked,
+		Plus,
+		MoreFilled,
+		EditPen
 	} from "@element-plus/icons-vue";
-	import { reactive, onBeforeUnmount, onMounted, ref, toRaw, computed } from "vue";
+	import { reactive, onBeforeUnmount, onMounted, ref, computed, watch } from "vue";
 	import { useTray, setTrayRunState, setTrayTooltip, checkNewVersion, hasNewVersion } from "~/composables/tray";
 	import { getMatches } from "@tauri-apps/plugin-cli";
-	import { initStartWinIpBroadcast } from "~/composables/netcard";
 	import useMainStore from "@/stores/index";
 	import { ElMessage, ElMessageBox, ElTooltip } from "element-plus";
-	import { getCurrentWindow, PhysicalSize, type Window } from "@tauri-apps/api/window";
-	import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
-	import etWindows, { dataSubscribe } from "@/composables/windows";
+	import { getCurrentWindow, PhysicalSize } from "@tauri-apps/api/window";
+	import { getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
+	import etWindows, { dataSubscribe, MAIN_WINDOW_LOGICAL_SIZE } from "@/composables/windows";
 	import { resourceDir as getResourceDir, join } from "@tauri-apps/api/path";
-	import { readDir, exists, mkdir, BaseDirectory, readTextFile, readFile, writeFile, remove as removeFile, stat } from "@tauri-apps/plugin-fs";
+	import { readDir, exists, mkdir, BaseDirectory, readFile, writeFile, remove as removeFile } from "@tauri-apps/plugin-fs";
 	import { updateConfigJson, updateConfigJsonBounce } from "~/composables/configJson";
-	import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
-	import { sortedUniq, uniq } from "lodash-es";
+	import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+	import { uniq } from "lodash-es";
 	import { addQQGroup, supportProtocols, preventSleep, stopPreventSleep, ATJ, copyText, isValidWindowsFileName, mixedArray } from "~/utils";
 	import { ElConfirmDanger, ElConfirmPrimary } from "~/utils/element";
 	import { getServerArgs } from "@/composables/server";
 	import { isIPv6 } from "is-ip";
 
+	type RoomRuntime = {
+		childId: number | null;
+		runId: string;
+		log: string;
+		isStart: boolean;
+		isSuccessGetIp: boolean;
+		startLoading: boolean;
+		error: string;
+	};
+
+	type ClientCommandEvent = {
+		instanceId: string;
+		runId: string;
+		eventType: "started" | "output" | "exited" | "error";
+		childId?: number;
+		output?: string;
+		exitCode?: number;
+	};
+
+	type RunningClientInstance = {
+		childId: number;
+		runId: string;
+	};
+
+	type RoomStatusView = {
+		text: string;
+		connectionText: string;
+		type: "success" | "warning" | "danger" | "info";
+		connectionType: "success" | "danger" | "info";
+		className: string;
+	};
+
+	const mainStore = useMainStore();
+	mainStore.initializeRoomProfiles();
+
+	const roomRuntimes = reactive<Record<string, RoomRuntime>>({});
+	const createRoomRuntime = (): RoomRuntime => ({
+		childId: null,
+		runId: "",
+		log: "",
+		isStart: false,
+		isSuccessGetIp: false,
+		startLoading: false,
+		error: ""
+	});
+	const idleRoomRuntime = Object.freeze(createRoomRuntime()) as RoomRuntime;
+	const getRoomRuntime = (roomId: string): RoomRuntime => {
+		if (!roomRuntimes[roomId]) {
+			roomRuntimes[roomId] = createRoomRuntime();
+		}
+		return roomRuntimes[roomId];
+	};
+	mainStore.roomProfiles.forEach(room => getRoomRuntime(room.id));
+	const activeRoomRuntime = computed(() => roomRuntimes[mainStore.activeRoomId] || idleRoomRuntime);
+	const hasRunningRoom = computed(() => Object.values(roomRuntimes).some(runtime => runtime.isStart));
+	const getRoomStatus = (runtime: RoomRuntime): RoomStatusView => {
+		if (runtime.error) {
+			return {
+				text: "异常",
+				connectionText: "启动失败",
+				type: "danger",
+				connectionType: "danger",
+				className: "bg-[var(--el-color-danger)]"
+			};
+		}
+		if (runtime.isSuccessGetIp) {
+			return {
+				text: "已连接",
+				connectionText: "联机成功",
+				type: "success",
+				connectionType: "success",
+				className: "bg-[var(--el-color-success)]"
+			};
+		}
+		if (runtime.startLoading || runtime.isStart) {
+			return {
+				text: runtime.startLoading ? "启动中" : "运行中",
+				connectionText: "联机中",
+				type: "warning",
+				connectionType: "info",
+				className: "bg-[var(--el-color-warning)]"
+			};
+		}
+		return {
+			text: "未运行",
+			connectionText: "未联机",
+			type: "info",
+			connectionType: "info",
+			className: "bg-[var(--el-text-color-placeholder)]"
+		};
+	};
+	const activeRoomStatus = computed(() => getRoomStatus(activeRoomRuntime.value));
+	const roomOptions = computed(() =>
+		mainStore.roomProfiles.map(room => {
+			const runtime = roomRuntimes[room.id] || idleRoomRuntime;
+			return { room, status: getRoomStatus(runtime) };
+		})
+	);
+	let roomProfileSaveTimer: number | null = null;
+	watch(
+		[
+			() => mainStore.config,
+			() => mainStore.cidrEnable,
+			() => mainStore.proxyForwardBySystem,
+			() => mainStore.configStartEnable,
+			() => mainStore.configPath
+		],
+		() => {
+			if (roomProfileSaveTimer) {
+				clearTimeout(roomProfileSaveTimer);
+			}
+			roomProfileSaveTimer = window.setTimeout(() => {
+				mainStore.saveActiveRoomProfile();
+				roomProfileSaveTimer = null;
+			}, 180);
+		},
+		{ deep: true }
+	);
+
 	let is_close = false;
-	const publicPeersLink = import.meta.env.VITE_PUBLIC_PEERS_URL;
 	const tray = await useTray(
 		true,
 		async () => {
 			is_close = true;
-			await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
+			await stopAllRooms();
 			await invoke("stop_command", { child_id: data.winipBcPid || 0 });
 			await invoke("stop_command", { child_id: listenObj.server_thread_id.value || 0 });
 			await stopPreventSleep(); //关闭防休眠
 		},
 		async () => {
 			await handleConnection();
-			return data.isStart;
+			return activeRoomRuntime.value.isStart;
 		},
 		async () => {
 			await handleReconnect();
@@ -827,8 +1020,6 @@
 			await handleShowPublicServersDialog();
 		}
 	);
-
-	const mainStore = useMainStore();
 
 	const protocols = supportProtocols();
 	const data = reactive({
@@ -841,17 +1032,11 @@
 		nodesListVisible: false,
 		serverVisible: false,
 		winipBcPid: 0, //WinIPBroadcast进程id
-		winipBcStart: false,
 		memberVisible: false,
-		log: "",
 		serverLog: "", //服务端日志
 		update: false,
 		releaseList: [[]],
 		coreVersion: "-",
-		isSuccessGetIp: false,
-		startLoading: false,
-		isStart: false,
-		connectionSuccess: false,
 		configJsonSeverUrl: [] // 本地保存一次，用于回填config.json
 	});
 
@@ -879,6 +1064,80 @@
 		loading: false,
 		data: ""
 	});
+
+	const requestRoomName = async (title: string, initialValue = "", excludeRoomId = "") => {
+		const [error, result] = await ATJ(
+			ElMessageBox.prompt("请输入便于识别的房间配置名称", title, {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				inputValue: initialValue,
+				inputPlaceholder: "例如：朋友联机房",
+				inputValidator: (value: string) => {
+					const name = value?.trim();
+					if (!name) return "房间名称不能为空";
+					if (name.length > 32) return "房间名称不能超过 32 个字符";
+					if (mainStore.roomProfiles.some(room => room.id !== excludeRoomId && room.name === name)) {
+						return "房间名称已存在";
+					}
+					return true;
+				}
+			})
+		);
+		return error ? "" : result?.value?.trim() || "";
+	};
+
+	const handleRoomSwitch = async (roomId: string) => {
+		if (!roomId || roomId === mainStore.activeRoomId) return;
+		await closeRoomDetailWindows();
+		mainStore.switchRoomProfile(roomId);
+		await updateConfigJsonBounce(data.configJsonSeverUrl);
+	};
+
+	const handleSaveRoom = async () => {
+		mainStore.saveActiveRoomProfile();
+		if (mainStore.createConfigInEasytier) {
+			await updateConfigJson(data.configJsonSeverUrl);
+		}
+		ElMessage.success(`房间“${mainStore.activeRoomProfile?.name || ""}”配置已保存`);
+	};
+
+	const handleAddRoom = async () => {
+		const name = await requestRoomName("新增房间配置");
+		if (!name) return;
+		const room = mainStore.addRoomProfile(name);
+		getRoomRuntime(room.id);
+		await closeRoomDetailWindows();
+		ElMessage.success(`已创建房间“${room.name}”`);
+	};
+
+	const handleRoomManageCommand = async (command: string | number | object) => {
+		const room = mainStore.activeRoomProfile;
+		if (!room) return;
+		if (command === "rename") {
+			const name = await requestRoomName("重命名房间配置", room.name, room.id);
+			if (name && mainStore.renameRoomProfile(room.id, name)) {
+				ElMessage.success("房间配置已重命名");
+			}
+		}
+		if (command === "delete") {
+			const runtime = getRoomRuntime(room.id);
+			if (runtime.isStart) {
+				ElMessage.warning("请先停止当前房间");
+				return;
+			}
+			const [error] = await ElConfirmDanger(`确定{action}房间“${room.name}”及其配置吗？`, "提示", {
+				confirmButtonText: "删除",
+				cancelButtonText: "取消",
+				action: "删除"
+			});
+			if (error) return;
+			if (mainStore.deleteRoomProfile(room.id)) {
+				delete roomRuntimes[room.id];
+				await closeRoomDetailWindows();
+				ElMessage.success("房间配置已删除");
+			}
+		}
+	};
 
 	const closePrevent = async () => {
 		const appWindow = getCurrentWindow();
@@ -926,7 +1185,7 @@
 					ElMessage.error("没有IPV4地址，无法复制");
 					return;
 				}
-				if (data.isStart || !mainStore.config.dhcp) {
+				if (activeRoomRuntime.value.isStart || !mainStore.config.dhcp) {
 					await copyText(v4);
 				} else {
 					await copyText(v4, "复制成功,联机后IP可能会变化");
@@ -937,7 +1196,7 @@
 				ElMessage.error("没有IPV4地址，无法复制");
 				return;
 			}
-			if (data.isStart || !mainStore.config.dhcp) {
+			if (activeRoomRuntime.value.isStart || !mainStore.config.dhcp) {
 				await copyText(v4);
 			} else {
 				await copyText(v4, "复制成功,联机后IP可能会变化");
@@ -999,91 +1258,252 @@
 		mainStore.basePeers = uniq([...mainStore.config.serverUrl, ...mainStore.basePeers]);
 	};
 
-	let getMemeberTimer: number | null = null;
+	const memberTimers: Record<string, number> = {};
+	const memberTimerGenerations: Record<string, number> = {};
+	const reconnectTimers: Record<string, number> = {};
+	const stoppingRuns = new Set<string>();
+	const cancelledRuns = new Set<string>();
+	const stopMemberTimer = (roomId: string) => {
+		memberTimerGenerations[roomId] = (memberTimerGenerations[roomId] || 0) + 1;
+		if (memberTimers[roomId]) {
+			clearTimeout(memberTimers[roomId]);
+			delete memberTimers[roomId];
+		}
+	};
+	const clearReconnectTimer = (roomId: string) => {
+		if (reconnectTimers[roomId]) {
+			clearTimeout(reconnectTimers[roomId]);
+			delete reconnectTimers[roomId];
+		}
+	};
+	let requestedTrayStatusKey: string | null = null;
+	let appliedTrayRunState: boolean | null = null;
+	let appliedTrayTooltip: string | null = null;
+	let trayUpdateQueue = Promise.resolve();
+	const updateTrayRoomStatus = async () => {
+		const runningRooms = mainStore.roomProfiles.filter(room => getRoomRuntime(room.id).isStart);
+		const isRunning = runningRooms.length > 0;
+		const tooltip = isRunning
+			? `${runningRooms.length} 个房间运行中\n${runningRooms
+					.slice(0, 4)
+					.map(room => {
+						const ipv4 = room.config.ipv4?.trim();
+						return `${room.name}: ${ipv4 || "连接中"}`;
+					})
+					.join("\n")}`
+			: null;
+		const statusKey = `${isRunning}:${tooltip || ""}`;
+		if (statusKey === requestedTrayStatusKey) {
+			await trayUpdateQueue;
+			return;
+		}
+		requestedTrayStatusKey = statusKey;
+		// 托盘 API 串行执行，避免多个房间的异步事件互相覆盖；图标与提示文本分别去重，防止同一图标被重复加载。
+		trayUpdateQueue = trayUpdateQueue
+			.then(async () => {
+				if (appliedTrayRunState !== isRunning) {
+					await setTrayRunState(tray, isRunning);
+					appliedTrayRunState = isRunning;
+				}
+				if (appliedTrayTooltip !== tooltip) {
+					await setTrayTooltip(tray, tooltip);
+					appliedTrayTooltip = tooltip;
+				}
+			})
+			.catch(error => {
+				if (requestedTrayStatusKey === statusKey) {
+					requestedTrayStatusKey = null;
+				}
+				console.error("更新托盘状态失败", error);
+			});
+		await trayUpdateQueue;
+	};
+	const resetRoomIp = async (roomId: string) => {
+		const room = mainStore.roomProfiles.find(item => item.id === roomId);
+		const runtime = getRoomRuntime(roomId);
+		let changed = runtime.isSuccessGetIp;
+		runtime.isSuccessGetIp = false;
+		if (room?.config.dhcp) {
+			changed ||= Boolean(room.config.ipv4);
+			room.config.ipv4 = "";
+			if (mainStore.activeRoomId === roomId) {
+				changed ||= Boolean(mainStore.config.ipv4);
+				mainStore.config.ipv4 = "";
+			}
+		}
+		return changed;
+	};
+	const startMemberTimer = (roomId: string) => {
+		stopMemberTimer(roomId);
+		const generation = memberTimerGenerations[roomId];
+		const scheduleNextPoll = (delay: number) => {
+			if (memberTimerGenerations[roomId] !== generation) return;
+			memberTimers[roomId] = window.setTimeout(() => {
+				delete memberTimers[roomId];
+				void pollMember();
+			}, delay);
+		};
+		const pollMember = async () => {
+			const room = mainStore.roomProfiles.find(item => item.id === roomId);
+			const runtime = getRoomRuntime(roomId);
+			if (!room || !runtime.isStart) {
+				stopMemberTimer(roomId);
+				if (await resetRoomIp(roomId)) {
+					await updateTrayRoomStatus();
+				}
+				return;
+			}
+			const runId = runtime.runId;
+			const [error, member] = await ATJ(invoke<string>("get_members_by_cli", { rpc_portal: room.rpcPortal }));
+			if (memberTimerGenerations[roomId] !== generation || runtime.runId !== runId || !runtime.isStart) return;
+			if (!error && member !== "_EasytierGameCliFailedToConnect_") {
+				try {
+					const memberJson = JSON.parse(member) as Member[];
+					const localData = memberJson.find(memberItem => memberItem?.cost == "Local");
+					const ipv4 = localData?.ipv4;
+					if (localData && ipv4) {
+						const changed = room.config.ipv4 !== ipv4 || !runtime.isSuccessGetIp;
+						room.config.ipv4 = ipv4;
+						if (mainStore.activeRoomId === roomId) {
+							mainStore.config.ipv4 = ipv4;
+						}
+						runtime.isSuccessGetIp = true;
+						if (changed) {
+							await updateTrayRoomStatus();
+						}
+					} else if (await resetRoomIp(roomId)) {
+						await updateTrayRoomStatus();
+					}
+				} catch (err) {
+					console.error(`解析房间“${room.name}”成员信息失败`, err);
+				}
+			}
+			scheduleNextPoll(runtime.isSuccessGetIp ? 3000 : 1000);
+		};
+		scheduleNextPoll(0);
+	};
+	const appendLimitedLog = (currentLog: string, output: string, maxLines = 1000) => {
+		const lines = currentLog ? currentLog.split("\n") : [];
+		if (lines[lines.length - 1] === "") {
+			lines.pop();
+		}
+		lines.push(output);
+		return `${lines.slice(-maxLines).join("\n")}\n`;
+	};
+	const appendRoomLog = (roomId: string, output: string) => {
+		const runtime = getRoomRuntime(roomId);
+		runtime.log = appendLimitedLog(runtime.log, output);
+	};
 	const listenObj: { [key: string]: any } = {
-		unListenOutPut: null,
-		unListenThreadId: null,
+		unListenClientCommand: null,
 		unListenServerOutPut: null,
 		unListenServerThreadId: null,
 		unListenStartStopServer: null,
-		thread_id: null,
 		server_thread_id: ref(null),
-		async listenOutput() {
-			// const appWindow = getCurrentWindow();
-			getMemeberTimer && clearInterval(getMemeberTimer);
-			getMemeberTimer = setInterval(async () => {
-				const [error, member] = await ATJ(invoke<string>("get_members_by_cli"));
-				if(!data.isStart) {
-					getMemeberTimer && clearInterval(getMemeberTimer);
-					getMemeberTimer = null;
-					ipReset();
+		async listenClientCommand() {
+			const unListen = await listen<ClientCommandEvent>("client-command-event", async event => {
+				const payload = event.payload;
+				const room = mainStore.roomProfiles.find(item => item.id === payload.instanceId);
+				if (!room) return;
+				const runtime = getRoomRuntime(room.id);
+				if (payload.eventType !== "started" && cancelledRuns.delete(payload.runId)) {
+					stoppingRuns.delete(payload.runId);
 					return;
 				}
-				if (!error && member !== "_EasytierGameCliFailedToConnect_") {
-					const memberJson = JSON.parse(member) as Member[];
-					const localData = memberJson.find(member => member?.cost == "Local");
-					const ipv4 = localData?.ipv4;
-					if (localData && ipv4) {
-						mainStore.config.ipv4 = ipv4;
-						await setTrayRunState(tray, true);
-						data.isSuccessGetIp = true;
-						await setTrayTooltip(tray, `IP: ${mainStore.config.ipv4}`);
+				if (payload.eventType === "started") {
+					if (cancelledRuns.delete(payload.runId) || payload.runId !== runtime.runId) {
+						if (payload.childId) {
+							stoppingRuns.add(payload.runId);
+							const [stopError, stopped] = await ATJ(invoke<boolean>("stop_command", { child_id: payload.childId }));
+							if (stopError || !stopped) {
+								console.error(`停止房间“${room.name}”的过期启动实例失败`, stopError);
+								if (payload.runId === runtime.runId) {
+									stoppingRuns.delete(payload.runId);
+									runtime.childId = payload.childId;
+									runtime.isStart = true;
+									runtime.startLoading = false;
+									runtime.error = "取消启动 EasyTier 内核失败";
+									await updateTrayRoomStatus();
+								}
+							}
+						}
 						return;
 					}
-					ipReset();
+					runtime.childId = payload.childId || null;
+					runtime.isStart = true;
+					runtime.startLoading = false;
+					runtime.error = "";
+					if (payload.output) {
+						appendRoomLog(room.id, payload.output);
+					}
+					startMemberTimer(room.id);
 				}
-			}, 1000);
-			const unListen = await listen<string>("command-output", async event => {
-				data.isStart = true;
-				if (event.payload) {
-					data.startLoading = false;
-					let devName = /tun device ready. dev: (.*)/g.exec(event.payload as string)?.[1];
+				if (payload.runId !== runtime.runId) {
+					stoppingRuns.delete(payload.runId);
+					cancelledRuns.delete(payload.runId);
+					return;
+				}
+				let shouldUpdateTray = payload.eventType === "started";
+				if (payload.eventType === "output" && payload.output) {
+					runtime.startLoading = false;
+					appendRoomLog(room.id, payload.output);
+					const devName = /tun device ready. dev: (.*)/g.exec(payload.output)?.[1];
 					if (
 						devName &&
-						mainStore.config.enableNetCardMetric &&
-						mainStore.config.netCardMetricValue &&
-						mainStore.config.netCardMetricValue >= 1 &&
-						mainStore.config.netCardMetricValue <= 9999
+						room.config.enableNetCardMetric &&
+						room.config.netCardMetricValue >= 1 &&
+						room.config.netCardMetricValue <= 9999
 					) {
 						try {
-							const output = await Command.create(
+							await Command.create(
 								"netsh",
-								["interface", "ipv4", "set", "interface", devName, "metric=", `${mainStore.config.netCardMetricValue}`],
-								{
-									encoding: "gb2312"
-								}
+								["interface", "ipv4", "set", "interface", devName, "metric=", `${room.config.netCardMetricValue}`],
+								{ encoding: "gb2312" }
 							).execute();
 						} catch (err) {
-							console.error(err);
-							ElMessage.error("跃点设置失败");
+							console.error(`设置房间“${room.name}”网卡跃点失败`, err);
+							ElMessage.error(`房间“${room.name}”跃点设置失败`);
 						}
 					}
 				}
-				const logArr = data.log.split("\n");
-				const start = logArr.length > 1000 ? logArr.length - 1000 : 0;
-				data.log = logArr.slice(start).join("\n");
-				data.log += (event.payload as string) + "\n";
-			});
-			this.unListenOutPut = () => {
-				getMemeberTimer && clearInterval(getMemeberTimer);
-				unListen();
-			};
-		},
-		async listenThreadId() {
-			const unListen = await listen("thread-id", event => {
-				if (event.payload) {
-					this.thread_id = event.payload;
+				if (payload.eventType === "error") {
+					shouldUpdateTray = true;
+					runtime.error = payload.output || "EasyTier 内核启动失败";
+					runtime.isStart = false;
+					runtime.startLoading = false;
+					runtime.childId = null;
+					stopMemberTimer(room.id);
+					await resetRoomIp(room.id);
+					appendRoomLog(room.id, runtime.error);
+					ElMessage.error(`房间“${room.name}”启动失败`);
+				}
+				if (payload.eventType === "exited") {
+					shouldUpdateTray = true;
+					const expectedStop = stoppingRuns.delete(payload.runId);
+					runtime.isStart = false;
+					runtime.startLoading = false;
+					runtime.childId = null;
+					stopMemberTimer(room.id);
+					await resetRoomIp(room.id);
+					if (!expectedStop) {
+						runtime.error =
+							payload.exitCode === undefined || payload.exitCode === null
+								? "EasyTier 内核异常退出"
+								: `EasyTier 内核异常退出，代码 ${payload.exitCode}`;
+						appendRoomLog(room.id, runtime.error);
+						ElMessage.error(`房间“${room.name}”异常退出`);
+					}
+				}
+				if (shouldUpdateTray) {
+					await updateTrayRoomStatus();
 				}
 			});
-			this.unListenThreadId = unListen;
+			this.unListenClientCommand = unListen;
 		},
 		async listenServerOutPut() {
 			const unListen = await listen<string>("server-command-output", async event => {
 				// console.log("server-command-output", event);
-				const logArr = data.serverLog.split("\n");
-				const start = logArr.length > 1000 ? logArr.length - 1000 : 0;
-				data.serverLog = logArr.slice(start).join("\n");
-				data.serverLog += (event.payload || "") + "\n";
+				data.serverLog = appendLimitedLog(data.serverLog, event.payload || "");
 			});
 			this.unListenServerOutPut = unListen;
 		},
@@ -1115,10 +1535,54 @@
 		}
 	};
 
-	const unListenAll = async () => {
-		listenObj.unListenOutPut && (await listenObj.unListenOutPut());
-		await invoke("stop_command", { child_id: listenObj.thread_id || 0 });
-		listenObj.thread_id = null;
+	const stopRoomProcess = async (roomId: string) => {
+		const runtime = getRoomRuntime(roomId);
+		const runId = runtime.runId;
+		if (runtime.startLoading && !runtime.childId && runId) {
+			cancelledRuns.add(runId);
+		}
+		if (runtime.childId) {
+			const childId = runtime.childId;
+			stoppingRuns.add(runId);
+			try {
+				const stopped = await invoke<boolean>("stop_command", { child_id: childId });
+				if (!stopped && runtime.childId === childId) {
+					stoppingRuns.delete(runId);
+					runtime.error = "停止 EasyTier 内核失败";
+					ElMessage.error(`房间“${mainStore.roomProfiles.find(room => room.id === roomId)?.name || ""}”停止失败`);
+					return false;
+				}
+			} catch (err) {
+				if (runtime.runId !== runId || runtime.childId !== childId) return true;
+				stoppingRuns.delete(runId);
+				runtime.error = "停止 EasyTier 内核失败";
+				console.error(runtime.error, err);
+				return false;
+			}
+		}
+		if (runtime.runId !== runId) return true;
+		stopMemberTimer(roomId);
+		runtime.childId = null;
+		runtime.isStart = false;
+		runtime.startLoading = false;
+		runtime.error = "";
+		await resetRoomIp(roomId);
+		return true;
+	};
+
+	const stopRoom = async (roomId: string) => {
+		const stopped = await stopRoomProcess(roomId);
+		await updateTrayRoomStatus();
+		return stopped;
+	};
+
+	const stopAllRooms = async () => {
+		const runningRooms = mainStore.roomProfiles.filter(room => {
+			const runtime = getRoomRuntime(room.id);
+			return runtime.isStart || runtime.startLoading || Boolean(runtime.childId);
+		});
+		await Promise.allSettled(runningRooms.map(room => stopRoomProcess(room.id)));
+		await updateTrayRoomStatus();
 	};
 
 	const getCoreVersion = async (isClick = false) => {
@@ -1202,6 +1666,9 @@
 	let size = 0;
 	const handleInstallCore = async () => {
 		try {
+			if (hasRunningRoom.value || listenObj.server_thread_id.value) {
+				return ElMessage.warning("请先停止所有房间和自建服务器");
+			}
 			if (!coreManagementData.data) {
 				return ElMessage.error("请选择一个内核");
 			}
@@ -1298,17 +1765,22 @@
 	// };
 
 	const initConnectAfterStart = async () => {
-		if (mainStore.config.connectAfterStart && data.coreVersion) {
-			await reset();
-			await handleConnection();
+		if (!data.coreVersion) return;
+		for (const room of mainStore.roomProfiles) {
+			if (room.config.connectAfterStart && !getRoomRuntime(room.id).isStart) {
+				await handleConnection(room.id);
+			}
 		}
 	};
 
 	// 多选serverUrl兼容
 	const compatibleInitServerUrl = async () => {
-		if (typeof mainStore.config.serverUrl == "string") {
-			mainStore.config.serverUrl = [mainStore.config.serverUrl || ""];
+		for (const room of mainStore.roomProfiles) {
+			if (typeof room.config.serverUrl == "string") {
+				room.config.serverUrl = [room.config.serverUrl || ""];
+			}
 		}
+		mainStore.applyRoomProfile(mainStore.activeRoomId);
 	};
 
 	const initGuiJson = async () => {
@@ -1353,6 +1825,7 @@
 							serverUrl: saveServerUrl
 						}
 					});
+					mainStore.saveActiveRoomProfile();
 					if (mainStore.createConfigInEasytier) {
 						await updateConfigJson(data.configJsonSeverUrl);
 					}
@@ -1382,6 +1855,26 @@
 		}
 	};
 
+	const recoverRunningRooms = async () => {
+		try {
+			const runningInstances = await invoke<Record<string, RunningClientInstance>>("get_running_instances");
+			for (const room of mainStore.roomProfiles) {
+				const instance = runningInstances[room.id];
+				if (!instance?.childId) continue;
+				const runtime = getRoomRuntime(room.id);
+				runtime.childId = instance.childId;
+				runtime.runId = instance.runId;
+				runtime.isStart = true;
+				runtime.startLoading = false;
+				runtime.error = "";
+				startMemberTimer(room.id);
+			}
+			await updateTrayRoomStatus();
+		} catch (error) {
+			console.error("恢复多房间运行状态失败", error);
+		}
+	};
+
 	const initPreventSleep = async () => {
 		if (mainStore.config.enablePreventSleep) {
 			preventSleep();
@@ -1396,16 +1889,20 @@
 			await appWindow.setFocus();
 		}
 		const appWindow = getCurrentWindow();
-		const logicalAppSize = {
-			width: 340,
-			height: 305
-		};
 		const scaleFactor = await appWindow.scaleFactor();
-		const size = new PhysicalSize(Math.ceil(logicalAppSize.width * scaleFactor), Math.ceil(logicalAppSize.height * scaleFactor));
+		const size = new PhysicalSize(
+			Math.ceil(MAIN_WINDOW_LOGICAL_SIZE.width * scaleFactor),
+			Math.ceil(MAIN_WINDOW_LOGICAL_SIZE.height * scaleFactor)
+		);
 		appWindow.setSize(size);
 		appWindow.onScaleChanged(({ payload: { scaleFactor } }) => {
 			console.log("scaleFactor", scaleFactor);
-			appWindow.setSize(new PhysicalSize(Math.ceil(logicalAppSize.width * scaleFactor), Math.ceil(logicalAppSize.height * scaleFactor)));
+			appWindow.setSize(
+				new PhysicalSize(
+					Math.ceil(MAIN_WINDOW_LOGICAL_SIZE.width * scaleFactor),
+					Math.ceil(MAIN_WINDOW_LOGICAL_SIZE.height * scaleFactor)
+				)
+			);
 		});
 	};
 
@@ -1416,11 +1913,13 @@
 	onMounted(async () => {
 		await compatibleInitServerUrl();
 		await initGuiJson();
+		mainStore.saveActiveRoomProfile();
 		await compatibleInitAutoStart();
 		// await initAutoStart();
 		// await initStartWinIpBroadcast();  // 对于三层tun而言，winipbroadcast没有作用，先禁用
 		await getCoreVersion();
-		await listenObj.listenThreadId();
+		await listenObj.listenClientCommand();
+		await recoverRunningRooms();
 		await listenObj.listenServerThreadId();
 		await listenObj.listenStartStopServer();
 		await initConfigDir();
@@ -1447,9 +1946,13 @@
 	});
 
 	onBeforeUnmount(() => {
-		unListenAll();
+		mainStore.saveActiveRoomProfile();
+		roomProfileSaveTimer && clearTimeout(roomProfileSaveTimer);
+		listenObj.unListenClientCommand && listenObj.unListenClientCommand();
 		listenObj.unListenReleaseList && listenObj.unListenReleaseList();
 		listenObj.unListenStartStopServer && listenObj.unListenStartStopServer();
+		Object.keys(memberTimerGenerations).forEach(stopMemberTimer);
+		Object.keys(reconnectTimers).forEach(clearReconnectTimer);
 		logsTimer && clearInterval(logsTimer);
 		serverLogsTimer && clearInterval(serverLogsTimer);
 		cidrTimer && clearInterval(cidrTimer);
@@ -1457,81 +1960,90 @@
 		// unListenStorage && unListenStorage();
 	});
 
-	const getArgs = async () => {
-		// console.error(config.proxyNetworks);
-		const args = [];
-		if (mainStore.configStartEnable) {
-			if (mainStore.configPath) {
-				const isExists = await exists(mainStore.configPath, { baseDir: BaseDirectory.Resource });
+	const getArgs = async (roomId: string) => {
+		const room = mainStore.roomProfiles.find(item => item.id === roomId);
+		if (!room) return [];
+		const config = room.config;
+		const args: string[] = [];
+		if (room.configStartEnable) {
+			if (room.configPath) {
+				const isExists = await exists(room.configPath, { baseDir: BaseDirectory.Resource });
 				if (isExists) {
 					const resourceDir = await getResourceDir();
-					const configPath = await join(resourceDir, mainStore.configPath);
+					const configPath = await join(resourceDir, room.configPath);
 					args.push("-c", configPath);
-					return args;
 				} else {
-					const appWindow = getCurrentWindow();
-					const isVisible = await appWindow.isVisible();
-					if (!isVisible) {
-						await appWindow.show();
-						await appWindow.setFocus();
+					room.configPath = "";
+					if (mainStore.activeRoomId === roomId) {
+						mainStore.configPath = "";
+						const appWindow = getCurrentWindow();
+						const isVisible = await appWindow.isVisible();
+						if (!isVisible) {
+							await appWindow.show();
+							await appWindow.setFocus();
+						}
+						await handleStartCommand("toml");
 					}
-					mainStore.configPath = "";
-					ElMessage.error(`配置文件不存在 请重新选择`);
-					await handleStartCommand("toml"); // 配置文件不存在，显示配置文件弹窗
+					ElMessage.error(`房间“${room.name}”的配置文件不存在，请重新选择`);
 					return [];
 				}
 			} else {
-				ElMessage.warning(`配置文件不存在 请选择`);
-				await handleStartCommand("toml"); // 配置文件不存在，显示配置文件弹窗
+				ElMessage.warning(`房间“${room.name}”尚未选择配置文件`);
+				if (mainStore.activeRoomId === roomId) {
+					await handleStartCommand("toml");
+				}
 				return [];
 			}
 		}
-		if (mainStore.config.serverUrl?.length <= 0) {
-			ElMessage.warning(`请至少选择一个服务器`);
+		if (room.configStartEnable) {
+			args.push("--rpc-portal", `${room.rpcPortal}`, "--instance-name", room.id);
+			return args;
+		}
+
+		if (config.serverUrl?.length <= 0) {
+			ElMessage.warning(`房间“${room.name}”请至少选择一个服务器`);
 			return [];
 		}
-		// 		lodash-es 如何将两个数组的值混合  比如["tcp","udp"] [1,2]
-		// 混合后["tcp1","tcp2","udp1","udp2"]
-		if (mainStore.config.protocol?.length <= 0) {
-			ElMessage.warning(`请至少选择一个协议`);
+		if (config.protocol?.length <= 0) {
+			ElMessage.warning(`房间“${room.name}”请至少选择一个协议`);
 			return [];
 		}
-		if (mainStore.config.dhcp) {
+		if (config.dhcp) {
 			args.push("-d");
 		}
-		if (mainStore.config.hostname) {
-			args.push("--hostname", mainStore.config.hostname);
+		if (config.hostname) {
+			args.push("--hostname", config.hostname);
 		}
-		if (mainStore.config.networkName) {
-			args.push("--network-name", mainStore.config.networkName);
+		if (config.networkName) {
+			args.push("--network-name", config.networkName);
 		}
-		if (mainStore.config.networkPassword) {
-			args.push("--network-secret", mainStore.config.networkPassword);
+		if (config.networkPassword) {
+			args.push("--network-secret", config.networkPassword);
 		}
-		if (mainStore.config.ipv4) {
-			args.push("--ipv4", mainStore.config.ipv4.trim());
+		if (config.ipv4) {
+			args.push("--ipv4", config.ipv4.trim());
 		}
-		if (mainStore.config.serverUrl) {
-			const formatUrlArr = mainStore.config.serverUrl.map((url: string) => url.replace(/\\/g, "/"));
-			args.push("--peers", ...mixedArray(mainStore.config.protocol, formatUrlArr, "://"));
+		if (config.serverUrl) {
+			const formatUrlArr = config.serverUrl.map((url: string) => url.replace(/\\/g, "/"));
+			args.push("--peers", ...mixedArray(config.protocol, formatUrlArr, "://"));
 		}
-		if (mainStore.config.enableCustomProtocol) {
-			const includes = mainStore.config.protocol.includes(mainStore.config.customProtocol);
+		if (config.enableCustomProtocol) {
+			const includes = config.protocol.includes(config.customProtocol);
 			if (includes) {
-				args.push("--default-protocol", mainStore.config.customProtocol);
+				args.push("--default-protocol", config.customProtocol);
 			}
 		}
-		if (mainStore.config.disbleP2p) {
+		if (config.disbleP2p) {
 			args.push("--disable-p2p");
 		}
-		if (mainStore.config.disableIpv6) {
+		if (config.disableIpv6) {
 			args.push("--disable-ipv6", "true");
 		}
-		if (mainStore.config.disbleListenner) {
+		if (config.disbleListenner) {
 			args.push("--no-listener");
 		}
-		if (!mainStore.config.disbleListenner && mainStore.config.enableCustomListener && mainStore.config.customListenerData) {
-			const customListener = mainStore.config.customListenerData
+		if (!config.disbleListenner && config.enableCustomListener && config.customListenerData) {
+			const customListener = config.customListenerData
 				.trim()
 				.split("\n")
 				.map(el => el.trim())
@@ -1541,11 +2053,11 @@
 			}
 		}
 
-		if (!mainStore.config.disbleListenner && !mainStore.config.enableCustomListener && mainStore.config.port) {
-			args.push("-l", mainStore.config.port);
+		if (!config.disbleListenner && !config.enableCustomListener && config.port) {
+			args.push("-l", config.port);
 		}
-		if (mainStore.cidrEnable && mainStore.config.proxyNetworks) {
-			let formatProxyNetworks = mainStore.config.proxyNetworks.trim().split("\n");
+		if (room.cidrEnable && config.proxyNetworks) {
+			const formatProxyNetworks = config.proxyNetworks.trim().split("\n");
 			const newformatProxyNetworks = formatProxyNetworks
 				.map(el => el.trim())
 				.filter(cidr => {
@@ -1556,79 +2068,82 @@
 					args.push("-n", cidr);
 				}
 			}
-			mainStore.config.proxyNetworks = formatProxyNetworks.join("\n");
+			config.proxyNetworks = formatProxyNetworks.join("\n");
+			if (mainStore.activeRoomId === roomId) {
+				mainStore.config.proxyNetworks = config.proxyNetworks;
+			}
 		}
-		if (mainStore.config.disableEncryption) {
+		if (config.disableEncryption) {
 			args.push("--disable-encryption", "true");
 		}
-		if (mainStore.config.multiThread) {
+		if (config.multiThread) {
 			args.push("--multi-thread", "true");
 		}
-		if (mainStore.config.enablExitNode) {
+		if (config.enablExitNode) {
 			args.push("--enable-exit-node", "true");
 		}
-		if (mainStore.config.noTun) {
+		if (config.noTun) {
 			args.push("--no-tun", "true");
 		}
-		if (mainStore.config.latencyfirst) {
+		if (config.latencyfirst) {
 			args.push("--latency-first", "true");
 		}
-		if (mainStore.config.useSmoltcp) {
+		if (config.useSmoltcp) {
 			args.push("--use-smoltcp", "true");
 		}
-		if (mainStore.config.disableUdpHolePunching) {
+		if (config.disableUdpHolePunching) {
 			args.push("--disable-udp-hole-punching", "true");
 		}
-		if (mainStore.config.relayAllPeerrpc) {
+		if (config.relayAllPeerrpc) {
 			args.push("--relay-all-peer-rpc", "true");
 		}
-		if (mainStore.config.saveErrorLog) {
-			args.push("--file-log-level", mainStore.config.logLevel, "--file-log-dir", import.meta.env.VITE_LOG_PATH);
+		if (config.saveErrorLog) {
+			args.push("--file-log-level", config.logLevel, "--file-log-dir", `${import.meta.env.VITE_LOG_PATH}${room.id}`);
 		}
-		if (mainStore.config.devName && mainStore.config.devNameValue) {
-			args.push("--dev-name", mainStore.config.devNameValue);
+		if (config.devName && config.devNameValue) {
+			args.push("--dev-name", config.devNameValue);
 		}
-		if (mainStore.config.compression && mainStore.config.compression != "none") {
-			args.push("--compression", mainStore.config.compression);
+		if (config.compression && config.compression != "none") {
+			args.push("--compression", config.compression);
 		}
-		if (mainStore.config.enableKcpProxy) {
+		if (config.enableKcpProxy) {
 			args.push("--enable-kcp-proxy", "true");
 		}
-		if (mainStore.config.disableKcpInput) {
+		if (config.disableKcpInput) {
 			args.push("--disable-kcp-input", "true");
 		}
-		if (mainStore.config.enableQuicProxy) {
+		if (config.enableQuicProxy) {
 			args.push("--enable-quic-proxy", "true");
 		}
-		if (mainStore.config.disableQuicInput) {
+		if (config.disableQuicInput) {
 			args.push("--disable-quic-input", "true");
 		}
-		if (mainStore.config.enableUdpBroadcastRelay) {
+		if (config.enableUdpBroadcastRelay) {
 			args.push("--enable-udp-broadcast-relay", "true");
 		}
-		if (!mainStore.config.enableUpnp) {
+		if (!config.enableUpnp) {
 			args.push("--disable-upnp", "true");
 		}
-		if (mainStore.config.ipv6PublicAddrProvider) {
+		if (config.ipv6PublicAddrProvider) {
 			args.push("--ipv6-public-addr-provider", "true");
 		}
-		if (mainStore.config.ipv6PublicAddrAuto) {
+		if (config.ipv6PublicAddrAuto) {
 			args.push("--ipv6-public-addr-auto", "true");
 		}
-		if (mainStore.config.disableRelayData) {
+		if (config.disableRelayData) {
 			args.push("--disable-relay-data", "true");
 		}
-		if (mainStore.config.bindDeviceEnable) {
+		if (config.bindDeviceEnable) {
 			args.push("--bind-device", "true");
 		}
-		if (mainStore.proxyForwardBySystem) {
+		if (room.proxyForwardBySystem) {
 			args.push("--proxy-forward-by-system", "true");
 		}
-		if (mainStore.config.acceptDNS) {
+		if (config.acceptDNS) {
 			args.push("--accept-dns", "true");
 		}
-		if (mainStore.config.enablePortForward) {
-			let formatPortForward = mainStore.config.portForwardData.trim().split("\n");
+		if (config.enablePortForward) {
+			const formatPortForward = config.portForwardData.trim().split("\n");
 			const newformatPortForward = formatPortForward.map(el => el.trim()).filter(el => el);
 			if (newformatPortForward.length > 0) {
 				newformatPortForward.map(el => {
@@ -1636,36 +2151,27 @@
 				});
 			}
 		}
-		if (mainStore.config.privateMode) {
+		if (config.privateMode) {
 			args.push("--private-mode", "true");
 		}
-		if (mainStore.config.ipv6 && !mainStore.config.disableIpv6) {
-			args.push("--ipv6", mainStore.config.ipv6.trim());
+		if (config.ipv6 && !config.disableIpv6) {
+			args.push("--ipv6", config.ipv6.trim());
 		}
-		const tcpWhitelist = mainStore.config.tcpWhitelist.trim();
-		if (mainStore.config.tcpWhitelistEnable && tcpWhitelist) {
+		const tcpWhitelist = config.tcpWhitelist.trim();
+		if (config.tcpWhitelistEnable && tcpWhitelist) {
 			args.push("--tcp-whitelist", tcpWhitelist);
 		}
-		const udpWhitelist = mainStore.config.udpWhitelist.trim();
-		if (mainStore.config.udpWhitelistEnable && udpWhitelist) {
+		const udpWhitelist = config.udpWhitelist.trim();
+		if (config.udpWhitelistEnable && udpWhitelist) {
 			args.push("--udp-whitelist", udpWhitelist);
 		}
+		args.push("--rpc-portal", `${room.rpcPortal}`, "--instance-name", room.id);
 		return args;
 	};
 
-	const ipReset = async () => {
-		data.isSuccessGetIp = false;
-		if (mainStore.config.dhcp) {
-			mainStore.config.ipv4 = "";
-		}
-		await setTrayRunState(tray, false);
-		await setTrayTooltip(tray);
-	};
-
-	const reset = async () => {
-		data.isStart = false;
+	const closeRoomDetailWindows = async () => {
 		const memberDialog = await getAllWebviewWindows();
-		const memberDialogs = memberDialog.filter(item => item.label === "member");
+		const memberDialogs = memberDialog.filter(item => item.label === "member" || item.label === "cidr");
 		if (memberDialogs && memberDialogs.length > 0) {
 			data.memberVisible = false;
 			for (const memberDialog of memberDialogs) {
@@ -1675,33 +2181,61 @@
 				}
 			}
 		}
-		await unListenAll();
-		await ipReset();
 	};
 
-	const handleConnection = async () => {
-		if (data.isStart) {
-			await reset();
+	const reset = async (roomId: string = mainStore.activeRoomId) => {
+		if (roomId === mainStore.activeRoomId) {
+			await closeRoomDetailWindows();
+		}
+		await stopRoom(roomId);
+	};
+
+	const handleConnection = async (roomId: string = mainStore.activeRoomId) => {
+		clearReconnectTimer(roomId);
+		if (roomId === mainStore.activeRoomId) {
+			mainStore.saveActiveRoomProfile();
+		}
+		const room = mainStore.roomProfiles.find(item => item.id === roomId);
+		if (!room) return;
+		const runtime = getRoomRuntime(roomId);
+		if (runtime.startLoading) {
+			ElMessage.info(`房间“${room.name}”正在启动，请稍候`);
+			return;
+		}
+		if (runtime.isStart) {
+			await reset(roomId);
 		} else {
-			await setTrayTooltip(tray, "请求联机中...");
-			const args = await getArgs();
+			runtime.error = "";
+			const args = await getArgs(roomId);
 			if (!args || args.length <= 0) {
-				await reset();
+				await reset(roomId);
 				return;
 			}
 			if (args[0] === "-c") {
 				ElMessage.warning({
-					message: "使用配置文件中.",
+					message: `房间“${room.name}”使用外部配置文件启动`,
 					duration: 5000
 				});
 			}
-			data.log = ""; //清空日志
-			data.startLoading = true;
-			await unListenAll();
-			await listenObj.listenOutput();
-			await invoke("run_command", {
-				args
-			});
+			runtime.log = "";
+			runtime.runId = `${room.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+			runtime.startLoading = true;
+			runtime.isStart = true;
+			await updateTrayRoomStatus();
+			try {
+				await invoke("run_command", {
+					args,
+					instance_id: room.id,
+					run_id: runtime.runId
+				});
+			} catch (err) {
+				runtime.isStart = false;
+				runtime.startLoading = false;
+				runtime.error = "请求启动 EasyTier 内核失败";
+				appendRoomLog(room.id, `${runtime.error}: ${err}`);
+				await updateTrayRoomStatus();
+				ElMessage.error(`房间“${room.name}”启动失败`);
+			}
 		}
 	};
 
@@ -1849,7 +2383,23 @@
 				})) as any;
 		}
 		if (command === "save_config_admin") {
-			const config = btoa(encodeURIComponent(JSON.stringify(mainStore.$state)));
+			mainStore.saveActiveRoomProfile();
+			const room = mainStore.activeRoomProfile;
+			if (!room) return;
+			const config = btoa(
+				encodeURIComponent(
+					JSON.stringify({
+						version: 2,
+						room: {
+							config: room.config,
+							cidrEnable: room.cidrEnable,
+							proxyForwardBySystem: room.proxyForwardBySystem,
+							configStartEnable: room.configStartEnable,
+							configPath: room.configPath
+						}
+					})
+				)
+			);
 			const [error, { value = "" } = {}] = await ATJ(
 				ElMessageBox.prompt("请输入配置的存储名", "提示", {
 					confirmButtonText: "保存",
@@ -1926,17 +2476,24 @@
 	};
 
 	const handleReconnect = async () => {
-		if (data.isStart) {
+		const roomId = mainStore.activeRoomId;
+		clearReconnectTimer(roomId);
+		if (activeRoomRuntime.value.isStart || activeRoomRuntime.value.startLoading) {
 			ElMessage.info({
-				message: "正在重新联机...",
+				message: `正在重新连接房间“${mainStore.activeRoomProfile?.name || ""}”...`,
 				duration: 2200
 			});
-			await handleConnection();
-			setTimeout(() => {
-				handleConnection();
+			const stopped = await stopRoom(roomId);
+			if (!stopped) return;
+			reconnectTimers[roomId] = window.setTimeout(() => {
+				delete reconnectTimers[roomId];
+				const runtime = getRoomRuntime(roomId);
+				if (!runtime.isStart && !runtime.startLoading) {
+					void handleConnection(roomId);
+				}
 			}, 2000);
 		} else {
-			handleConnection();
+			await handleConnection(roomId);
 		}
 	};
 
@@ -1969,13 +2526,24 @@
 		const base64U8Arrray = await readFile(path, { baseDir: BaseDirectory.Resource });
 		const decoder = new TextDecoder("utf-8");
 		try {
-			if (data.isStart) {
-				ElMessage.warning("停止联机..");
+			if (activeRoomRuntime.value.isStart) {
+				ElMessage.warning("正在停止当前房间...");
 				await reset();
 			}
-			const json: typeof mainStore.$state = JSON.parse(decodeURIComponent(atob(decoder.decode(base64U8Arrray))));
-			mainStore.$patch(json);
-			ElMessage.success("切换成功");
+			const payload = JSON.parse(decodeURIComponent(atob(decoder.decode(base64U8Arrray))));
+			const savedRoom = payload.version === 2 && payload.room ? payload.room : payload;
+			mainStore.$patch({
+				config: {
+					...mainStore.config,
+					...(savedRoom.config || {})
+				},
+				cidrEnable: savedRoom.cidrEnable ?? mainStore.cidrEnable,
+				proxyForwardBySystem: savedRoom.proxyForwardBySystem ?? mainStore.proxyForwardBySystem,
+				configStartEnable: savedRoom.configStartEnable ?? mainStore.configStartEnable,
+				configPath: savedRoom.configPath ?? mainStore.configPath
+			});
+			mainStore.saveActiveRoomProfile();
+			ElMessage.success("当前房间配置切换成功");
 			configAdminData.visible = false;
 		} catch (err) {
 			ElMessage.error("读取配置失败");
@@ -1993,7 +2561,7 @@
 			payload.config.serverUrl = Array.isArray(payload?.config?.serverUrl)
 				? payload?.config?.serverUrl
 				: typeof payload?.config?.serverUrl == "string"
-					? [payload?.config?.serverUrl.split(",")]
+					? payload?.config?.serverUrl.split(",")
 					: typeof mainStore.config.serverUrl == "string"
 						? [mainStore.config.serverUrl]
 						: [];
@@ -2003,6 +2571,7 @@
 					...payload.config
 				}
 			});
+			mainStore.saveActiveRoomProfile();
 			ElMessage.success("导入成功");
 			importConfigData.visible = false;
 			mainStore.basePeers = uniq([...(mainStore.config.serverUrl || []), ...mainStore.basePeers].filter(el => el.trim()));
@@ -2020,6 +2589,7 @@
 		if (!isExists) {
 			mainStore.configStartEnable = false;
 			mainStore.configPath = "";
+			mainStore.saveActiveRoomProfile();
 			try {
 				await mkdir(path, { baseDir: BaseDirectory.Resource });
 			} catch (err) {
@@ -2042,7 +2612,7 @@
 	};
 
 	const handleShowMemberDialog = async () => {
-		if (!data.isStart) {
+		if (!activeRoomRuntime.value.isStart) {
 			return ElMessage.warning("请先启动联机");
 		}
 		// if (!mainStore.config.ipv4) {
@@ -2080,7 +2650,7 @@
 				data.logVisible = true;
 				logsTimer && clearInterval(logsTimer);
 				logsTimer = setInterval(() => {
-					appWindow.emitTo({ kind: "WebviewWindow", label: "log" }, "logs", data.log);
+					appWindow.emitTo({ kind: "WebviewWindow", label: "log" }, "logs", activeRoomRuntime.value.log);
 				}, 650);
 			},
 			() => {
@@ -2104,7 +2674,7 @@
 				data.cidrVisible = true;
 				cidrTimer && clearInterval(cidrTimer);
 				cidrTimer = setInterval(() => {
-					appWindow.emitTo({ kind: "WebviewWindow", label: "cidr" }, "route", data.isStart);
+					appWindow.emitTo({ kind: "WebviewWindow", label: "cidr" }, "route", activeRoomRuntime.value.isStart);
 				}, 650);
 			},
 			() => {

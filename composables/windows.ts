@@ -8,6 +8,11 @@ import { updateConfigJsonBounce, type ConfigServerUrlType } from "./configJson";
 
 const _listenersMaps: { [key: string]: [UnlistenFn | null] } = {};
 
+export const MAIN_WINDOW_LOGICAL_SIZE = Object.freeze({
+	width: 340,
+	height: 350
+});
+
 const dealCloseListener = async (dialog: WebviewWindow, label: string, beforeCloseFunc?: () => void | null) => {
 	const unlistenFnList: [UnlistenFn | null] = _listenersMaps[label] || [null];
 	let [unListenlogClose] = unlistenFnList;
@@ -44,13 +49,12 @@ export default async (
 			defaultOpts.parent = appWindow;
 			// console.error(logicalPosition);
 			if (defaultOpts.x == 0 && defaultOpts.y == 0) {
-				const logicalAppSize = {
-					width: 340,
-					height: 305
-				}
 				const factor = await appWindow.scaleFactor();
 				const appPosition = await appWindow.outerPosition();
-				const logicalPosition = new PhysicalPosition(appPosition.x + Math.ceil((logicalAppSize.width + 5) * factor), appPosition.y).toLogical(factor);
+				const logicalPosition = new PhysicalPosition(
+					appPosition.x + Math.ceil((MAIN_WINDOW_LOGICAL_SIZE.width + 5) * factor),
+					appPosition.y
+				).toLogical(factor);
 				defaultOpts.x = logicalPosition.x;
 				defaultOpts.y = logicalPosition.y;
 			}

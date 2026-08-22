@@ -54,9 +54,12 @@
 	import { dataSubscribe } from "@/composables/windows";
 	import { invoke } from "@tauri-apps/api/core";
 	import { reactive, onMounted, onBeforeUnmount } from "vue";
-	import { ATJ, parseCliInfo } from "@/utils";
+	import { ATJ } from "@/utils";
 	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 	const mainStore = useMainStore();
+	if (!mainStore.activeRoomProfile) {
+		mainStore.initializeRoomProfiles();
+	}
 
 	const data = reactive<{ [key: string]: any }>({
 		route: [],
@@ -67,7 +70,13 @@
 
 	const listenOutput = async () => {
 		data.isRunning = true;
-		const [error, member] = await ATJ(invoke<string>("get_route_by_cli"));
+		const rpcPortal = mainStore.activeRoomProfile?.rpcPortal;
+		if (!rpcPortal) {
+			data.isRunning = false;
+			data.route = [];
+			return;
+		}
+		const [error, member] = await ATJ(invoke<string>("get_route_by_cli", { rpc_portal: rpcPortal }));
 		data.isRunning = false;
 		if(!member) return;
 		if (error) {
@@ -76,10 +85,14 @@
 		}
 		if (member === "_EasytierGameCliFailedToConnect_") {
 			data.route = [];
-			await listenOutput();
 			return;
 		}
-		data.route = JSON.parse(member);
+		try {
+			data.route = JSON.parse(member);
+		} catch (error) {
+			console.error("解析当前房间的子网代理路由失败", error);
+			data.route = [];
+		}
 	};
 
 	const listenStart = async () => {

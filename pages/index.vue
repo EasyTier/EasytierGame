@@ -2198,9 +2198,6 @@
 				alwaysOnBottom: true,
 				visible: false,
 				url: "#/storage-listener"
-			},
-			dialog => {
-				dialog.hide();
 			}
 		);
 	};
